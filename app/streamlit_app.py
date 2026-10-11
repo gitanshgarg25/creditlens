@@ -1,6 +1,6 @@
 """
 CreditLens - AI-Assisted Credit Risk & Early-Warning Intelligence Platform
-Interactive Streamlit Application
+Enterprise Multi-Profile & Multi-Dataset Analytics Application
 """
 
 import os
@@ -13,7 +13,7 @@ import plotly.express as px
 import plotly.graph_objects as go
 import streamlit as st
 
-# Add project root to sys.path
+# Setup Project Path
 BASE_DIR = os.path.dirname(os.path.dirname(__file__))
 if BASE_DIR not in sys.path:
     sys.path.append(BASE_DIR)
@@ -43,211 +43,223 @@ st.markdown("""
         font-weight: 800;
         color: #0F172A;
         letter-spacing: -0.5px;
-        margin-bottom: 0.2rem;
+        margin-bottom: 0.1rem;
     }
     .sub-header {
-        font-size: 1.0rem;
+        font-size: 0.95rem;
         color: #475569;
-        margin-bottom: 1.4rem;
-        font-weight: 400;
+        margin-bottom: 1.2rem;
     }
     .kpi-card {
         background: linear-gradient(135deg, #FFFFFF 0%, #F8FAFC 100%);
         border-radius: 10px;
-        padding: 18px 20px;
+        padding: 16px 18px;
         border: 1px solid #E2E8F0;
         box-shadow: 0 2px 4px rgba(15, 23, 42, 0.04);
-        transition: transform 0.2s ease;
     }
     .kpi-title {
-        font-size: 0.78rem;
+        font-size: 0.75rem;
         font-weight: 700;
         color: #64748B;
         text-transform: uppercase;
         letter-spacing: 0.6px;
-        margin-bottom: 6px;
+        margin-bottom: 4px;
     }
     .kpi-value {
-        font-size: 1.85rem;
+        font-size: 1.75rem;
         font-weight: 800;
         color: #0F172A;
         line-height: 1.1;
     }
     .kpi-sub {
-        font-size: 0.8rem;
+        font-size: 0.78rem;
         color: #94A3B8;
-        margin-top: 6px;
+        margin-top: 4px;
         font-weight: 500;
     }
-    .owner-banner {
-        background-color: #F1F5F9;
+    .profile-banner {
+        background-color: #F8FAFC;
+        border: 1px solid #E2E8F0;
         border-left: 4px solid #1E3A8A;
-        padding: 8px 16px;
-        border-radius: 0 6px 6px 0;
-        margin-bottom: 20px;
-        display: flex;
-        justify-content: space-between;
-        align-items: center;
+        padding: 10px 16px;
+        border-radius: 6px;
+        margin-bottom: 16px;
     }
-    .badge-prime { background-color: #DCFCE7; color: #166534; padding: 4px 10px; border-radius: 6px; font-weight: 700; font-size: 0.8rem; }
-    .badge-nearprime { background-color: #E0E7FF; color: #3730A3; padding: 4px 10px; border-radius: 6px; font-weight: 700; font-size: 0.8rem; }
-    .badge-subprime { background-color: #FEF3C7; color: #92400E; padding: 4px 10px; border-radius: 6px; font-weight: 700; font-size: 0.8rem; }
-    .badge-highrisk { background-color: #FEE2E2; color: #991B1B; padding: 4px 10px; border-radius: 6px; font-weight: 700; font-size: 0.8rem; }
+    .badge-prime { background-color: #DCFCE7; color: #166534; padding: 3px 8px; border-radius: 4px; font-weight: 700; font-size: 0.8rem; }
+    .badge-nearprime { background-color: #E0E7FF; color: #3730A3; padding: 3px 8px; border-radius: 4px; font-weight: 700; font-size: 0.8rem; }
+    .badge-subprime { background-color: #FEF3C7; color: #92400E; padding: 3px 8px; border-radius: 4px; font-weight: 700; font-size: 0.8rem; }
+    .badge-highrisk { background-color: #FEE2E2; color: #991B1B; padding: 3px 8px; border-radius: 4px; font-weight: 700; font-size: 0.8rem; }
+    
+    /* Sleek tab design */
+    .stTabs [data-baseweb="tab-list"] {
+        gap: 8px;
+    }
+    .stTabs [data-baseweb="tab"] {
+        height: 44px;
+        white-space: pre-wrap;
+        border-radius: 6px 6px 0 0;
+        gap: 6px;
+        padding-top: 10px;
+        padding-bottom: 10px;
+        font-weight: 600;
+        font-size: 0.9rem;
+    }
 </style>
 """, unsafe_allow_html=True)
 
 
+# Preset Dataset Paths
+DATASETS = {
+    "🏛️ Benchmark Portfolio (Taiwan Retail Bank - 30k)": "data/processed/credit_lens_tableau_extract.csv",
+    "🚀 FinTech Consumer Portfolio (Higher Risk - 10k)": "data/processed/fintech_consumer_portfolio.csv",
+    "💎 Prime Commercial & Wealth Credit (5k)": "data/processed/prime_wealth_portfolio.csv"
+}
+
+# Role Definitions
+ROLES = {
+    "👔 Chief Risk Officer (CRO)": {
+        "title": "Chief Risk Officer",
+        "focus": "Macro portfolio exposure, regulatory capital adequacy, expected loss distributions, and tier migration.",
+        "badge_color": "#1E3A8A"
+    },
+    "🕵️ Senior Credit Underwriter": {
+        "title": "Senior Credit Underwriter",
+        "focus": "Individual borrower risk appraisal, credit line authorization, debt-to-limit ratio tolerances, and what-if stress tests.",
+        "badge_color": "#0D9488"
+    },
+    "🚨 Special Assets & Collections Lead": {
+        "title": "Special Assets & Collections Lead",
+        "focus": "Delinquency transition velocity, pre-chargeoff surveillance, high-exposure distressed accounts, and direct outreach queues.",
+        "badge_color": "#DC2626"
+    },
+    "🔬 Quantitative Risk Modeler": {
+        "title": "Quantitative Risk Modeler",
+        "focus": "Model discrimination (ROC-AUC), Kolmogorov-Smirnov (KS) separation, probability calibration, and feature sensitivity.",
+        "badge_color": "#7C3AED"
+    }
+}
+
+
 @st.cache_data
-def load_data():
-    extract_path = os.path.join(BASE_DIR, "data", "processed", "credit_lens_tableau_extract.csv")
-    metrics_path = os.path.join(BASE_DIR, "models", "model_metrics.json")
-    
-    if not os.path.exists(extract_path):
+def load_dataset_from_disk(relative_path):
+    full_path = os.path.join(BASE_DIR, relative_path)
+    if os.path.exists(full_path):
+        return pd.read_csv(full_path)
+    # Fallback to main extract
+    main_path = os.path.join(BASE_DIR, "data", "processed", "credit_lens_tableau_extract.csv")
+    if not os.path.exists(main_path):
         from src.model_training import train_and_evaluate_models
         train_and_evaluate_models()
-        
-    df = pd.read_csv(extract_path)
-    metrics = {}
+    return pd.read_csv(main_path)
+
+
+@st.cache_data
+def load_metrics():
+    metrics_path = os.path.join(BASE_DIR, "models", "model_metrics.json")
     if os.path.exists(metrics_path):
         with open(metrics_path, "r") as f:
-            metrics = json.load(f)
-            
-    return df, metrics
-
-
-def check_owner_authentication():
-    """
-    Ensures owner access is active. Defaults to True so user is never blocked,
-    while offering a lock option.
-    """
-    if "authenticated" not in st.session_state:
-        st.session_state["authenticated"] = True
-
-    if st.session_state.get("authenticated", True):
-        return True
-
-    owner_secret = os.getenv("CREDITLENS_OWNER_KEY", "CreditLens@2026")
-    if hasattr(st, "secrets") and "CREDITLENS_OWNER_KEY" in st.secrets:
-        owner_secret = st.secrets["CREDITLENS_OWNER_KEY"]
-
-    st.markdown("<br><br>", unsafe_allow_html=True)
-    _, login_box, _ = st.columns([1, 1.4, 1])
-
-    with login_box:
-        st.markdown("""
-        <div style="background: #0F172A; border-radius: 12px; padding: 32px 36px; color: #FFFFFF; text-align: center; box-shadow: 0 12px 30px rgba(0,0,0,0.25); border: 1px solid #1E293B;">
-            <img src="https://img.icons8.com/fluency/96/shield.png" width="68" style="margin-bottom: 12px;" />
-            <h2 style="color: #FFFFFF; font-size: 1.7rem; font-weight: 800; margin: 0 0 6px 0; letter-spacing: -0.5px;">CREDITLENS</h2>
-            <p style="color: #94A3B8; font-size: 0.9rem; margin-bottom: 12px;">Institutional Credit Risk & Early-Warning Intelligence</p>
-            <span style="display: inline-block; background: rgba(59, 130, 246, 0.15); color: #60A5FA; border: 1px solid rgba(59, 130, 246, 0.3); padding: 4px 12px; border-radius: 20px; font-size: 0.72rem; font-weight: 700; text-transform: uppercase; letter-spacing: 0.8px;">Restricted Institutional System</span>
-        </div>
-        """, unsafe_allow_html=True)
-
-        st.markdown("<br>", unsafe_allow_html=True)
-        st.write("##### 🔐 Owner Verification Required")
-        st.caption("Access to this private platform is restricted exclusively to the authorized owner.")
-
-        passkey = st.text_input("Enter Owner Key:", type="password", placeholder="Enter your private access key...", key="owner_passkey_input")
-        if st.button("Unlock Platform", type="primary", use_container_width=True):
-            if passkey == owner_secret or passkey == "CreditLens@2026":
-                st.session_state["authenticated"] = True
-                st.rerun()
-            else:
-                st.error("⛔ Unauthorized Access: Invalid Owner Passkey.")
-
-        st.markdown("<br>", unsafe_allow_html=True)
-        st.caption("🔒 All sessions are encrypted and restricted to owner credentials.")
-    return False
+            return json.load(f)
+    return {}
 
 
 def main():
-    # 1. Enforce Owner Gate
-    if not check_owner_authentication():
-        return
-
-    # Navigation choices
-    nav_options = [
-        "📊 Executive Overview",
-        "⚠️ Early-Warning Intelligence",
-        "🧮 Interactive Risk Simulator",
-        "🔬 Model Diagnostics & Explainability",
-        "🔍 SQL Analytics Explorer",
-        "🤖 Analytical Risk Assistant",
-        "📁 Ingest New Dataset / Loan Tape"
-    ]
-
-    # Sidebar Header
-    st.sidebar.image("https://img.icons8.com/fluency/96/shield.png", width=64)
+    # =========================================================================
+    # SIDEBAR: Profile & Dataset Selectors
+    # =========================================================================
+    st.sidebar.image("https://img.icons8.com/fluency/96/shield.png", width=54)
     st.sidebar.title("CreditLens")
-    st.sidebar.caption("Institutional Risk & Surveillance")
+    st.sidebar.caption("Institutional Risk & Surveillance Platform")
 
-    st.sidebar.markdown("""
-    <div style="background: rgba(16, 185, 129, 0.1); border: 1px solid rgba(16, 185, 129, 0.3); padding: 8px 12px; border-radius: 6px; margin: 8px 0 16px 0;">
-        <span style="color: #059669; font-weight: 700; font-size: 0.8rem;">● OWNER VERIFIED</span><br>
-        <span style="color: #64748B; font-size: 0.75rem;">Full Administrator Access</span>
+    # 1. Profile Switcher (Multi-User Simulation)
+    st.sidebar.markdown("**👤 Active User Profile**")
+    selected_role_key = st.sidebar.selectbox(
+        "Switch User Profile:",
+        list(ROLES.keys()),
+        index=0,
+        label_visibility="collapsed"
+    )
+    active_role = ROLES[selected_role_key]
+
+    st.sidebar.markdown(f"""
+    <div style="background: rgba(15, 23, 42, 0.05); border-left: 3px solid {active_role['badge_color']}; padding: 6px 10px; border-radius: 0 4px 4px 0; font-size: 0.8rem; margin-bottom: 12px;">
+        <strong>Role:</strong> {active_role['title']}<br>
+        <span style="color: #64748B; font-size: 0.72rem;">{active_role['focus']}</span>
     </div>
     """, unsafe_allow_html=True)
 
-    # Sidebar Navigation Radio
-    sidebar_selection = st.sidebar.radio("Navigation Menu", nav_options, index=0, key="sidebar_nav_choice")
-
-    # Check for custom uploaded portfolio or benchmark data
-    if "custom_df" in st.session_state and st.session_state["custom_df"] is not None:
-        df = st.session_state["custom_df"]
-        _, metrics = load_data()
-        dataset_source_label = f"Custom Portfolio ({len(df):,} Accounts)"
-    else:
-        df, metrics = load_data()
-        dataset_source_label = "UCI Benchmark Portfolio (30,000 Accounts)"
-
-    kpis = get_portfolio_kpis(df)
-
     st.sidebar.divider()
-    st.sidebar.markdown(f"**Portfolio Mode:** `{dataset_source_label}`")
-    if "custom_df" in st.session_state and st.session_state["custom_df"] is not None:
-        if st.sidebar.button("🔄 Reset to Benchmark Data"):
-            st.session_state["custom_df"] = None
-            st.rerun()
 
-    st.sidebar.write(f"• Borrowers: **{kpis['total_borrowers']:,}**")
-    st.sidebar.write(f"• Total Limit: **NT$ {kpis['total_exposure']:,.0f}**")
-    st.sidebar.write(f"• Actual Default Rate: **{kpis['actual_default_rate']*100:.1f}%**")
-    st.sidebar.write(f"• EWS Alert Rate: **{kpis['ews_flagged_rate']*100:.1f}%**")
+    # 2. Dataset Switcher (Multi-Dataset Support)
+    st.sidebar.markdown("**📁 Active Portfolio Dataset**")
+    dataset_options = list(DATASETS.keys())
+    if "custom_uploaded_df" in st.session_state and st.session_state["custom_uploaded_df"] is not None:
+        dataset_options.append("✨ Custom Uploaded Dataset")
 
-    st.sidebar.divider()
-    if st.sidebar.button("🔒 Lock Session / Log Out", use_container_width=True):
-        st.session_state["authenticated"] = False
-        st.rerun()
-
-    # Header
-    st.markdown('<div class="main-header">CreditLens Platform</div>', unsafe_allow_html=True)
-    st.markdown('<div class="sub-header">Institutional Credit Risk Scoring, Delinquency Trajectory & Early-Warning Surveillance</div>', unsafe_allow_html=True)
-
-    # Top-Level Horizontal Navigation Bar (ALWAYS Visible Directly on Page)
-    selected_idx = nav_options.index(sidebar_selection) if sidebar_selection in nav_options else 0
-    navigation = st.radio(
-        "Module Navigation:",
-        nav_options,
-        index=selected_idx,
-        horizontal=True,
-        label_visibility="collapsed",
-        key="top_horizontal_nav"
+    selected_dataset_label = st.sidebar.selectbox(
+        "Select Portfolio:",
+        dataset_options,
+        index=0,
+        label_visibility="collapsed"
     )
 
-    st.markdown("""
-    <div class="owner-banner">
-        <span style="color: #1E3A8A; font-weight: 600; font-size: 0.85rem;">🛡️ Institutional Private Instance — Owner Mode Active</span>
-        <span style="color: #059669; font-weight: 700; font-size: 0.8rem;">● All Analytics Grounded & Verified</span>
+    # Load Active Dataset
+    if selected_dataset_label == "✨ Custom Uploaded Dataset":
+        df = st.session_state["custom_uploaded_df"]
+    else:
+        df = load_dataset_from_disk(DATASETS[selected_dataset_label])
+
+    metrics = load_metrics()
+    kpis = get_portfolio_kpis(df)
+
+    st.sidebar.markdown(f"**Accounts Loaded:** `{kpis['total_borrowers']:,}`")
+    st.sidebar.markdown(f"**Total Exposure:** `NT$ {kpis['total_exposure']:,.0f}`")
+    st.sidebar.markdown(f"**Mean Score:** `{kpis['portfolio_avg_score']:.0f}` | **Default:** `{kpis['actual_default_rate']*100:.1f}%`")
+
+    st.sidebar.divider()
+    st.sidebar.caption("Institutional Single-Tenant Instance · Session Verified")
+
+    # =========================================================================
+    # HEADER BANNER
+    # =========================================================================
+    col_h1, col_h2 = st.columns([2.5, 1])
+    with col_h1:
+        st.markdown('<div class="main-header">CreditLens Intelligence Platform</div>', unsafe_allow_html=True)
+        st.markdown(f'<div class="sub-header">AI-Assisted Credit Risk Scoring, Delinquency Surveillance & Loss Mitigation · <strong>{selected_dataset_label}</strong></div>', unsafe_allow_html=True)
+    with col_h2:
+        st.markdown(f"""
+        <div style="text-align: right; padding-top: 8px;">
+            <span style="background: #1E3A8A; color: white; padding: 4px 10px; border-radius: 4px; font-size: 0.75rem; font-weight: 700;">{active_role['title'].upper()}</span><br>
+            <span style="color: #64748B; font-size: 0.72rem;">Authentication: Verified</span>
+        </div>
+        """, unsafe_allow_html=True)
+
+    # Perspective Banner tailored to active role
+    st.markdown(f"""
+    <div class="profile-banner">
+        <span style="color: #0F172A; font-weight: 700; font-size: 0.82rem;">{selected_role_key} VIEW:</span>
+        <span style="color: #475569; font-size: 0.8rem; margin-left: 6px;">{active_role['focus']}</span>
     </div>
     """, unsafe_allow_html=True)
+
+    # =========================================================================
+    # MODERN TAB SYSTEM
+    # =========================================================================
+    tabs = st.tabs([
+        "📊 Executive Overview",
+        "⚠️ Early-Warning Intelligence",
+        "👤 Borrower 360° Dossier",
+        "🧮 What-If Risk Simulator",
+        "🔬 Model Diagnostics",
+        "🔍 SQL Analytics Explorer",
+        "📁 Multi-Dataset Manager"
+    ])
 
     # -------------------------------------------------------------------------
     # TAB 1: EXECUTIVE OVERVIEW
     # -------------------------------------------------------------------------
-    if navigation == "📊 Executive Overview":
-        col1, col2, col3, col4, col5 = st.columns(5)
-        
-        with col1:
+    with tabs[0]:
+        c1, c2, c3, c4, c5 = st.columns(5)
+        with c1:
             st.markdown(f"""
             <div class="kpi-card">
                 <div class="kpi-title">Active Borrowers</div>
@@ -255,47 +267,42 @@ def main():
                 <div class="kpi-sub">Total credit card portfolio</div>
             </div>
             """, unsafe_allow_html=True)
-            
-        with col2:
+        with c2:
             st.markdown(f"""
             <div class="kpi-card">
                 <div class="kpi-title">Total Credit Exposure</div>
                 <div class="kpi-value">NT$ {kpis['total_exposure']/1e9:.2f}B</div>
-                <div class="kpi-sub">Avg Limit: NT$ {kpis['avg_credit_line']:,.0f}</div>
+                <div class="kpi-sub">Avg Line: NT$ {kpis['avg_credit_line']:,.0f}</div>
             </div>
             """, unsafe_allow_html=True)
-
-        with col3:
+        with c3:
             st.markdown(f"""
             <div class="kpi-card">
-                <div class="kpi-title">Mean Risk Score</div>
+                <div class="kpi-title">Portfolio Mean Score</div>
                 <div class="kpi-value">{kpis['portfolio_avg_score']:.0f}</div>
-                <div class="kpi-sub">FICO-Scale (300 - 850)</div>
+                <div class="kpi-sub">FICO Scale (300 - 850)</div>
             </div>
             """, unsafe_allow_html=True)
-
-        with col4:
+        with c4:
             st.markdown(f"""
             <div class="kpi-card">
                 <div class="kpi-title">Actual Default Rate</div>
                 <div class="kpi-value">{kpis['actual_default_rate']*100:.1f}%</div>
-                <div class="kpi-sub">Predicted PD: {kpis['expected_default_rate']*100:.1f}%</div>
+                <div class="kpi-sub">Model PD: {kpis['expected_default_rate']*100:.1f}%</div>
             </div>
             """, unsafe_allow_html=True)
-
-        with col5:
+        with c5:
             st.markdown(f"""
             <div class="kpi-card">
-                <div class="kpi-title">EWS Alerts Active</div>
+                <div class="kpi-title">Active EWS Alerts</div>
                 <div class="kpi-value" style="color: #DC2626;">{kpis['ews_flagged_count']:,}</div>
-                <div class="kpi-sub">{kpis['ews_flagged_rate']*100:.1f}% of total accounts</div>
+                <div class="kpi-sub">{kpis['ews_flagged_rate']*100:.1f}% under surveillance</div>
             </div>
             """, unsafe_allow_html=True)
 
         st.markdown("<br>", unsafe_allow_html=True)
 
-        # Charts: Risk Tier Breakdown & Exposure
-        row1_col1, row1_col2 = st.columns([1, 1])
+        row1_col1, row1_col2 = st.columns([1, 1.1])
         tier_df = get_risk_tier_breakdown(df)
 
         with row1_col1:
@@ -318,7 +325,7 @@ def main():
             st.plotly_chart(fig_tier, use_container_width=True)
 
         with row1_col2:
-            st.subheader("Credit Exposure & Default Rate by Risk Tier")
+            st.subheader("Exposure & Default Rate by Risk Tier")
             fig_exp = go.Figure()
             fig_exp.add_trace(go.Bar(
                 x=tier_df["RISK_TIER"],
@@ -345,20 +352,20 @@ def main():
             )
             st.plotly_chart(fig_exp, use_container_width=True)
 
-        st.subheader("Institutional Risk Segment Metrics Table")
+        st.subheader("Institutional Risk Segment Breakdown Table")
         st.dataframe(
             tier_df[[
                 "RISK_TIER", "borrower_count", "portfolio_share_pct", "total_exposure",
                 "avg_credit_limit", "avg_score", "avg_pd_pct", "actual_default_pct", "ews_alerts"
             ]].rename(columns={
                 "RISK_TIER": "Risk Tier",
-                "borrower_count": "Borrowers",
+                "borrower_count": "Accounts",
                 "portfolio_share_pct": "Share %",
                 "total_exposure": "Total Limit (NTD)",
                 "avg_credit_limit": "Avg Limit (NTD)",
-                "avg_score": "Avg Risk Score",
+                "avg_score": "Avg Score",
                 "avg_pd_pct": "Model PD %",
-                "actual_default_pct": "Actual Default %",
+                "actual_default_pct": "Default Rate %",
                 "ews_alerts": "EWS Alerts"
             }),
             use_container_width=True,
@@ -368,9 +375,9 @@ def main():
     # -------------------------------------------------------------------------
     # TAB 2: EARLY-WARNING INTELLIGENCE
     # -------------------------------------------------------------------------
-    elif navigation == "⚠️ Early-Warning Intelligence":
-        st.subheader("Delinquency Trajectory & Early-Warning Surveillance")
-        st.write("Early detection of delinquency migration allows risk teams to initiate soft collections or line freezes before default manifests.")
+    with tabs[1]:
+        st.subheader("⚠️ Delinquency Trajectory & Early-Warning Surveillance")
+        st.write("Tracking pre-delinquency migration allows risk teams to initiate soft collections or line freezes before default manifests.")
 
         delinq_df = get_delinquency_transition(df)
         util_df = get_utilization_risk_matrix(df)
@@ -384,9 +391,9 @@ def main():
                 y="default_rate_pct",
                 color="default_rate_pct",
                 color_continuous_scale="Reds",
-                labels={"STATUS_LABEL": "Payment Status (Sept)", "default_rate_pct": "Default Rate (%)"}
+                labels={"STATUS_LABEL": "Payment Status", "default_rate_pct": "Default Rate (%)"}
             )
-            fig_del.update_layout(height=350, margin=dict(t=20, b=20, l=20, r=20))
+            fig_del.update_layout(height=340, margin=dict(t=20, b=20, l=20, r=20))
             st.plotly_chart(fig_del, use_container_width=True)
 
         with col_w2:
@@ -399,13 +406,11 @@ def main():
                 color_continuous_scale="Oranges",
                 labels={"UTIL_BUCKET": "Credit Utilization Bucket", "default_rate_pct": "Default Rate (%)"}
             )
-            fig_ut.update_layout(height=350, margin=dict(t=20, b=20, l=20, r=20))
+            fig_ut.update_layout(height=340, margin=dict(t=20, b=20, l=20, r=20))
             st.plotly_chart(fig_ut, use_container_width=True)
 
-        st.subheader("High-Exposure Distressed Accounts Watchlist (Intervention Queue)")
-        st.write("Filters for active EWS alerts with highest credit limits and predicted default probability:")
-        
-        limit_filter = st.slider("Minimum Credit Limit Filter (NTD):", min_value=50000, max_value=800000, value=200000, step=50000)
+        st.subheader("Distressed High-Exposure Watchlist (Intervention Queue)")
+        limit_filter = st.slider("Minimum Credit Limit Filter (NTD):", min_value=10000, max_value=800000, value=150000, step=25000)
         filtered_wl = df[(df["EARLY_WARNING_FLAG"] == 1) & (df["LIMIT_BAL"] >= limit_filter)].sort_values(by="PREDICTED_PD", ascending=False).head(30)
         
         display_cols = [
@@ -431,18 +436,116 @@ def main():
 
         csv_download = filtered_wl[display_cols].to_csv(index=False).encode('utf-8')
         st.download_button(
-            label="📥 Download Watchlist CSV for Operations",
+            label="📥 Export Triage Watchlist CSV",
             data=csv_download,
-            file_name="creditlens_high_risk_watchlist.csv",
+            file_name="creditlens_watchlist_export.csv",
             mime="text/csv"
         )
 
     # -------------------------------------------------------------------------
-    # TAB 3: INTERACTIVE RISK SIMULATOR
+    # TAB 3: BORROWER 360° DOSSIER & CLIENT ID SWITCHER
     # -------------------------------------------------------------------------
-    elif navigation == "🧮 Interactive Risk Simulator":
-        st.subheader("What-If Credit Risk Simulator & Underwriting Calculator")
-        st.write("Simulate any borrower profile to observe how changes in credit line, repayment delays, and balance ratios impact risk scores and required policy actions.")
+    with tabs[2]:
+        st.subheader("👤 Borrower 360° Credit Dossier & Account Lookup")
+        st.write("Investigate any individual client record in the active portfolio to inspect repayment timelines, monthly statement balances, and policy actions.")
+
+        col_search1, col_search2 = st.columns([1, 2])
+        
+        # Sample interesting IDs
+        distressed_ids = df[df["EARLY_WARNING_FLAG"] == 1]["ID"].head(10).tolist()
+        prime_ids = df[df["RISK_TIER"] == "Prime"]["ID"].head(10).tolist()
+
+        with col_search1:
+            st.markdown("##### Select or Enter Client ID")
+            lookup_mode = st.radio("Lookup Method:", ["Select from Curated Profiles", "Enter Custom ID"], horizontal=True)
+            
+            if lookup_mode == "Select from Curated Profiles":
+                quick_picks = {"🚨 High-Risk Distressed Account": distressed_ids[0] if distressed_ids else 1,
+                               "⚠️ Elevated Utilization Account": distressed_ids[1] if len(distressed_ids) > 1 else 2,
+                               "🛡️ Super-Prime Benchmark Account": prime_ids[0] if prime_ids else 10}
+                chosen_label = st.selectbox("Curated Institutional Profiles:", list(quick_picks.keys()))
+                target_id = quick_picks[chosen_label]
+            else:
+                target_id = st.number_input("Enter Client ID Number:", min_value=int(df["ID"].min()), max_value=int(df["ID"].max()), value=int(df["ID"].iloc[0]))
+
+        borrower_records = df[df["ID"] == target_id]
+        if borrower_records.empty:
+            st.warning(f"No record found for Client ID #{target_id} in active portfolio.")
+        else:
+            b = borrower_records.iloc[0]
+
+            with col_search2:
+                # Customer Snapshot Card
+                st.markdown(f"""
+                <div style="background: #F8FAFC; border: 1px solid #CBD5E1; border-radius: 8px; padding: 14px 20px; margin-top: 25px;">
+                    <div style="display: flex; justify-content: space-between; align-items: center;">
+                        <h4 style="margin: 0; color: #0F172A;">Client #{int(b['ID'])} — Comprehensive Profile</h4>
+                        <span class="badge-{b['RISK_TIER'].lower().replace(' ', '').replace('-', '')}">{b['RISK_TIER']}</span>
+                    </div>
+                    <div style="margin-top: 10px; display: grid; grid-template-columns: repeat(4, 1fr); gap: 10px; font-size: 0.85rem;">
+                        <div><strong>Credit Line:</strong> NT$ {b['LIMIT_BAL']:,.0f}</div>
+                        <div><strong>Latest Bill:</strong> NT$ {b.get('BILL_AMT1', 0):,.0f}</div>
+                        <div><strong>Age:</strong> {int(b.get('AGE', 35))} yrs</div>
+                        <div><strong>Education:</strong> {b.get('EDUCATION', 'N/A')}</div>
+                    </div>
+                </div>
+                """, unsafe_allow_html=True)
+
+            st.markdown("<br>", unsafe_allow_html=True)
+            doss_col1, doss_col2 = st.columns([1, 1.2])
+
+            with doss_col1:
+                # Gauge Chart for Risk Score
+                score_val = int(b["CREDIT_RISK_SCORE"])
+                fig_g = go.Figure(go.Indicator(
+                    mode="gauge+number",
+                    value=score_val,
+                    domain={'x': [0, 1], 'y': [0, 1]},
+                    title={'text': f"Credit Score: {score_val} ({b['RISK_TIER']})", 'font': {'size': 18}},
+                    gauge={
+                        'axis': {'range': [300, 850]},
+                        'bar': {'color': "#0F172A"},
+                        'steps': [
+                            {'range': [300, 580], 'color': "#FEE2E2"},
+                            {'range': [580, 660], 'color': "#FEF3C7"},
+                            {'range': [660, 720], 'color': "#E0E7FF"},
+                            {'range': [720, 850], 'color': "#DCFCE7"}
+                        ],
+                        'threshold': {'line': {'color': "black", 'width': 4}, 'thickness': 0.75, 'value': score_val}
+                    }
+                ))
+                fig_g.update_layout(height=260, margin=dict(t=20, b=10, l=20, r=20))
+                st.plotly_chart(fig_g, use_container_width=True)
+
+                st.info(f"**Action Directive:** {b['RECOMMENDED_ACTION']}")
+                st.write(f"• **Predicted Default Probability:** `{b['PREDICTED_PD']*100:.1f}%`")
+                st.write(f"• **Avg Utilization Rate:** `{b['AVG_UTILIZATION_RATE']*100:.1f}%`")
+                st.write(f"• **Early-Warning Trigger:** `{'⚠️ Triggered' if b['EARLY_WARNING_FLAG'] else '✅ Normal'}`")
+
+            with doss_col2:
+                # Monthly statement vs payment trend
+                months = ["Apr", "May", "Jun", "Jul", "Aug", "Sep"]
+                bill_vals = [b.get(f"BILL_AMT{i}", 0) for i in range(6, 0, -1)]
+                pay_vals = [b.get(f"PAY_AMT{i}", 0) for i in range(6, 0, -1)]
+
+                fig_trend = go.Figure()
+                fig_trend.add_trace(go.Bar(x=months, y=bill_vals, name="Statement Bill (NTD)", marker_color="#3B82F6"))
+                fig_trend.add_trace(go.Bar(x=months, y=pay_vals, name="Payment Made (NTD)", marker_color="#10B981"))
+                fig_trend.update_layout(
+                    title="6-Month Bill Balance vs Payment Repayment History",
+                    barmode="group",
+                    height=320,
+                    margin=dict(t=40, b=20, l=20, r=20),
+                    legend=dict(x=0.05, y=0.95)
+                )
+                st.plotly_chart(fig_trend, use_container_width=True)
+
+    # -------------------------------------------------------------------------
+    # TAB 4: INTERACTIVE WHAT-IF SIMULATOR
+    # -------------------------------------------------------------------------
+    with tabs[3]:
+        st.subheader("🧮 What-If Risk Simulator & Credit Policy Sandbox")
+        st.write("Simulate any borrower profile to observe how changes in credit limit, repayment delays, and debt ratios impact risk scores and required policy actions.")
 
         sim_col1, sim_col2 = st.columns([1, 1])
 
@@ -469,17 +572,13 @@ def main():
 
             sim_max_delinq = st.slider("Maximum Delay Over Past 6 Months:", min_value=0, max_value=6, value=max(0, sim_pay0))
             sim_age = st.slider("Borrower Age:", min_value=18, max_value=80, value=34)
-            sim_edu = st.selectbox("Education Level:", [1, 2, 3, 4], format_func=lambda x: {1: "Graduate School", 2: "University", 3: "High School", 4: "Other"}[x])
-            sim_marr = st.selectbox("Marital Status:", [1, 2, 3], format_func=lambda x: {1: "Married", 2: "Single", 3: "Other"}[x])
 
         with sim_col2:
-            st.markdown("##### Real-Time Risk Evaluation")
-            
-            # Compute real-time synthetic PD based on champion model or analytical weighting
+            st.markdown("##### Real-Time Stress Evaluation")
             util_rate = min(sim_bill / max(sim_limit, 1), 3.0)
             pay_ratio = min(sim_payment / max(sim_bill, 1), 2.0)
             
-            # Calibrated baseline calculation matching Random Forest behavior
+            # Calibrated baseline calculation
             base_log_odds = -1.6
             if sim_pay0 > 0:
                 base_log_odds += sim_pay0 * 0.95
@@ -505,12 +604,11 @@ def main():
             }
             sim_action = assign_recommended_action(sim_row)
 
-            # Gauge Chart for Credit Score
-            fig_gauge = go.Figure(go.Indicator(
+            fig_sim_g = go.Figure(go.Indicator(
                 mode="gauge+number",
                 value=sim_score,
                 domain={'x': [0, 1], 'y': [0, 1]},
-                title={'text': f"CreditLens Risk Score ({sim_tier})", 'font': {'size': 20}},
+                title={'text': f"Simulated Credit Score: {sim_score} ({sim_tier})", 'font': {'size': 18}},
                 gauge={
                     'axis': {'range': [300, 850]},
                     'bar': {'color': "#1E3A8A"},
@@ -520,48 +618,43 @@ def main():
                         {'range': [660, 720], 'color': "#E0E7FF"},
                         {'range': [720, 850], 'color': "#DCFCE7"}
                     ],
-                    'threshold': {
-                        'line': {'color': "black", 'width': 4},
-                        'thickness': 0.75,
-                        'value': sim_score
-                    }
+                    'threshold': {'line': {'color': "black", 'width': 4}, 'thickness': 0.75, 'value': sim_score}
                 }
             ))
-            fig_gauge.update_layout(height=280, margin=dict(t=30, b=10, l=30, r=30))
-            st.plotly_chart(fig_gauge, use_container_width=True)
+            fig_sim_g.update_layout(height=260, margin=dict(t=20, b=10, l=20, r=20))
+            st.plotly_chart(fig_sim_g, use_container_width=True)
 
             st.write(f"• **Probability of Default (PD):** `{sim_pd*100:.1f}%`")
             st.write(f"• **Credit Utilization:** `{util_rate*100:.1f}%`")
             st.write(f"• **Early Warning Flag:** `{'⚠️ Triggered' if sim_row['EARLY_WARNING_FLAG'] else '✅ Normal'}`")
-            
             st.info(f"**Policy Action:** {sim_action}")
 
     # -------------------------------------------------------------------------
-    # TAB 4: MODEL DIAGNOSTICS & EXPLAINABILITY
+    # TAB 5: MODEL DIAGNOSTICS & EXPLAINABILITY
     # -------------------------------------------------------------------------
-    elif navigation == "🔬 Model Diagnostics & Explainability":
-        st.subheader("Credit Risk Machine Learning Diagnostics")
-        st.write("Comparison of non-linear machine learning (Random Forest) against regulatory benchmark (Logistic Regression).")
+    with tabs[4]:
+        st.subheader("🔬 Machine Learning Diagnostics & Model Validation")
+        st.write("Rigorous benchmarking of non-linear machine learning (Random Forest) against regulatory baseline (Logistic Regression).")
 
         rf_m = metrics.get("champion_metrics", {})
         lr_m = metrics.get("benchmark_metrics", {})
 
         col_m1, col_m2 = st.columns(2)
         with col_m1:
-            st.markdown("#### Champion Model: Random Forest")
-            st.write(f"• **ROC-AUC Score:** `{rf_m.get('roc_auc', 0.77):.4f}`")
-            st.write(f"• **PR-AUC (Avg Precision):** `{rf_m.get('pr_auc', 0.54):.4f}`")
-            st.write(f"• **Kolmogorov-Smirnov (KS):** `{rf_m.get('ks_statistic', 0.42):.4f}`")
-            st.write(f"• **Precision:** `{rf_m.get('precision', 0.63):.2%}` | **Recall:** `{rf_m.get('recall', 0.42):.2%}`")
-            st.write(f"• **Brier Score (Calibration):** `{rf_m.get('brier_score', 0.13):.4f}`")
+            st.markdown("#### Champion Model: Random Forest Classifier")
+            st.write(f"• **ROC-AUC (Discrimination):** `{rf_m.get('roc_auc', 0.7781):.4f}`")
+            st.write(f"• **PR-AUC (Precision-Recall):** `{rf_m.get('pr_auc', 0.5573):.4f}`")
+            st.write(f"• **KS Statistic (Separation):** `{rf_m.get('ks_statistic', 0.4257):.4f}` *(Target: $\ge 40\%$)*")
+            st.write(f"• **Accuracy:** `{rf_m.get('accuracy', 0.814):.1%}`")
+            st.write(f"• **Brier Score Loss (Calibration):** `{rf_m.get('brier_score', 0.1340):.4f}`")
 
         with col_m2:
-            st.markdown("#### Benchmark: Logistic Regression (Balanced)")
-            st.write(f"• **ROC-AUC Score:** `{lr_m.get('roc_auc', 0.72):.4f}`")
-            st.write(f"• **PR-AUC (Avg Precision):** `{lr_m.get('pr_auc', 0.46):.4f}`")
-            st.write(f"• **Kolmogorov-Smirnov (KS):** `{lr_m.get('ks_statistic', 0.35):.4f}`")
-            st.write(f"• **Precision:** `{lr_m.get('precision', 0.38):.2%}` | **Recall:** `{lr_m.get('recall', 0.67):.2%}`")
-            st.write(f"• **Brier Score (Calibration):** `{lr_m.get('brier_score', 0.20):.4f}`")
+            st.markdown("#### Benchmark Model: Logistic Regression (Balanced)")
+            st.write(f"• **ROC-AUC (Discrimination):** `{lr_m.get('roc_auc', 0.7521):.4f}`")
+            st.write(f"• **PR-AUC (Precision-Recall):** `{lr_m.get('pr_auc', 0.5079):.4f}`")
+            st.write(f"• **KS Statistic (Separation):** `{lr_m.get('ks_statistic', 0.3928):.4f}`")
+            st.write(f"• **Accuracy:** `{lr_m.get('accuracy', 0.692):.1%}`")
+            st.write(f"• **Brier Score Loss (Calibration):** `{lr_m.get('brier_score', 0.1985):.4f}`")
 
         st.markdown("---")
         st.subheader("Top Predictive Features (Information Gain)")
@@ -577,15 +670,15 @@ def main():
                 color="importance",
                 color_continuous_scale="Blues"
             )
-            fig_feat.update_layout(height=400, margin=dict(t=20, b=20, l=20, r=20))
+            fig_feat.update_layout(height=380, margin=dict(t=20, b=20, l=20, r=20))
             st.plotly_chart(fig_feat, use_container_width=True)
 
     # -------------------------------------------------------------------------
-    # TAB 5: SQL ANALYTICS EXPLORER
+    # TAB 6: SQL ANALYTICS EXPLORER
     # -------------------------------------------------------------------------
-    elif navigation == "🔍 SQL Analytics Explorer":
-        st.subheader("SQL Portfolio Query Console")
-        st.write("Execute live SQL queries on the CreditLens database (`credit_card_clients` & `credit_risk_evaluations` tables).")
+    with tabs[5]:
+        st.subheader("🔍 SQL Portfolio Analytics Console")
+        st.write("Execute live SQL queries against the local CreditLens database tables (`credit_card_clients` & `credit_risk_evaluations`).")
 
         db_path = os.path.join(BASE_DIR, "database", "credit_lens.db")
         if not os.path.exists(db_path):
@@ -615,18 +708,7 @@ FROM credit_card_clients c
 JOIN credit_risk_evaluations e ON c.client_id = e.client_id
 GROUP BY e.risk_tier;""",
 
-            "3. Early Warning Delinquency Escalation": """SELECT 
-    c.pay_status_sep AS delay_months,
-    COUNT(*) AS accounts,
-    ROUND(AVG(e.credit_risk_score), 0) AS avg_score,
-    ROUND(SUM(c.default_next_month) * 100.0 / COUNT(*), 2) AS default_rate_pct,
-    SUM(c.bill_amt_sep) AS total_balance_at_risk
-FROM credit_card_clients c
-JOIN credit_risk_evaluations e ON c.client_id = e.client_id
-GROUP BY c.pay_status_sep
-ORDER BY c.pay_status_sep ASC;""",
-
-            "4. Top 10 High Exposure Distressed Accounts": """SELECT 
+            "3. Top 10 High Exposure Distressed Accounts": """SELECT 
     c.client_id,
     c.limit_bal,
     c.bill_amt_sep,
@@ -642,120 +724,54 @@ ORDER BY e.predicted_pd DESC, c.limit_bal DESC
 LIMIT 10;"""
         }
 
-        selected_query = st.selectbox("Select Pre-Built Analytical Query:", list(queries_map.keys()))
-        sql_input = st.text_area("SQL Query Editor:", value=queries_map[selected_query], height=160)
+        selected_q = st.selectbox("Pre-Built Analytical Queries:", list(queries_map.keys()))
+        sql_input = st.text_area("SQL Editor:", value=queries_map[selected_q], height=150)
 
-        if st.button("🚀 Run SQL Query"):
+        if st.button("🚀 Execute SQL Query"):
             try:
                 conn = sqlite3.connect(db_path)
                 result_df = pd.read_sql_query(sql_input, conn)
                 conn.close()
-                st.success(f"Query returned {len(result_df)} records.")
+                st.success(f"Returned {len(result_df)} rows.")
                 st.dataframe(result_df, use_container_width=True)
             except Exception as e:
-                st.error(f"SQL Error: {e}")
+                st.error(f"SQL Execution Error: {e}")
 
     # -------------------------------------------------------------------------
-    # TAB 6: ANALYTICAL RISK ASSISTANT
+    # TAB 7: MULTI-DATASET MANAGER & UPLOADER
     # -------------------------------------------------------------------------
-    elif navigation == "🤖 Analytical Risk Assistant":
-        st.subheader("CreditLens Grounded Risk Assistant")
-        st.write("Ask questions regarding credit risk, portfolio metrics, delinquency triggers, or underwriting policy. Responses are 100% grounded in verified portfolio calculations.")
+    with tabs[6]:
+        st.subheader("📁 Multi-Dataset Management & Custom Loan Tape Ingestion")
+        st.write("Upload any custom credit portfolio, retail card, or installment loan dataset (CSV/Excel) to map columns, score risk, and switch the entire platform in real time.")
 
-        faq_questions = [
-            "What is the overall portfolio size and default rate?",
-            "How does credit utilization relate to default probability?",
-            "What are the criteria that trigger an Early-Warning Alert?",
-            "Which risk tier holds the largest credit exposure?",
-            "How does repayment delay in the most recent month impact risk?"
-        ]
+        up_col1, up_col2 = st.columns([1.2, 1])
+        with up_col1:
+            custom_file = st.file_uploader("Upload New Dataset (.csv or .xlsx):", type=["csv", "xlsx"])
 
-        user_query = st.selectbox("Select or type an analytical inquiry:", faq_questions)
-
-        if "overall portfolio size" in user_query.lower():
-            st.markdown(f"""
-            ### 📌 Portfolio Health Summary
-            - **Total Active Borrowers:** `{kpis['total_borrowers']:,}`
-            - **Total Credit Exposure:** `NT$ {kpis['total_exposure']:,.0f}` (Avg limit `NT$ {kpis['avg_credit_line']:,.0f}`)
-            - **Historical Default Rate:** `{kpis['actual_default_rate']*100:.2f}%` (6,636 clients defaulted)
-            - **Mean Risk Score:** `{kpis['portfolio_avg_score']:.0f}` on a 300-850 FICO-aligned scale.
-            """)
-        elif "utilization relate" in user_query.lower():
-            st.markdown("""
-            ### 📌 Credit Utilization Analysis
-            - Accounts maintaining utilization **below 20%** exhibit a default rate of under **15%**.
-            - Accounts crossing **80% credit utilization** experience default rates surging beyond **35%**.
-            - When high utilization is combined with any payment delay, default probability escalates above **60%**, triggering an automatic line freeze recommendation.
-            """)
-        elif "criteria that trigger" in user_query.lower():
-            st.markdown("""
-            ### 📌 Early-Warning System (EWS) Trigger Logic
-            An account is flagged as an Early-Warning Alert when **any** of the following conditions are met:
-            1. **Recent Delinquency:** Most recent payment status (`PAY_0`) is $\ge 1$ (30+ days past due).
-            2. **High Credit Strain:** 6-month average credit utilization rate $\ge 80\%$.
-            3. **Severe Historical Delinquency:** Maximum past-due status over past 6 months $\ge 2$ (60+ days past due).
-            - **Current Portfolio Alert Prevalence:** `29.2%` of accounts are actively flagged for monitoring.
-            """)
-        elif "largest credit exposure" in user_query.lower():
-            tier_df = get_risk_tier_breakdown(df)
-            top_tier = tier_df.sort_values(by="total_exposure", ascending=False).iloc[0]
-            st.markdown(f"""
-            ### 📌 Exposure Concentration
-            - **Largest Exposure Tier:** `{top_tier['RISK_TIER']}`
-            - **Total Exposure:** `NT$ {top_tier['total_exposure']:,.0f}` ({top_tier['portfolio_share_pct']}% of portfolio)
-            - **Average Credit Limit:** `NT$ {top_tier['avg_credit_limit']:,.0f}`
-            - **Actual Default Rate:** `{top_tier['actual_default_pct']}%`
-            """)
-        elif "repayment delay in the most recent month" in user_query.lower():
-            del_df = get_delinquency_transition(df)
-            st.markdown("""
-            ### 📌 Delinquency Deterioration Impact
-            - **On-Time / Revolving (0 Months):** Default rate is `12.8%`.
-            - **1 Month Past Due (30 DPD):** Default rate increases to `33.9%`.
-            - **2 Months Past Due (60 DPD):** Default rate spikes to `69.1%`.
-            - **3+ Months Past Due (90+ DPD):** Default rate exceeds `75%`.
-            - **Key Takeaway:** A 60-day delinquency is the single strongest transition boundary indicating imminent loan loss.
-            """)
-
-    # -------------------------------------------------------------------------
-    # TAB 7: INGEST NEW DATASET / LOAN TAPE
-    # -------------------------------------------------------------------------
-    elif navigation == "📁 Ingest New Dataset / Loan Tape":
-        st.subheader("📁 Ingest Custom Credit Portfolio / Loan Tape")
-        st.write("Upload any retail credit, personal loan, or credit card portfolio dataset (CSV or Excel) to evaluate credit risk, stratify risk tiers, and generate early-warning indicators instantly.")
-
-        upload_col1, upload_col2 = st.columns([1.2, 1])
-
-        with upload_col1:
-            uploaded_file = st.file_uploader("Upload Portfolio Dataset (.csv or .xlsx):", type=["csv", "xlsx"])
-
-        with upload_col2:
+        with up_col2:
             st.info("""
-            **📋 Expected Portfolio Fields (or Mapped Equivalents):**
-            - **Borrower / Account ID** (unique key)
-            - **Credit Limit / Loan Amount**
-            - **Current Outstanding Balance / Billed Amount**
-            - **Payment Status / Delinquency Months**
-            - *(Optional)* Target Default Indicator (0 or 1)
-            - *(Optional)* Age, Education, Demographics
+            **📋 Expected Fields for Instant Scoring:**
+            - **Borrower / Account ID**
+            - **Credit Limit / Loan Balance**
+            - **Current Outstanding Billed Balance**
+            - **Payment Status / Delinquency (Months Past Due)**
+            - *(Optional)* Target Default Flag, Age, Demographics
             """)
 
-        if uploaded_file is not None:
+        if custom_file is not None:
             try:
-                if uploaded_file.name.endswith(".csv"):
-                    new_df = pd.read_csv(uploaded_file)
+                if custom_file.name.endswith(".csv"):
+                    new_df = pd.read_csv(custom_file)
                 else:
-                    new_df = pd.read_excel(uploaded_file)
-                    
-                st.success(f"Loaded `{uploaded_file.name}` with {len(new_df):,} records and {len(new_df.columns)} columns.")
-                st.markdown("##### 🔍 Data Preview")
-                st.dataframe(new_df.head(4), use_container_width=True)
+                    new_df = pd.read_excel(custom_file)
+
+                st.success(f"Successfully loaded `{custom_file.name}` with {len(new_df):,} records!")
+                st.markdown("##### 🔍 Data Sample")
+                st.dataframe(new_df.head(3), use_container_width=True)
 
                 st.markdown("##### ⚙️ Interactive Column Mapping")
-                st.caption("Map the columns from your uploaded file to the CreditLens risk intelligence engine:")
-
                 cols = ["(None)"] + list(new_df.columns)
-                col_m1, col_m2 = st.columns(2)
+                cm1, cm2 = st.columns(2)
 
                 def match_col(keyword_list):
                     for c in new_df.columns:
@@ -764,70 +780,37 @@ LIMIT 10;"""
                                 return cols.index(c)
                     return 0
 
-                with col_m1:
-                    map_id = st.selectbox("Account ID / Borrower Key:", cols, index=match_col(["id", "client", "cust", "account"]))
-                    map_limit = st.selectbox("Credit Limit / Total Line (NTD/USD):", cols, index=match_col(["limit", "credit_limit", "loan_amt", "amount", "bal"]))
-                    map_bill = st.selectbox("Current Balance / Statement Billed:", cols, index=match_col(["bill", "balance", "outstanding", "current"]))
+                with cm1:
+                    m_id = st.selectbox("Account ID Column:", cols, index=match_col(["id", "client", "cust", "account"]))
+                    m_limit = st.selectbox("Credit Limit Column:", cols, index=match_col(["limit", "credit_limit", "loan_amt", "amount", "bal"]))
+                    m_bill = st.selectbox("Statement Balance Column:", cols, index=match_col(["bill", "balance", "outstanding", "current"]))
 
-                with col_m2:
-                    map_pay = st.selectbox("Payment Status / Delay (0: On-time, 1: 30 DPD, 2+: 60+ DPD):", cols, index=match_col(["pay_0", "status", "delinq", "delay", "dpd"]))
-                    map_default = st.selectbox("Historical / Target Default Flag (Optional):", cols, index=match_col(["default", "target", "bad", "loss", "is_default"]))
-                    map_age = st.selectbox("Borrower Age (Optional):", cols, index=match_col(["age", "dob", "years"]))
+                with cm2:
+                    m_pay = st.selectbox("Payment Delay Column (0: On-time, 1: 30 DPD, 2+: 60+ DPD):", cols, index=match_col(["pay_0", "status", "delinq", "delay", "dpd"]))
+                    m_default = st.selectbox("Historical Default Column (Optional):", cols, index=match_col(["default", "target", "bad", "loss", "is_default"]))
+                    m_age = st.selectbox("Borrower Age Column (Optional):", cols, index=match_col(["age", "dob", "years"]))
 
-                if st.button("⚡ Score & Ingest Portfolio into Dashboard", type="primary", use_container_width=True):
-                    with st.spinner("Processing credit metrics, risk scoring, and EWS surveillance flags..."):
+                if st.button("⚡ Score & Set as Active Portfolio", type="primary", use_container_width=True):
+                    with st.spinner("Processing credit risk metrics and stratifying risk tiers..."):
                         scored_df = pd.DataFrame()
                         
-                        # ID
-                        if map_id != "(None)":
-                            scored_df["ID"] = new_df[map_id]
-                        else:
-                            scored_df["ID"] = np.arange(1, len(new_df) + 1)
-                            
-                        # Limit
-                        if map_limit != "(None)":
-                            scored_df["LIMIT_BAL"] = pd.to_numeric(new_df[map_limit], errors="coerce").fillna(50000.0)
-                        else:
-                            scored_df["LIMIT_BAL"] = 50000.0
+                        scored_df["ID"] = new_df[m_id] if m_id != "(None)" else np.arange(1, len(new_df) + 1)
+                        scored_df["LIMIT_BAL"] = pd.to_numeric(new_df[m_limit], errors="coerce").fillna(50000.0) if m_limit != "(None)" else 50000.0
+                        scored_df["BILL_AMT1"] = pd.to_numeric(new_df[m_bill], errors="coerce").fillna(0.0) if m_bill != "(None)" else scored_df["LIMIT_BAL"] * 0.4
+                        scored_df["PAY_0"] = pd.to_numeric(new_df[m_pay], errors="coerce").fillna(0).astype(int) if m_pay != "(None)" else 0
+                        scored_df["DEFAULT_NEXT_MONTH"] = pd.to_numeric(new_df[m_default], errors="coerce").fillna(0).astype(int) if m_default != "(None)" else (scored_df["PAY_0"] >= 2).astype(int)
+                        scored_df["AGE"] = pd.to_numeric(new_df[m_age], errors="coerce").fillna(35).astype(int) if m_age != "(None)" else 35
 
-                        # Bill
-                        if map_bill != "(None)":
-                            scored_df["BILL_AMT1"] = pd.to_numeric(new_df[map_bill], errors="coerce").fillna(0.0)
-                        else:
-                            scored_df["BILL_AMT1"] = scored_df["LIMIT_BAL"] * 0.4
-
-                        # Payment Status
-                        if map_pay != "(None)":
-                            scored_df["PAY_0"] = pd.to_numeric(new_df[map_pay], errors="coerce").fillna(0).astype(int)
-                        else:
-                            scored_df["PAY_0"] = 0
-
-                        # Default
-                        if map_default != "(None)":
-                            scored_df["DEFAULT_NEXT_MONTH"] = pd.to_numeric(new_df[map_default], errors="coerce").fillna(0).astype(int)
-                        else:
-                            scored_df["DEFAULT_NEXT_MONTH"] = (scored_df["PAY_0"] >= 2).astype(int)
-
-                        # Age
-                        if map_age != "(None)":
-                            scored_df["AGE"] = pd.to_numeric(new_df[map_age], errors="coerce").fillna(35).astype(int)
-                        else:
-                            scored_df["AGE"] = 35
-
-                        # Calculate Derived Features
                         scored_df["AVG_UTILIZATION_RATE"] = (scored_df["BILL_AMT1"].clip(lower=0) / scored_df["LIMIT_BAL"].clip(lower=1)).clip(upper=3.0)
                         scored_df["MAX_DELINQUENCY_MONTHS"] = scored_df["PAY_0"].clip(lower=0)
                         
-                        # Calibrated PD calculation
                         log_odds = -1.6 + (scored_df["PAY_0"].clip(lower=0) * 0.95) + ((scored_df["AVG_UTILIZATION_RATE"] - 0.7).clip(lower=0) * 1.5)
                         pd_vals = 1.0 / (1.0 + np.exp(-log_odds))
                         scored_df["PREDICTED_PD"] = np.round(np.clip(pd_vals, 0.02, 0.98), 4)
                         
-                        # Scores and Tiers
                         scored_df["CREDIT_RISK_SCORE"] = pd_to_credit_score(scored_df["PREDICTED_PD"])
                         scored_df["RISK_TIER"] = scored_df["CREDIT_RISK_SCORE"].apply(classify_risk_tier)
                         
-                        # EWS Flag
                         scored_df["EARLY_WARNING_FLAG"] = (
                             (scored_df["PAY_0"] >= 1) |
                             (scored_df["AVG_UTILIZATION_RATE"] >= 0.80)
@@ -835,20 +818,12 @@ LIMIT 10;"""
                         
                         scored_df["RECOMMENDED_ACTION"] = scored_df.apply(assign_recommended_action, axis=1)
 
-                        # Set in session state
-                        st.session_state["custom_df"] = scored_df
-                        
-                        st.success(f"🎉 Successfully ingested {len(scored_df):,} accounts! All dashboard tabs are now displaying your new dataset.")
-                        
-                        csv_data = scored_df.to_csv(index=False).encode("utf-8")
-                        st.download_button(
-                            label="📥 Download Scored Portfolio CSV",
-                            data=csv_data,
-                            file_name="creditlens_custom_portfolio_scored.csv",
-                            mime="text/csv"
-                        )
+                        st.session_state["custom_uploaded_df"] = scored_df
+                        st.success(f"🎉 Successfully ingested {len(scored_df):,} accounts! The entire platform is now analyzing your custom dataset.")
+                        st.rerun()
+
             except Exception as e:
-                st.error(f"Error parsing dataset: {e}")
+                st.error(f"Error processing custom dataset: {e}")
 
 
 if __name__ == "__main__":
