@@ -18,7 +18,7 @@ BASE_DIR = os.path.dirname(os.path.dirname(__file__))
 if BASE_DIR not in sys.path:
     sys.path.append(BASE_DIR)
 
-from src.auth import init_user_db, register_user, authenticate_user, list_users
+from src.auth import init_user_db, register_user, authenticate_user, list_users, update_password
 from src.analytics_engine import (
     get_portfolio_kpis,
     get_risk_tier_breakdown,
@@ -159,7 +159,7 @@ def render_auth_modal():
         </div>
         """, unsafe_allow_html=True)
 
-        tab_login, tab_signup = st.tabs(["🔑 Sign In", "✨ Create New Account"])
+        tab_login, tab_signup, tab_reset = st.tabs(["🔑 Sign In", "✨ Create New Account", "🔄 Reset / Change Passkey"])
 
         with tab_login:
             st.markdown("<br>", unsafe_allow_html=True)
@@ -206,6 +206,28 @@ def render_auth_modal():
                     st.success(f"{msg} You can now switch to the 'Sign In' tab to log in.")
                 else:
                     st.error(msg)
+
+        with tab_reset:
+            st.markdown("<br>", unsafe_allow_html=True)
+            st.caption("Update your existing account password or passkey.")
+            r_user = st.text_input("Username:", placeholder="e.g. admin or analyst", key="reset_user_tab")
+            r_curr = st.text_input("Current Passkey / Password:", type="password", placeholder="Enter current passkey", key="reset_curr_tab")
+            r_new = st.text_input("New Passkey / Password:", type="password", placeholder="At least 4 characters", key="reset_new_tab")
+            r_conf = st.text_input("Confirm New Passkey:", type="password", placeholder="Repeat new passkey", key="reset_conf_tab")
+
+            if st.button("Update Passkey Now", type="primary", use_container_width=True):
+                if not r_user or not r_curr or not r_new:
+                    st.error("Please fill in all required fields.")
+                elif r_new != r_conf:
+                    st.error("New passwords do not match.")
+                elif not authenticate_user(r_user, r_curr):
+                    st.error("Verification failed: Username or current password does not match.")
+                else:
+                    ok, msg = update_password(r_user, r_new)
+                    if ok:
+                        st.success(f"✅ {msg} You can now sign in with your new passkey!")
+                    else:
+                        st.error(f"❌ {msg}")
 
 
 # =============================================================================
@@ -446,6 +468,28 @@ def main():
         if st.sidebar.button("Switch to this Account", use_container_width=True):
             st.session_state["current_user"] = authenticate_user(user_choices[selected_account_label], "password123") or {"username": user_choices[selected_account_label], "full_name": selected_account_label, "role": "Risk Analyst"}
             st.rerun()
+
+    # Passkey / Password Update Expander
+    with st.sidebar.expander("🔑 Change Passkey / Password"):
+        with st.form("sidebar_change_pass_form", clear_on_submit=True):
+            s_curr_pw = st.text_input("Current Passkey:", type="password", key="side_curr_pw")
+            s_new_pw = st.text_input("New Passkey:", type="password", key="side_new_pw")
+            s_conf_pw = st.text_input("Confirm New Passkey:", type="password", key="side_conf_pw")
+            s_submit = st.form_submit_button("Update Passkey", use_container_width=True)
+
+            if s_submit:
+                if not s_curr_pw or not s_new_pw:
+                    st.error("Please fill in all fields.")
+                elif s_new_pw != s_conf_pw:
+                    st.error("New passwords do not match.")
+                elif not authenticate_user(current_u["username"], s_curr_pw):
+                    st.error("Current passkey is incorrect.")
+                else:
+                    ok, msg = update_password(current_u["username"], s_new_pw)
+                    if ok:
+                        st.success(f"✅ {msg}")
+                    else:
+                        st.error(f"❌ {msg}")
 
     if st.sidebar.button("🚪 Sign Out / Switch ID", use_container_width=True):
         st.session_state["current_user"] = None

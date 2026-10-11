@@ -121,3 +121,29 @@ def list_users():
     rows = cursor.fetchall()
     conn.close()
     return [{"username": r[0], "full_name": r[1], "role": r[2]} for r in rows]
+
+
+def update_password(username: str, new_password: str):
+    """
+    Updates the password for an existing user account.
+    Returns (success: bool, message: str)
+    """
+    init_user_db()
+    username = username.strip().lower()
+    if len(new_password) < 4:
+        return False, "New password must be at least 4 characters long."
+
+    conn = sqlite3.connect(DB_PATH)
+    cursor = conn.cursor()
+    try:
+        pw_hash = hash_password(new_password)
+        cursor.execute("UPDATE app_users SET password_hash = ? WHERE username = ?;", (pw_hash, username))
+        conn.commit()
+        if cursor.rowcount > 0:
+            return True, f"Password for @{username} updated successfully!"
+        return False, f"User @{username} not found."
+    except Exception as e:
+        return False, f"Failed to update password: {e}"
+    finally:
+        conn.close()
+
