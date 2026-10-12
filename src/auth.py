@@ -241,10 +241,16 @@ def authenticate_or_register_social(provider: str, email_or_id: str, display_nam
     row = cursor.fetchone()
 
     if row:
+        current_name = row[2]
+        if display_clean and display_clean != current_name:
+            cursor.execute("UPDATE app_users SET full_name = ? WHERE user_id = ?;", (display_clean, row[0]))
+            conn.commit()
+            current_name = display_clean
+
         user_dict = {
             "user_id": row[0],
             "username": row[1],
-            "full_name": row[2],
+            "full_name": current_name,
             "role": row[3],
             "created_at": row[4],
             "email": row[5] or ident,
