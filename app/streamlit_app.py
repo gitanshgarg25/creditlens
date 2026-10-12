@@ -18,7 +18,16 @@ BASE_DIR = os.path.dirname(os.path.dirname(__file__))
 if BASE_DIR not in sys.path:
     sys.path.append(BASE_DIR)
 
-from src.auth import init_user_db, register_user, authenticate_user, list_users, update_password
+from src.auth import (
+    init_user_db,
+    register_user,
+    authenticate_user,
+    list_users,
+    update_password,
+    authenticate_or_register_social,
+    authenticate_or_register_contact,
+    reset_password_forgot
+)
 from src.analytics_engine import (
     get_portfolio_kpis,
     get_risk_tier_breakdown,
@@ -159,11 +168,112 @@ def render_auth_modal():
         </div>
         """, unsafe_allow_html=True)
 
-        tab_login, tab_signup, tab_reset = st.tabs(["🔑 Sign In", "✨ Create New Account", "🔄 Reset / Change Passkey"])
+        st.markdown("<p style='font-size: 0.75rem; font-weight: 700; color: #64748B; margin-top: 14px; margin-bottom: 6px; text-transform: uppercase;'>⚡ Instant Social & Contact Sign-In:</p>", unsafe_allow_html=True)
+        
+        col_g, col_a, col_c = st.columns(3)
+        with col_g:
+            if st.button("🔴 Google", use_container_width=True, help="Sign in with your Google account"):
+                st.session_state["social_login_tab"] = "Google"
+
+        with col_a:
+            if st.button("🍏 Apple ID", use_container_width=True, help="Sign in with your Apple ID"):
+                st.session_state["social_login_tab"] = "Apple"
+
+        with col_c:
+            if st.button("📱 Mobile / SMS", use_container_width=True, help="Sign in with Mobile Phone / Contact"):
+                st.session_state["social_login_tab"] = "Contact"
+
+        # Expandable Social SSO Drawer if one is activated
+        if st.session_state.get("social_login_tab") == "Google":
+            with st.container():
+                st.info("🔴 **Google One-Tap / SSO Authentication**")
+                g_email = st.text_input("Enter your Google Account email:", value="analyst.google@gmail.com", key="g_email_input")
+                g_name = st.text_input("Display Name:", value="Google Risk Analyst", key="g_name_input")
+                cg1, cg2 = st.columns(2)
+                with cg1:
+                    if st.button("Continue with Google", type="primary", use_container_width=True):
+                        user_rec = authenticate_or_register_social("Google", g_email, g_name)
+                        if user_rec:
+                            st.session_state["current_user"] = user_rec
+                            st.session_state["social_login_tab"] = None
+                            st.success(f"Signed in as {user_rec['full_name']} via Google SSO!")
+                            st.rerun()
+                with cg2:
+                    if st.button("Cancel Google Sign In", use_container_width=True):
+                        st.session_state["social_login_tab"] = None
+                        st.rerun()
+
+        elif st.session_state.get("social_login_tab") == "Apple":
+            with st.container():
+                st.info("🍏 **Apple ID Secure Authentication**")
+                a_email = st.text_input("Enter your Apple ID email:", value="officer.apple@privaterelay.appleid.com", key="a_email_input")
+                a_name = st.text_input("Display Name:", value="Apple Risk Officer", key="a_name_input")
+                ca1, ca2 = st.columns(2)
+                with ca1:
+                    if st.button("Continue with Apple", type="primary", use_container_width=True):
+                        user_rec = authenticate_or_register_social("Apple", a_email, a_name)
+                        if user_rec:
+                            st.session_state["current_user"] = user_rec
+                            st.session_state["social_login_tab"] = None
+                            st.success(f"Signed in as {user_rec['full_name']} via Apple ID!")
+                            st.rerun()
+                with ca2:
+                    if st.button("Cancel Apple Sign In", use_container_width=True):
+                        st.session_state["social_login_tab"] = None
+                        st.rerun()
+
+        elif st.session_state.get("social_login_tab") == "Contact":
+            with st.container():
+                st.info("📱 **Mobile Phone / SMS OTP Authentication**")
+                phone_in = st.text_input("Mobile Phone / Contact Number:", placeholder="+1 555-0199 or 9876543210", key="phone_input")
+                
+                if "otp_code" not in st.session_state:
+                    st.session_state["otp_code"] = None
+
+                cp1, cp2 = st.columns(2)
+                with cp1:
+                    if st.button("Send SMS Code", use_container_width=True):
+                        if phone_in.strip():
+                            import random
+                            gen_otp = str(random.randint(100000, 999999))
+                            st.session_state["otp_code"] = gen_otp
+                            st.session_state["otp_phone"] = phone_in.strip()
+                        else:
+                            st.error("Please enter a valid phone number first.")
+                
+                with cp2:
+                    if st.button("Cancel Mobile Sign In", use_container_width=True):
+                        st.session_state["social_login_tab"] = None
+                        st.session_state["otp_code"] = None
+                        st.rerun()
+
+                if st.session_state.get("otp_code"):
+                    st.success(f"📬 **Simulation SMS**: Your 6-digit OTP code is `{st.session_state['otp_code']}`")
+                    entered_otp = st.text_input("Enter 6-Digit OTP:", key="otp_verify_input")
+                    if st.button("Verify OTP & Log In", type="primary", use_container_width=True):
+                        if entered_otp.strip() == st.session_state["otp_code"]:
+                            user_rec = authenticate_or_register_contact(st.session_state["otp_phone"])
+                            if user_rec:
+                                st.session_state["current_user"] = user_rec
+                                st.session_state["otp_code"] = None
+                                st.session_state["social_login_tab"] = None
+                                st.success(f"Verified! Welcome {user_rec['full_name']}")
+                                st.rerun()
+                        else:
+                            st.error("Invalid OTP code. Please enter the 6-digit code shown above.")
+
+        st.markdown("<div style='text-align: center; color: #94A3B8; font-size: 0.72rem; margin: 12px 0 10px 0; border-bottom: 1px solid #E2E8F0; line-height: 0.1em;'><span style='background:#FFFFFF; padding:0 8px; font-weight:700;'>OR LOG IN WITH CREDENTIALS</span></div>", unsafe_allow_html=True)
+
+        tab_login, tab_signup, tab_forgot, tab_reset = st.tabs([
+            "🔑 Sign In",
+            "✨ Create Account",
+            "🆘 Forgot Password?",
+            "🔄 Change Passkey"
+        ])
 
         with tab_login:
             st.markdown("<br>", unsafe_allow_html=True)
-            login_user = st.text_input("Username:", placeholder="e.g. admin or your username", key="login_username_field")
+            login_user = st.text_input("Username, Email, or Phone:", placeholder="e.g. admin or analyst@creditlens.internal", key="login_username_field")
             login_pass = st.text_input("Password:", type="password", placeholder="Enter your password", key="login_pass_field")
 
             if st.button("Log In to CreditLens", type="primary", use_container_width=True):
@@ -173,7 +283,7 @@ def render_auth_modal():
                     st.success(f"Welcome back, {user_record['full_name']}!")
                     st.rerun()
                 else:
-                    st.error("Invalid username or password. Please try again.")
+                    st.error("Invalid username/email or password. If you forgot your password, switch to the '🆘 Forgot Password?' tab.")
 
             st.markdown("<br>", unsafe_allow_html=True)
             st.markdown("##### ⚡ Quick Demo Logins")
@@ -191,6 +301,8 @@ def render_auth_modal():
             st.markdown("<br>", unsafe_allow_html=True)
             new_name = st.text_input("Full Display Name:", placeholder="e.g. John Doe", key="signup_name")
             new_username = st.text_input("Choose Username:", placeholder="e.g. johndoe", key="signup_user")
+            new_email = st.text_input("Email Address (Optional):", placeholder="e.g. john@example.com", key="signup_email")
+            new_phone = st.text_input("Mobile Phone (Optional):", placeholder="e.g. +1-555-0100", key="signup_phone")
             new_password = st.text_input("Choose Password:", type="password", placeholder="At least 4 characters", key="signup_pw")
             new_role = st.selectbox("Role / Job Title:", [
                 "Senior Risk Analyst",
@@ -201,16 +313,36 @@ def render_auth_modal():
             ], key="signup_role")
 
             if st.button("Create My Account", type="primary", use_container_width=True):
-                ok, msg = register_user(new_username, new_password, new_name, new_role)
+                ok, msg = register_user(new_username, new_password, new_name, new_role, new_email, new_phone)
                 if ok:
                     st.success(f"{msg} You can now switch to the 'Sign In' tab to log in.")
                 else:
                     st.error(msg)
 
+        with tab_forgot:
+            st.markdown("<br>", unsafe_allow_html=True)
+            st.caption("Forgot your password? Reset it easily using your registered username, email, or contact number.")
+            f_ident = st.text_input("Username, Email, or Mobile Contact:", placeholder="e.g. admin or analyst@creditlens.internal", key="forgot_ident_tab")
+            f_new = st.text_input("New Desired Password:", type="password", placeholder="At least 4 characters", key="forgot_new_tab")
+            f_conf = st.text_input("Confirm New Password:", type="password", placeholder="Re-type new password", key="forgot_conf_tab")
+
+            if st.button("Reset Password Now", type="primary", use_container_width=True):
+                if not f_ident or not f_new:
+                    st.error("Please fill in all fields.")
+                elif f_new != f_conf:
+                    st.error("New passwords do not match.")
+                else:
+                    ok, msg = reset_password_forgot(f_ident, f_new)
+                    if ok:
+                        st.success(f"✅ {msg}")
+                        st.info("👉 Switch to the '🔑 Sign In' tab to log in with your updated credentials.")
+                    else:
+                        st.error(f"❌ {msg}")
+
         with tab_reset:
             st.markdown("<br>", unsafe_allow_html=True)
-            st.caption("Update your existing account password or passkey.")
-            r_user = st.text_input("Username:", placeholder="e.g. admin or analyst", key="reset_user_tab")
+            st.caption("Update your existing account password when you already know your current passkey.")
+            r_user = st.text_input("Username or Email:", placeholder="e.g. admin or analyst", key="reset_user_tab")
             r_curr = st.text_input("Current Passkey / Password:", type="password", placeholder="Enter current passkey", key="reset_curr_tab")
             r_new = st.text_input("New Passkey / Password:", type="password", placeholder="At least 4 characters", key="reset_new_tab")
             r_conf = st.text_input("Confirm New Passkey:", type="password", placeholder="Repeat new passkey", key="reset_conf_tab")
@@ -444,11 +576,15 @@ def main():
     st.sidebar.title("CreditLens")
     st.sidebar.caption("Multi-User Credit Risk Intelligence")
 
+    auth_tag = ""
+    if current_u.get("auth_provider") and current_u.get("auth_provider") != "local":
+        auth_tag = f" · <span style='color:#38BDF8; font-weight:600;'>via {current_u['auth_provider'].title()}</span>"
+
     st.sidebar.markdown(f"""
     <div style="background: #0F172A; color: white; padding: 12px 14px; border-radius: 8px; margin-bottom: 12px;">
         <div style="font-size: 0.72rem; color: #94A3B8; text-transform: uppercase; font-weight: 700;">CURRENTLY LOGGED IN AS:</div>
         <div style="font-size: 1.05rem; font-weight: 800; margin: 2px 0;">{current_u['full_name']}</div>
-        <div style="font-size: 0.78rem; color: #60A5FA;">@{current_u['username']} · {current_u['role']}</div>
+        <div style="font-size: 0.78rem; color: #60A5FA;">@{current_u['username']} · {current_u['role']}{auth_tag}</div>
     </div>
     """, unsafe_allow_html=True)
 
