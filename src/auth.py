@@ -50,17 +50,34 @@ def init_user_db():
         except sqlite3.OperationalError:
             pass  # column already exists
 
-    # Purge any legacy temporary or test accounts
+    # Ensure tables for persistent user sheets, session state, and notes exist
     cursor.execute("""
-    DELETE FROM app_users 
-    WHERE username LIKE 'mobile_%' 
-       OR username LIKE 'user_%' 
-       OR username LIKE 'temp_%' 
-       OR username LIKE 'test_%'
-       OR username LIKE '%_demo'
-       OR username LIKE '%_user'
-       OR username = 'officer_apple'
-       OR username = 'analyst_google';
+    CREATE TABLE IF NOT EXISTS user_custom_sheets (
+        sheet_id INTEGER PRIMARY KEY AUTOINCREMENT,
+        username TEXT NOT NULL,
+        sheet_title TEXT NOT NULL,
+        file_path TEXT NOT NULL,
+        record_count INTEGER DEFAULT 0,
+        created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+        UNIQUE(username, sheet_title)
+    );
+    """)
+    cursor.execute("""
+    CREATE TABLE IF NOT EXISTS app_session_state (
+        state_key TEXT PRIMARY KEY,
+        state_value TEXT,
+        updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+    );
+    """)
+    cursor.execute("""
+    CREATE TABLE IF NOT EXISTS user_risk_notes (
+        note_id INTEGER PRIMARY KEY AUTOINCREMENT,
+        username TEXT NOT NULL,
+        sheet_title TEXT NOT NULL,
+        note_content TEXT,
+        updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+        UNIQUE(username, sheet_title)
+    );
     """)
     conn.commit()
 
@@ -401,7 +418,7 @@ def reset_password_forgot(identifier: str, new_password: str):
 def list_users(exclude_temp: bool = True):
     """
     Returns list of registered usernames and display names with avatars.
-    By default excludes temporary test IDs (e.g. mobile_*, user_*, *_demo).
+    Preserves all user-created accounts permanently.
     """
     init_user_db()
     conn = sqlite3.connect(DB_PATH)
@@ -425,11 +442,7 @@ def list_users(exclude_temp: bool = True):
         av = r[4] or ""
         if exclude_temp:
             un_l = un.lower()
-            if (un_l.startswith("mobile_") or un_l.startswith("user_") or 
-                un_l.startswith("temp_") or un_l.startswith("test_") or 
-                un_l.endswith("_demo") or un_l.endswith("_user") or
-                "demo" in un_l or "dummy" in un_l or "fake" in un_l or
-                un_l in ("officer_apple", "analyst_google")):
+            if un_l.startswith("temp_") or un_l.startswith("dummy_"):
                 continue
         users.append({"username": un, "full_name": fn, "role": rl, "auth_provider": ap, "avatar_data": av})
     return users
@@ -458,3 +471,172 @@ def update_password(username: str, new_password: str):
         return False, f"Failed to update password: {e}"
     finally:
         conn.close()
+
+
+# =============================================================================
+# DATA PERSISTENCE: CUSTOM USER DATASETS, WORKBOOK SHEETS & NOTES
+# =============================================================================
+
+def save_user_custom_sheet(username: str, sheet_title: str, df) -> tuple[bool, str]:
+    """
+    Saves a user's custom dataset sheet to disk and registers it in SQLite.
+    Ensures custom uploaded sheets are permanently preserved across logouts and server restarts.
+    """
+    init_user_db()
+    if df is None:
+        return False, "Cannot save empty dataset."
+    
+    username_clean = username.strip().lower()
+    safe_title = "".join(c for c in sheet_title if c.isalnum() or c in (" ", "_", "-")).strip().replace(" ", "_")
+    if not safe_title:
+        safe_title = f"sheet_{os.urandom(3).hex()}"
+    
+    user_dir = os.path.join(BASE_DIR, "data", "user_uploads", username_clean)
+    os.makedirs(user_dir, exist_ok=True)
+    
+    file_path = os.path.join(user_dir, f"{safe_title}.csv")
+    try:
+        import pandas as pd
+        if isinstance(df, pd.DataFrame):
+            df.to_csv(file_path, index=False)
+            records = len(df)
+        else:
+            return False, "Dataset must be a pandas DataFrame."
+        
+        conn = sqlite3.connect(DB_PATH)
+        cursor = conn.cursor()
+        cursor.execute("""
+        INSERT INTO user_custom_sheets (username, sheet_title, file_path, record_count)
+        VALUES (?, ?, ?, ?)
+        ON CONFLICT(username, sheet_title) DO UPDATE SET
+            file_path = excluded.file_path,
+            record_count = excluded.record_count,
+            created_at = CURRENT_TIMESTAMP;
+        """, (username_clean, sheet_title.strip(), file_path, records))
+        conn.commit()
+        conn.close()
+        return True, f"Saved sheet '{sheet_title}' permanently ({records:,} records)."
+    except Exception as e:
+        return False, f"Failed to save sheet: {e}"
+
+
+def load_user_custom_sheets(username: str) -> dict:
+    """
+    Retrieves all custom dataset sheets belonging to the user from SQLite and disk.
+    Returns dict mapping sheet_title -> DataFrame.
+    """
+    init_user_db()
+    username_clean = username.strip().lower()
+    conn = sqlite3.connect(DB_PATH)
+    cursor = conn.cursor()
+    cursor.execute("""
+    SELECT sheet_title, file_path
+    FROM user_custom_sheets
+    WHERE username = ?
+    ORDER BY created_at ASC;
+    """, (username_clean,))
+    rows = cursor.fetchall()
+    conn.close()
+
+    sheets = {}
+    for title, path in rows:
+        target_path = path if os.path.isabs(path) else os.path.join(BASE_DIR, path)
+        if os.path.exists(target_path):
+            try:
+                import pandas as pd
+                sheets[title] = pd.read_csv(target_path)
+            except Exception:
+                sheets[title] = target_path
+    return sheets
+
+
+def delete_user_custom_sheet(username: str, sheet_title: str) -> bool:
+    """Removes a custom dataset sheet record and local file for a user."""
+    init_user_db()
+    username_clean = username.strip().lower()
+    conn = sqlite3.connect(DB_PATH)
+    cursor = conn.cursor()
+    cursor.execute("SELECT file_path FROM user_custom_sheets WHERE username = ? AND sheet_title = ?;", (username_clean, sheet_title))
+    row = cursor.fetchone()
+    if row:
+        file_path = row[0]
+        target_path = file_path if os.path.isabs(file_path) else os.path.join(BASE_DIR, file_path)
+        if os.path.exists(target_path):
+            try:
+                os.remove(target_path)
+            except Exception:
+                pass
+    cursor.execute("DELETE FROM user_custom_sheets WHERE username = ? AND sheet_title = ?;", (username_clean, sheet_title))
+    conn.commit()
+    conn.close()
+    return True
+
+
+def set_last_active_user(username: str):
+    """Stores the username of the last logged-in account in SQLite."""
+    init_user_db()
+    conn = sqlite3.connect(DB_PATH)
+    cursor = conn.cursor()
+    cursor.execute("""
+    INSERT INTO app_session_state (state_key, state_value, updated_at)
+    VALUES ('last_active_username', ?, CURRENT_TIMESTAMP)
+    ON CONFLICT(state_key) DO UPDATE SET
+        state_value = excluded.state_value,
+        updated_at = CURRENT_TIMESTAMP;
+    """, (username.strip().lower(),))
+    conn.commit()
+    conn.close()
+
+
+def get_last_active_user():
+    """Returns user dict of the last logged-in user, or None."""
+    init_user_db()
+    conn = sqlite3.connect(DB_PATH)
+    cursor = conn.cursor()
+    cursor.execute("SELECT state_value FROM app_session_state WHERE state_key = 'last_active_username';")
+    row = cursor.fetchone()
+    conn.close()
+    if row and row[0]:
+        return get_user_by_username(row[0])
+    return None
+
+
+def clear_last_active_user():
+    """Clears last active user on explicit sign-out."""
+    init_user_db()
+    conn = sqlite3.connect(DB_PATH)
+    cursor = conn.cursor()
+    cursor.execute("DELETE FROM app_session_state WHERE state_key = 'last_active_username';")
+    conn.commit()
+    conn.close()
+
+
+def save_user_risk_note(username: str, sheet_title: str, note_content: str):
+    """Persists analyst underwriting comments or credit memos for a sheet."""
+    init_user_db()
+    conn = sqlite3.connect(DB_PATH)
+    cursor = conn.cursor()
+    cursor.execute("""
+    INSERT INTO user_risk_notes (username, sheet_title, note_content, updated_at)
+    VALUES (?, ?, ?, CURRENT_TIMESTAMP)
+    ON CONFLICT(username, sheet_title) DO UPDATE SET
+        note_content = excluded.note_content,
+        updated_at = CURRENT_TIMESTAMP;
+    """, (username.strip().lower(), sheet_title.strip(), note_content))
+    conn.commit()
+    conn.close()
+
+
+def get_user_risk_note(username: str, sheet_title: str) -> str:
+    """Retrieves saved analyst notes for a sheet."""
+    init_user_db()
+    conn = sqlite3.connect(DB_PATH)
+    cursor = conn.cursor()
+    cursor.execute("""
+    SELECT note_content FROM user_risk_notes 
+    WHERE username = ? AND sheet_title = ?;
+    """, (username.strip().lower(), sheet_title.strip()))
+    row = cursor.fetchone()
+    conn.close()
+    return row[0] if row else ""
+

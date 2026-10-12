@@ -79,6 +79,14 @@ update_password = _auth.update_password
 authenticate_or_register_social = _auth.authenticate_or_register_social
 authenticate_or_register_contact = _auth.authenticate_or_register_contact
 reset_password_forgot = _auth.reset_password_forgot
+save_user_custom_sheet = _auth.save_user_custom_sheet
+load_user_custom_sheets = _auth.load_user_custom_sheets
+delete_user_custom_sheet = _auth.delete_user_custom_sheet
+set_last_active_user = _auth.set_last_active_user
+get_last_active_user = _auth.get_last_active_user
+clear_last_active_user = _auth.clear_last_active_user
+save_user_risk_note = _auth.save_user_risk_note
+get_user_risk_note = _auth.get_user_risk_note
 
 get_portfolio_kpis = _analytics.get_portfolio_kpis
 get_risk_tier_breakdown = _analytics.get_risk_tier_breakdown
@@ -419,8 +427,11 @@ def render_avatar_circle(user_dict, size=36, font_size=0.95):
 
 
 @st.cache_data
-def load_dataset_from_disk(relative_path):
-    full_path = os.path.join(BASE_DIR, relative_path)
+def load_dataset_from_disk(relative_or_abs_path):
+    if os.path.isabs(relative_or_abs_path):
+        full_path = relative_or_abs_path
+    else:
+        full_path = os.path.join(BASE_DIR, relative_or_abs_path)
     if os.path.exists(full_path):
         return pd.read_csv(full_path)
     main_path = os.path.join(BASE_DIR, "data", "processed", "credit_lens_tableau_extract.csv")
@@ -442,6 +453,20 @@ DEFAULT_SHEETS = {
     "📑 FinTech Consumer Loans (10k)": "data/processed/fintech_consumer_portfolio.csv",
     "📑 Prime Wealth Credit (5k)": "data/processed/prime_wealth_portfolio.csv"
 }
+
+
+def sync_user_workbook_sheets(username: str):
+    """
+    Loads default institutional benchmark sheets combined with all custom dataset sheets 
+    created by and preserved for this specific user.
+    """
+    sheets = dict(DEFAULT_SHEETS)
+    if username:
+        user_sheets = load_user_custom_sheets(username)
+        sheets.update(user_sheets)
+    st.session_state["workbook_sheets"] = sheets
+    st.session_state["_sheets_user"] = username
+
 
 
 # =============================================================================
@@ -503,6 +528,8 @@ def render_auth_modal():
                 u_rec = authenticate_or_register_social("Apple", "gitansh.apple@icloud.internal", "Gitansh Garg", "CRO Level (Executive)")
                 if u_rec:
                     st.session_state["current_user"] = u_rec
+                    set_last_active_user(u_rec["username"])
+                    sync_user_workbook_sheets(u_rec["username"])
                     st.session_state["social_mode"] = None
                     st.success("Face ID Verified ✓")
                     st.rerun()
@@ -544,6 +571,8 @@ def render_auth_modal():
                 u_rec = authenticate_or_register_social("Google", "gitanshgarg@gmail.com", "Gitansh Garg", "CRO Level (Executive)")
                 if u_rec:
                     st.session_state["current_user"] = u_rec
+                    set_last_active_user(u_rec["username"])
+                    sync_user_workbook_sheets(u_rec["username"])
                     st.session_state["social_mode"] = None
                     st.rerun()
 
@@ -555,6 +584,8 @@ def render_auth_modal():
                         u_rec = authenticate_or_register_social("Google", g_other_email.strip(), g_other_name.strip() or "Google User", "Senior Analyst Level")
                         if u_rec:
                             st.session_state["current_user"] = u_rec
+                            set_last_active_user(u_rec["username"])
+                            sync_user_workbook_sheets(u_rec["username"])
                             st.session_state["social_mode"] = None
                             st.rerun()
                     else:
@@ -600,9 +631,12 @@ def render_auth_modal():
                         u_rec = authenticate_or_register_contact(st.session_state["phone_target"], full_name="Gitansh Garg", role="CRO Level (Executive)")
                         if u_rec:
                             st.session_state["current_user"] = u_rec
+                            set_last_active_user(u_rec["username"])
+                            sync_user_workbook_sheets(u_rec["username"])
                             st.session_state["phone_otp"] = None
                             st.session_state["social_mode"] = None
                             st.rerun()
+
                     else:
                         st.error("Incorrect verification code.")
 
@@ -626,33 +660,58 @@ def render_auth_modal():
             </div>
             """, unsafe_allow_html=True)
 
-            # --- Saved Profile Quick Login ---
-            default_u = get_user_by_username("admin")
-            if default_u:
-                def_av_html = render_avatar_circle(default_u, size=52, font_size=1.4)
+            # --- Saved Profile Quick Login (Dynamic & Multi-Account) ---
+            all_users = list_users(exclude_temp=True)
+            last_u = get_last_active_user()
+            
+            # Select target primary user to spotlight: last active user, or first user in DB, or admin
+            primary_u = last_u
+            if not primary_u and all_users:
+                primary_u = all_users[0]
+            if not primary_u:
+                primary_u = get_user_by_username("admin")
+
+            if primary_u:
+                prim_av_html = render_avatar_circle(primary_u, size=52, font_size=1.4)
                 st.markdown(f"""
                 <div style="text-align: center; padding: 14px 16px; background: rgba(37, 99, 235, 0.04); border: 1px solid rgba(37, 99, 235, 0.14); border-radius: 14px; margin-bottom: 12px;">
-                    <div style="margin-bottom: 8px;">{def_av_html}</div>
-                    <div style="font-weight: 750; font-size: 0.96rem; color: var(--text-headline);">{default_u['full_name']}</div>
-                    <div style="font-size: 0.78rem; color: #64748B;">@{default_u['username']} &nbsp;•&nbsp; <span style="color:#2563EB; font-weight:600;">{default_u['role']}</span></div>
+                    <div style="margin-bottom: 8px;">{prim_av_html}</div>
+                    <div style="font-weight: 750; font-size: 0.98rem; color: var(--text-headline);">{primary_u['full_name']}</div>
+                    <div style="font-size: 0.8rem; color: #64748B;"><code>@{primary_u['username']}</code> &nbsp;•&nbsp; <span style="color:#2563EB; font-weight:600;">{primary_u['role']}</span></div>
                 </div>
                 """, unsafe_allow_html=True)
 
-                if st.button(f"Continue as {default_u['full_name']}", type="primary", use_container_width=True, key="btn_quick_admin"):
-                    st.session_state["current_user"] = default_u
+                if st.button(f"Continue as {primary_u['full_name']}", type="primary", use_container_width=True, key="btn_quick_primary"):
+                    st.session_state["current_user"] = primary_u
+                    set_last_active_user(primary_u["username"])
+                    sync_user_workbook_sheets(primary_u["username"])
                     st.rerun()
 
-                c_q1, c_q2 = st.columns(2)
-                with c_q1:
-                    u_ana = get_user_by_username("analyst")
-                    if st.button("Lead Analyst (@analyst)", use_container_width=True, key="btn_quick_analyst"):
-                        st.session_state["current_user"] = u_ana or authenticate_user("analyst", "password123")
-                        st.rerun()
-                with c_q2:
-                    u_gst = get_user_by_username("guest")
-                    if st.button("Portfolio Auditor (@guest)", use_container_width=True, key="btn_quick_guest"):
-                        st.session_state["current_user"] = u_gst or authenticate_user("guest", "guest123")
-                        st.rerun()
+            # Other Saved Accounts on this Device
+            other_users = [u for u in all_users if primary_u and u["username"] != primary_u["username"]]
+            if other_users:
+                with st.expander(f"Saved Accounts on this Device ({len(other_users)})", expanded=False):
+                    for o_u in other_users:
+                        col_o1, col_o2 = st.columns([3, 1.2])
+                        with col_o1:
+                            o_av = render_avatar_circle(o_u, size=28, font_size=0.75)
+                            st.markdown(f"""
+                            <div style="display: flex; align-items: center; gap: 8px; padding-top: 4px;">
+                                {o_av}
+                                <div>
+                                    <span style="font-weight: 700; font-size: 0.86rem; color: var(--text-headline);">{o_u['full_name']}</span>
+                                    <span style="font-size: 0.78rem; color: #64748B;">(@{o_u['username']})</span>
+                                </div>
+                            </div>
+                            """, unsafe_allow_html=True)
+                        with col_o2:
+                            if st.button("Log In", key=f"btn_switch_acc_{o_u['username']}", use_container_width=True):
+                                u_full = get_user_by_username(o_u["username"])
+                                if u_full:
+                                    st.session_state["current_user"] = u_full
+                                    set_last_active_user(u_full["username"])
+                                    sync_user_workbook_sheets(u_full["username"])
+                                    st.rerun()
 
             # --- Divider ---
             st.markdown("""
@@ -673,6 +732,8 @@ def render_auth_modal():
                     u_rec = authenticate_user(l_ident, l_pass)
                     if u_rec:
                         st.session_state["current_user"] = u_rec
+                        set_last_active_user(u_rec["username"])
+                        sync_user_workbook_sheets(u_rec["username"])
                         st.success(f"Welcome back, {u_rec['full_name']}!")
                         st.rerun()
                     else:
@@ -784,8 +845,13 @@ def render_auth_modal():
                 else:
                     ok, msg = register_user(su_user, su_pw, su_name, su_role, su_email, su_phone)
                     if ok:
-                        st.success(f"{msg} Redirecting to login...")
+                        new_u = get_user_by_username(su_user)
+                        if new_u:
+                            st.session_state["current_user"] = new_u
+                            set_last_active_user(new_u["username"])
+                            sync_user_workbook_sheets(new_u["username"])
                         st.session_state["auth_view"] = "login"
+                        st.success(f"🎉 Account @{su_user} created and permanently saved in database! Welcome, {su_name}.")
                         st.rerun()
                     else:
                         st.error(f"{msg}")
@@ -1097,6 +1163,21 @@ def render_portfolio_sheet(
         key=f"dl_{sheet_title}"
     )
 
+    # 6. Persistent Analyst Underwriting Notes & Credit Memo
+    curr_un = (st.session_state.get("current_user") or {}).get("username", "admin")
+    with st.expander(f"📝 Credit Risk Memo & Analyst Notes ({sheet_title})", expanded=False):
+        c_note = get_user_risk_note(curr_un, sheet_title)
+        n_note = st.text_area(
+            "Portfolio Underwriting Comments & Committee Findings:",
+            value=c_note,
+            height=85,
+            key=f"memo_{sheet_title}_{curr_un}",
+            placeholder="Document portfolio-level risk observations, macro assumptions, or remediation plans..."
+        )
+        if st.button("💾 Save Memo to Database", key=f"save_memo_{sheet_title}"):
+            save_user_risk_note(curr_un, sheet_title, n_note)
+            st.success("Analyst notes saved permanently in database!")
+
 
 # =============================================================================
 # MAIN MULTI-USER & MULTI-DATASET APP CONTROLLER
@@ -1104,12 +1185,14 @@ def render_portfolio_sheet(
 def main():
     # Session state for user authentication
     if "current_user" not in st.session_state:
-        # Default to admin so user immediately sees the working dashboard!
-        st.session_state["current_user"] = get_user_by_username("admin") or authenticate_user("admin", "password123")
-
-    # Session state for workbook sheets (datasets)
-    if "workbook_sheets" not in st.session_state:
-        st.session_state["workbook_sheets"] = dict(DEFAULT_SHEETS)
+        last_u = get_last_active_user()
+        if last_u:
+            st.session_state["current_user"] = last_u
+        else:
+            # Default to admin so user immediately sees the working dashboard on initial start!
+            st.session_state["current_user"] = get_user_by_username("admin") or authenticate_user("admin", "password123")
+            if st.session_state["current_user"]:
+                set_last_active_user(st.session_state["current_user"]["username"])
 
     # 1. If not logged in, show login/signup screen
     if st.session_state["current_user"] is None:
@@ -1118,6 +1201,10 @@ def main():
 
     # 2. Logged in View
     current_u = st.session_state["current_user"]
+
+    # Synchronize user workbook sheets (defaults + user's persistent sheets from SQLite)
+    if "workbook_sheets" not in st.session_state or st.session_state.get("_sheets_user") != current_u["username"]:
+        sync_user_workbook_sheets(current_u["username"])
 
     # =========================================================================
     # SIDEBAR: Institutional Risk Command Center & Interactive Slicing
@@ -1249,6 +1336,8 @@ def main():
                         u_target = get_user_by_username(acc_un)
                         if u_target:
                             st.session_state["current_user"] = u_target
+                            set_last_active_user(u_target["username"])
+                            sync_user_workbook_sheets(u_target["username"])
                             st.rerun()
 
             st.markdown('<div style="height: 1px; background: var(--card-border, #E2E8F0); margin: 12px 0;"></div>', unsafe_allow_html=True)
@@ -1323,14 +1412,21 @@ def main():
                     if reg_sub:
                         ok, msg = register_user(reg_user, reg_pw, reg_name, reg_role)
                         if ok:
-                            st.success(f"{msg}")
+                            u_target = get_user_by_username(reg_user)
+                            if u_target:
+                                st.session_state["current_user"] = u_target
+                                set_last_active_user(u_target["username"])
+                                sync_user_workbook_sheets(u_target["username"])
+                            st.success(f"{msg} Switched to new account @{reg_user}!")
                             st.rerun()
                         else:
                             st.error(f"{msg}")
 
             st.markdown('<div style="height: 10px;"></div>', unsafe_allow_html=True)
             if st.button("Sign Out", use_container_width=True, key="top_btn_signout"):
+                clear_last_active_user()
                 st.session_state["current_user"] = None
+                st.session_state["_sheets_user"] = None
                 st.rerun()
 
     # =========================================================================
@@ -1342,7 +1438,19 @@ def main():
     # Render each existing dataset sheet
     for idx, (sheet_title, path_or_df) in enumerate(st.session_state["workbook_sheets"].items()):
         with workbook_tabs[idx]:
-            st.markdown(f"### {sheet_title}")
+            if sheet_title not in DEFAULT_SHEETS:
+                col_sh1, col_sh2 = st.columns([3.8, 1.2])
+                with col_sh1:
+                    st.markdown(f"### {sheet_title} <span style='font-size:0.75rem; background:rgba(37,99,235,0.12); color:#2563EB; font-weight:700; padding:3px 8px; border-radius:12px; vertical-align:middle;'>SAVED IN DATABASE</span>", unsafe_allow_html=True)
+                with col_sh2:
+                    if st.button("🗑️ Delete Sheet", key=f"del_sheet_{idx}", help="Remove this custom sheet from your database"):
+                        delete_user_custom_sheet(current_u["username"], sheet_title)
+                        del st.session_state["workbook_sheets"][sheet_title]
+                        st.success(f"Sheet '{sheet_title}' deleted.")
+                        st.rerun()
+            else:
+                st.markdown(f"### {sheet_title}")
+
             if isinstance(path_or_df, pd.DataFrame):
                 sheet_df = path_or_df
             else:
@@ -1435,11 +1543,15 @@ def main():
                         final_tab_title = new_sheet_name.strip() or f"📑 Dataset Sheet {len(st.session_state['workbook_sheets'])+1}"
                         st.session_state["workbook_sheets"][final_tab_title] = processed_df
 
-                        st.success(f"🎉 Created '{final_tab_title}' with {len(processed_df):,} accounts! Your new sheet tab is ready.")
+                        # Persist permanently in SQLite database and disk
+                        ok_p, p_msg = save_user_custom_sheet(current_u["username"], final_tab_title, processed_df)
+
+                        st.success(f"🎉 Created '{final_tab_title}' with {len(processed_df):,} accounts! Your new sheet tab is permanently preserved in the database.")
                         st.rerun()
 
             except Exception as e:
                 st.error(f"Error creating dataset sheet: {e}")
+
 
 
 if __name__ == "__main__":
