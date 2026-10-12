@@ -54,9 +54,9 @@ def init_user_db():
     count = cursor.fetchone()[0]
     if count == 0:
         default_users = [
-            ("admin", hash_password("password123"), "Chief Risk Administrator", "Chief Risk Officer", "admin@creditlens.internal", "+1-800-555-0100", "local"),
-            ("analyst", hash_password("password123"), "Lead Credit Analyst", "Senior Risk Analyst", "analyst@creditlens.internal", "+1-800-555-0101", "local"),
-            ("guest", hash_password("guest123"), "Portfolio Reviewer", "Reviewer", "guest@creditlens.internal", "+1-800-555-0102", "local")
+            ("admin", hash_password("password123"), "Chief Risk Officer", "CRO Level (Executive)", "admin@creditlens.internal", "+1-800-555-0100", "local"),
+            ("analyst", hash_password("password123"), "Lead Credit Analyst", "Senior Analyst Level", "analyst@creditlens.internal", "+1-800-555-0101", "local"),
+            ("guest", hash_password("guest123"), "Portfolio Auditor", "Reviewer Level", "guest@creditlens.internal", "+1-800-555-0102", "local")
         ]
         cursor.executemany("""
         INSERT INTO app_users (username, password_hash, full_name, role, email, phone, auth_provider)
@@ -309,15 +309,35 @@ def reset_password_forgot(identifier: str, new_password: str):
         conn.close()
 
 
-def list_users():
-    """Returns list of registered usernames and display names."""
+def list_users(exclude_temp: bool = True):
+    """
+    Returns list of registered usernames and display names.
+    By default excludes temporary test IDs (e.g. mobile_*, user_*, *_demo).
+    """
     init_user_db()
     conn = sqlite3.connect(DB_PATH)
     cursor = conn.cursor()
-    cursor.execute("SELECT username, full_name, role, auth_provider FROM app_users ORDER BY user_id ASC;")
+    cursor.execute("""
+    SELECT username, full_name, role, auth_provider 
+    FROM app_users 
+    ORDER BY CASE 
+        WHEN username = 'admin' THEN 1
+        WHEN username = 'analyst' THEN 2
+        WHEN username = 'guest' THEN 3
+        ELSE 4 
+    END, user_id ASC;
+    """)
     rows = cursor.fetchall()
     conn.close()
-    return [{"username": r[0], "full_name": r[1], "role": r[2], "auth_provider": r[3] or "local"} for r in rows]
+    
+    users = []
+    for r in rows:
+        un, fn, rl, ap = r[0], r[1], r[2], r[3] or "local"
+        if exclude_temp:
+            if un.startswith("mobile_") or un.startswith("user_") or un.endswith("_demo"):
+                continue
+        users.append({"username": un, "full_name": fn, "role": rl, "auth_provider": ap})
+    return users
 
 
 def update_password(username: str, new_password: str):
