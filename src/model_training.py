@@ -26,7 +26,10 @@ from sklearn.metrics import (
     roc_curve
 )
 
-from src.risk_scoring import enrich_with_scores_and_tiers
+try:
+    from risk_scoring import enrich_with_scores_and_tiers
+except (ImportError, ModuleNotFoundError):
+    from src.risk_scoring import enrich_with_scores_and_tiers
 
 PROCESSED_DATA_DIR = os.path.join(os.path.dirname(os.path.dirname(__file__)), "data", "processed")
 MODELS_DIR = os.path.join(os.path.dirname(os.path.dirname(__file__)), "models")
@@ -65,7 +68,10 @@ def train_and_evaluate_models():
     features_csv = os.path.join(PROCESSED_DATA_DIR, "credit_lens_features.csv")
     
     if not os.path.exists(features_csv):
-        from src.feature_engineering import run_feature_engineering_pipeline
+        try:
+            from feature_engineering import run_feature_engineering_pipeline
+        except (ImportError, ModuleNotFoundError):
+            from src.feature_engineering import run_feature_engineering_pipeline
         df = run_feature_engineering_pipeline()
     else:
         df = pd.read_csv(features_csv)

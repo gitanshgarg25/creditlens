@@ -13,29 +13,54 @@ import plotly.express as px
 import plotly.graph_objects as go
 import streamlit as st
 
-# Setup Project Path
-BASE_DIR = os.path.dirname(os.path.dirname(__file__))
-if BASE_DIR not in sys.path:
-    sys.path.append(BASE_DIR)
+# Setup Project Path (Robust resolution for both local development & Streamlit Cloud container)
+BASE_DIR = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
+SRC_DIR = os.path.join(BASE_DIR, "src")
 
-from src.auth import (
-    init_user_db,
-    register_user,
-    authenticate_user,
-    list_users,
-    update_password,
-    authenticate_or_register_social,
-    authenticate_or_register_contact,
-    reset_password_forgot
-)
-from src.analytics_engine import (
-    get_portfolio_kpis,
-    get_risk_tier_breakdown,
-    get_delinquency_transition,
-    get_utilization_risk_matrix,
-    get_watchlist
-)
-from src.risk_scoring import pd_to_credit_score, classify_risk_tier, assign_recommended_action
+# Prepend SRC_DIR and BASE_DIR so /mount/src on Streamlit Cloud never conflicts
+for _p in [SRC_DIR, BASE_DIR]:
+    while _p in sys.path:
+        sys.path.remove(_p)
+    sys.path.insert(0, _p)
+
+try:
+    from auth import (
+        init_user_db,
+        register_user,
+        authenticate_user,
+        list_users,
+        update_password,
+        authenticate_or_register_social,
+        authenticate_or_register_contact,
+        reset_password_forgot
+    )
+    from analytics_engine import (
+        get_portfolio_kpis,
+        get_risk_tier_breakdown,
+        get_delinquency_transition,
+        get_utilization_risk_matrix,
+        get_watchlist
+    )
+    from risk_scoring import pd_to_credit_score, classify_risk_tier, assign_recommended_action
+except (ImportError, ModuleNotFoundError):
+    from src.auth import (
+        init_user_db,
+        register_user,
+        authenticate_user,
+        list_users,
+        update_password,
+        authenticate_or_register_social,
+        authenticate_or_register_contact,
+        reset_password_forgot
+    )
+    from src.analytics_engine import (
+        get_portfolio_kpis,
+        get_risk_tier_breakdown,
+        get_delinquency_transition,
+        get_utilization_risk_matrix,
+        get_watchlist
+    )
+    from src.risk_scoring import pd_to_credit_score, classify_risk_tier, assign_recommended_action
 
 # Streamlit Page Config
 st.set_page_config(
@@ -138,7 +163,10 @@ def load_dataset_from_disk(relative_path):
         return pd.read_csv(full_path)
     main_path = os.path.join(BASE_DIR, "data", "processed", "credit_lens_tableau_extract.csv")
     if not os.path.exists(main_path):
-        from src.model_training import train_and_evaluate_models
+        try:
+            from model_training import train_and_evaluate_models
+        except (ImportError, ModuleNotFoundError):
+            from src.model_training import train_and_evaluate_models
         train_and_evaluate_models()
     return pd.read_csv(main_path)
 

@@ -76,7 +76,10 @@ def run_feature_engineering_pipeline():
     """
     clean_path = os.path.join(PROCESSED_DATA_DIR, "credit_lens_clean.csv")
     if not os.path.exists(clean_path):
-        from src.data_ingestion import run_ingestion_pipeline
+        try:
+            from data_ingestion import run_ingestion_pipeline
+        except (ImportError, ModuleNotFoundError):
+            from src.data_ingestion import run_ingestion_pipeline
         df = run_ingestion_pipeline()
     else:
         df = pd.read_csv(clean_path)
