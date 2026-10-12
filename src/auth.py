@@ -37,11 +37,12 @@ def init_user_db():
     """)
     conn.commit()
 
-    # Safely migrate new columns (email, phone, auth_provider) if they don't exist
+    # Safely migrate new columns (email, phone, auth_provider, avatar_data) if they don't exist
     for col_name, col_type in [
         ("email", "TEXT"),
         ("phone", "TEXT"),
-        ("auth_provider", "TEXT DEFAULT 'local'")
+        ("auth_provider", "TEXT DEFAULT 'local'"),
+        ("avatar_data", "TEXT")
     ]:
         try:
             cursor.execute(f"ALTER TABLE app_users ADD COLUMN {col_name} {col_type};")
@@ -86,7 +87,7 @@ def get_user_by_username(username: str):
     conn = sqlite3.connect(DB_PATH)
     cursor = conn.cursor()
     cursor.execute("""
-    SELECT user_id, username, full_name, role, created_at, email, phone, auth_provider
+    SELECT user_id, username, full_name, role, created_at, email, phone, auth_provider, avatar_data
     FROM app_users
     WHERE username = ?;
     """, (username.strip().lower(),))
@@ -101,9 +102,28 @@ def get_user_by_username(username: str):
             "created_at": row[4],
             "email": row[5] or "",
             "phone": row[6] or "",
-            "auth_provider": row[7] or "local"
+            "auth_provider": row[7] or "local",
+            "avatar_data": row[8] or ""
         }
     return None
+
+
+def update_profile_avatar(username: str, avatar_data: str):
+    """
+    Updates or clears avatar_data (base64 string or image URI) for an account.
+    Returns (success: bool, message: str)
+    """
+    init_user_db()
+    conn = sqlite3.connect(DB_PATH)
+    cursor = conn.cursor()
+    try:
+        cursor.execute("UPDATE app_users SET avatar_data = ? WHERE username = ?;", (avatar_data, username.strip().lower()))
+        conn.commit()
+        return True, "Profile picture updated successfully!"
+    except Exception as e:
+        return False, f"Failed to update profile picture: {e}"
+    finally:
+        conn.close()
 
 
 def register_user(username: str, password: str, full_name: str, role: str = "Risk Analyst", email: str = "", phone: str = "", auth_provider: str = "local"):
@@ -147,7 +167,7 @@ def authenticate_user(username_or_email: str, password: str):
     conn = sqlite3.connect(DB_PATH)
     cursor = conn.cursor()
     cursor.execute("""
-    SELECT user_id, username, full_name, role, created_at, email, phone, auth_provider
+    SELECT user_id, username, full_name, role, created_at, email, phone, auth_provider, avatar_data
     FROM app_users
     WHERE (username = ? OR email = ? OR phone = ?) AND password_hash = ?;
     """, (ident, ident, ident, pw_hash))
@@ -163,7 +183,8 @@ def authenticate_user(username_or_email: str, password: str):
             "created_at": row[4],
             "email": row[5] or "",
             "phone": row[6] or "",
-            "auth_provider": row[7] or "local"
+            "auth_provider": row[7] or "local",
+            "avatar_data": row[8] or ""
         }
     return None
 
@@ -195,7 +216,7 @@ def authenticate_or_register_social(provider: str, email_or_id: str, display_nam
     conn = sqlite3.connect(DB_PATH)
     cursor = conn.cursor()
     cursor.execute("""
-    SELECT user_id, username, full_name, role, created_at, email, phone, auth_provider
+    SELECT user_id, username, full_name, role, created_at, email, phone, auth_provider, avatar_data
     FROM app_users
     WHERE email = ? OR username = ?;
     """, (ident, base_user))
@@ -210,7 +231,8 @@ def authenticate_or_register_social(provider: str, email_or_id: str, display_nam
             "created_at": row[4],
             "email": row[5] or ident,
             "phone": row[6] or "",
-            "auth_provider": row[7] or provider.lower()
+            "auth_provider": row[7] or provider.lower(),
+            "avatar_data": row[8] or ""
         }
         conn.close()
         return user_dict
@@ -232,7 +254,7 @@ def authenticate_or_register_social(provider: str, email_or_id: str, display_nam
             suffix += 1
 
     cursor.execute("""
-    SELECT user_id, username, full_name, role, created_at, email, phone, auth_provider
+    SELECT user_id, username, full_name, role, created_at, email, phone, auth_provider, avatar_data
     FROM app_users
     WHERE username = ?;
     """, (final_username,))
@@ -247,7 +269,8 @@ def authenticate_or_register_social(provider: str, email_or_id: str, display_nam
         "created_at": row[4],
         "email": row[5] or ident,
         "phone": row[6] or "",
-        "auth_provider": row[7] or provider.lower()
+        "auth_provider": row[7] or provider.lower(),
+        "avatar_data": row[8] or ""
     }
 
 
@@ -265,7 +288,7 @@ def authenticate_or_register_contact(phone: str, full_name: str = "", role: str 
     conn = sqlite3.connect(DB_PATH)
     cursor = conn.cursor()
     cursor.execute("""
-    SELECT user_id, username, full_name, role, created_at, email, phone, auth_provider
+    SELECT user_id, username, full_name, role, created_at, email, phone, auth_provider, avatar_data
     FROM app_users
     WHERE phone = ?;
     """, (phone_clean,))
@@ -280,7 +303,8 @@ def authenticate_or_register_contact(phone: str, full_name: str = "", role: str 
             "created_at": row[4],
             "email": row[5] or "",
             "phone": row[6] or phone_clean,
-            "auth_provider": row[7] or "contact"
+            "auth_provider": row[7] or "contact",
+            "avatar_data": row[8] or ""
         }
         conn.close()
         return user_dict
@@ -316,7 +340,7 @@ def authenticate_or_register_contact(phone: str, full_name: str = "", role: str 
             suffix += 1
 
     cursor.execute("""
-    SELECT user_id, username, full_name, role, created_at, email, phone, auth_provider
+    SELECT user_id, username, full_name, role, created_at, email, phone, auth_provider, avatar_data
     FROM app_users
     WHERE username = ?;
     """, (final_username,))
@@ -331,7 +355,8 @@ def authenticate_or_register_contact(phone: str, full_name: str = "", role: str 
         "created_at": row[4],
         "email": row[5] or "",
         "phone": row[6] or phone_clean,
-        "auth_provider": row[7] or "contact"
+        "auth_provider": row[7] or "contact",
+        "avatar_data": row[8] or ""
     }
 
 
@@ -375,14 +400,14 @@ def reset_password_forgot(identifier: str, new_password: str):
 
 def list_users(exclude_temp: bool = True):
     """
-    Returns list of registered usernames and display names.
+    Returns list of registered usernames and display names with avatars.
     By default excludes temporary test IDs (e.g. mobile_*, user_*, *_demo).
     """
     init_user_db()
     conn = sqlite3.connect(DB_PATH)
     cursor = conn.cursor()
     cursor.execute("""
-    SELECT username, full_name, role, auth_provider 
+    SELECT username, full_name, role, auth_provider, avatar_data 
     FROM app_users 
     ORDER BY CASE 
         WHEN username = 'admin' THEN 1
@@ -397,6 +422,7 @@ def list_users(exclude_temp: bool = True):
     users = []
     for r in rows:
         un, fn, rl, ap = r[0], r[1], r[2], r[3] or "local"
+        av = r[4] or ""
         if exclude_temp:
             un_l = un.lower()
             if (un_l.startswith("mobile_") or un_l.startswith("user_") or 
@@ -405,7 +431,7 @@ def list_users(exclude_temp: bool = True):
                 "demo" in un_l or "dummy" in un_l or "fake" in un_l or
                 un_l in ("officer_apple", "analyst_google")):
                 continue
-        users.append({"username": un, "full_name": fn, "role": rl, "auth_provider": ap})
+        users.append({"username": un, "full_name": fn, "role": rl, "auth_provider": ap, "avatar_data": av})
     return users
 
 

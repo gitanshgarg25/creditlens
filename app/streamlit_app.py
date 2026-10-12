@@ -29,6 +29,7 @@ try:
         register_user,
         authenticate_user,
         get_user_by_username,
+        update_profile_avatar,
         list_users,
         update_password,
         authenticate_or_register_social,
@@ -49,6 +50,7 @@ except (ImportError, ModuleNotFoundError):
         register_user,
         authenticate_user,
         get_user_by_username,
+        update_profile_avatar,
         list_users,
         update_password,
         authenticate_or_register_social,
@@ -217,12 +219,77 @@ st.markdown("""
         color: var(--tab-active-text, #1E3A8A) !important;
         border-top: 3px solid #2563EB !important;
     }
+
+    /* Instagram/Snapchat Social UI Elements */
+    .ig-auth-card {
+        background: var(--card-bg, #FFFFFF) !important;
+        border: 1px solid var(--card-border, #CBD5E1) !important;
+        border-radius: 16px;
+        padding: 30px 28px 24px 28px;
+        box-shadow: 0 8px 28px rgba(0, 0, 0, 0.06);
+        text-align: center;
+        margin-bottom: 14px;
+    }
+    .ig-bottom-card {
+        background: var(--card-bg, #FFFFFF) !important;
+        border: 1px solid var(--card-border, #CBD5E1) !important;
+        border-radius: 12px;
+        padding: 16px 20px;
+        text-align: center;
+        box-shadow: 0 2px 8px rgba(0, 0, 0, 0.04);
+        font-size: 0.88rem;
+    }
+    .user-avatar-circle {
+        width: 36px;
+        height: 36px;
+        border-radius: 50%;
+        background: linear-gradient(135deg, #2563EB 0%, #7C3AED 50%, #EC4899 100%);
+        color: #FFFFFF !important;
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        font-weight: 800;
+        font-size: 0.95rem;
+        border: 2px solid #FFFFFF;
+        box-shadow: 0 2px 6px rgba(37, 99, 235, 0.35);
+        text-transform: uppercase;
+        flex-shrink: 0;
+    }
+    .user-avatar-img {
+        width: 36px;
+        height: 36px;
+        border-radius: 50%;
+        object-fit: cover;
+        border: 2px solid #3B82F6;
+        box-shadow: 0 2px 6px rgba(0, 0, 0, 0.15);
+        flex-shrink: 0;
+    }
 </style>
 """, unsafe_allow_html=True)
 
 
 # Initialize DB on load
 init_user_db()
+
+
+def render_avatar_circle(user_dict, size=36, font_size=0.95):
+    """
+    Renders circular avatar HTML:
+    - If user has avatar_data (base64 image), renders the image inside a circle.
+    - If no avatar_data, renders the first initial of the user's name encircled with a vibrant modern gradient.
+    """
+    if not user_dict:
+        initial = "U"
+        avatar_img = ""
+    else:
+        name = user_dict.get("full_name", "") or user_dict.get("username", "") or "User"
+        initial = name.strip()[:1].upper() if name.strip() else "U"
+        avatar_img = user_dict.get("avatar_data", "")
+
+    if avatar_img:
+        return f'<img src="{avatar_img}" style="width:{size}px; height:{size}px; border-radius:50%; object-fit:cover; border:2px solid #3B82F6; box-shadow:0 2px 6px rgba(0,0,0,0.15); display:inline-block; vertical-align:middle; flex-shrink:0;" />'
+    else:
+        return f'<div style="width:{size}px; height:{size}px; border-radius:50%; background:linear-gradient(135deg, #2563EB 0%, #7C3AED 50%, #EC4899 100%); color:#FFFFFF !important; display:inline-flex; align-items:center; justify-content:center; font-size:{font_size}rem; font-weight:800; border:2px solid rgba(255,255,255,0.9); box-shadow:0 2px 8px rgba(37,99,235,0.35); vertical-align:middle; text-transform:uppercase; flex-shrink:0;">{initial}</div>'
 
 
 @st.cache_data
@@ -252,232 +319,314 @@ DEFAULT_SHEETS = {
 # AUTHENTICATION & SOCIAL-STYLE USER ACCOUNT SYSTEM
 # =============================================================================
 def render_auth_modal():
-    """Renders a clean, executive FinTech sign-in and account management portal."""
+    """
+    Renders an Instagram / Snapchat level social login and sign-up experience:
+    - Sleek centered cards with gradient brand identity
+    - Instagram-style "One-Click Saved Account Login" (instant access with circular avatars)
+    - Clean credentials login (username, email, or contact)
+    - Social SSO integration (Google, Apple, Phone)
+    - Instagram-style separate bottom cards to switch between Log In and Sign Up
+    - Trouble logging in (Forgot Password) self-service view
+    """
+    if "auth_view" not in st.session_state:
+        st.session_state["auth_view"] = "login"
+    if "social_mode" not in st.session_state:
+        st.session_state["social_mode"] = None
+
+    auth_view = st.session_state["auth_view"]
+
     st.markdown("<br>", unsafe_allow_html=True)
-    _, auth_box, _ = st.columns([1, 1.6, 1])
+    _, auth_box, _ = st.columns([1, 1.28, 1])
 
     with auth_box:
-        st.markdown("""
-        <div style="background: linear-gradient(135deg, #0F172A 0%, #1E293B 100%); border-radius: 14px; padding: 26px 24px; color: #FFFFFF; text-align: center; box-shadow: 0 12px 30px rgba(0,0,0,0.22); border: 1px solid #334155; margin-bottom: 14px;">
-            <div style="display: inline-flex; align-items: center; justify-content: center; width: 54px; height: 54px; background: rgba(37, 99, 235, 0.2); border-radius: 12px; margin-bottom: 10px; border: 1px solid rgba(56, 189, 248, 0.4);">
-                <span style="font-size: 26px;">🛡️</span>
+        # =====================================================================
+        # VIEW 1: LOG IN (INSTAGRAM / SNAPCHAT STYLE)
+        # =====================================================================
+        if auth_view == "login":
+            st.markdown("""
+            <div class="ig-auth-card">
+                <div style="display: inline-flex; align-items: center; justify-content: center; width: 64px; height: 64px; border-radius: 20px; background: linear-gradient(45deg, #F58529, #FEDA77, #DD2A7B, #8134AF, #515BD4); box-shadow: 0 4px 18px rgba(221, 42, 123, 0.35); margin-bottom: 12px;">
+                    <span style="font-size: 32px;">🛡️</span>
+                </div>
+                <h1 style="font-size: 2.3rem; font-weight: 850; letter-spacing: -0.8px; margin: 0; background: linear-gradient(90deg, #2563EB 0%, #7C3AED 50%, #EC4899 100%); -webkit-background-clip: text; -webkit-text-fill-color: transparent;">CreditLens</h1>
+                <p style="color: #64748B; font-size: 0.86rem; margin-top: 4px; margin-bottom: 18px; font-weight: 500;">Institutional Credit Risk & Portfolio Intelligence</p>
             </div>
-            <h2 style="color: #FFFFFF; font-size: 1.65rem; font-weight: 800; margin: 0; letter-spacing: -0.5px;">CREDITLENS PORTAL</h2>
-            <p style="color: #94A3B8; font-size: 0.86rem; margin-top: 5px; margin-bottom: 10px; font-weight: 500;">Institutional Credit Risk & Portfolio Intelligence Engine</p>
-            <div style="display: inline-flex; gap: 8px; font-size: 0.72rem; color: #38BDF8; background: rgba(56, 189, 248, 0.1); padding: 4px 14px; border-radius: 20px; font-weight: 600;">
-                🔒 Enterprise Multi-Tenant Session &nbsp;•&nbsp; SHA-256 Encrypted
+            """, unsafe_allow_html=True)
+
+            # --- Instagram Saved Profile Quick Login ---
+            default_u = get_user_by_username("admin")
+            if default_u:
+                def_av_html = render_avatar_circle(default_u, size=64, font_size=1.7)
+                st.markdown(f"""
+                <div style="text-align: center; padding: 14px 16px; background: rgba(37, 99, 235, 0.05); border: 1px solid rgba(37, 99, 235, 0.15); border-radius: 14px; margin-bottom: 14px;">
+                    <div style="margin-bottom: 8px;">{def_av_html}</div>
+                    <div style="font-weight: 750; font-size: 0.96rem; color: var(--text-headline);">{default_u['full_name']}</div>
+                    <div style="font-size: 0.78rem; color: #64748B;">@{default_u['username']} &nbsp;•&nbsp; <span style="color:#2563EB; font-weight:600;">{default_u['role']}</span></div>
+                </div>
+                """, unsafe_allow_html=True)
+
+                if st.button(f"Log In as {default_u['full_name']}", type="primary", use_container_width=True, key="ig_btn_quick_admin"):
+                    st.session_state["current_user"] = default_u
+                    st.rerun()
+
+                # Fast chips for other profiles
+                c_chip1, c_chip2 = st.columns(2)
+                with c_chip1:
+                    u_ana = get_user_by_username("analyst")
+                    if st.button("📊 Lead Analyst (@analyst)", use_container_width=True, key="ig_chip_analyst"):
+                        st.session_state["current_user"] = u_ana or authenticate_user("analyst", "password123")
+                        st.rerun()
+                with c_chip2:
+                    u_gst = get_user_by_username("guest")
+                    if st.button("🔍 Auditor (@guest)", use_container_width=True, key="ig_chip_guest"):
+                        st.session_state["current_user"] = u_gst or authenticate_user("guest", "guest123")
+                        st.rerun()
+
+            # --- Divider ---
+            st.markdown("""
+            <div style="display:flex; align-items:center; margin:18px 0 14px 0; color:#8E8E8E; font-size:0.74rem; font-weight:700;">
+                <div style="flex:1; height:1px; background:#E2E8F0;"></div>
+                <span style="padding:0 12px; color:#94A3B8;">OR LOG IN WITH CREDENTIALS</span>
+                <div style="flex:1; height:1px; background:#E2E8F0;"></div>
             </div>
-        </div>
-        """, unsafe_allow_html=True)
+            """, unsafe_allow_html=True)
 
-        tab_login, tab_sso, tab_contact, tab_signup, tab_forgot, tab_reset = st.tabs([
-            "🔑 Sign In",
-            "🌐 Corporate SSO",
-            "📱 Mobile Access",
-            "✨ Create Profile",
-            "🆘 Forgot Password",
-            "🔄 Passkey Reset"
-        ])
+            # --- Standard Inputs ---
+            l_ident = st.text_input("Username, email, or contact:", placeholder="Phone number, username, or email", key="ig_field_ident")
+            l_pass = st.text_input("Password:", placeholder="Password", type="password", key="ig_field_pass")
 
-        with tab_login:
-            st.markdown("<br>", unsafe_allow_html=True)
-            login_user = st.text_input("Username, Corporate Email, or Contact:", placeholder="e.g. admin or analyst@creditlens.internal", key="login_username_field")
-            login_pass = st.text_input("Passkey / Password:", type="password", placeholder="Enter your passkey", key="login_pass_field")
-
-            if st.button("Sign In to CreditLens", type="primary", use_container_width=True):
-                if not login_user or not login_pass:
+            if st.button("Log In", type="primary", use_container_width=True, key="ig_btn_submit_login"):
+                if not l_ident or not l_pass:
                     st.error("Please enter both username/email and password.")
                 else:
-                    user_record = authenticate_user(login_user, login_pass)
-                    if user_record:
-                        st.session_state["current_user"] = user_record
-                        st.success(f"Welcome back, {user_record['full_name']}!")
+                    u_rec = authenticate_user(l_ident, l_pass)
+                    if u_rec:
+                        st.session_state["current_user"] = u_rec
+                        st.success(f"Welcome back, {u_rec['full_name']}!")
                         st.rerun()
                     else:
-                        st.error("Authentication failed. Invalid credentials. If you forgot your password, switch to the '🆘 Forgot Password' tab.")
+                        st.error("Incorrect username or password. Check your credentials or reset your password.")
 
-            st.markdown("<br>", unsafe_allow_html=True)
-            st.markdown("<p style='font-size: 0.74rem; font-weight: 700; color: #64748B; text-transform: uppercase; margin-bottom: 8px;'>⚡ Instant Executive Evaluation Profiles:</p>", unsafe_allow_html=True)
-            q1, q2, q3 = st.columns(3)
-            with q1:
-                if st.button("👔 Chief Risk Officer\n(@admin)", use_container_width=True, help="One-click access as Chief Risk Officer"):
-                    st.session_state["current_user"] = get_user_by_username("admin") or authenticate_user("admin", "password123")
+            # --- Social SSO Buttons (Instagram & Snapchat style) ---
+            st.markdown("""
+            <div style="display:flex; align-items:center; margin:16px 0 12px 0; color:#8E8E8E; font-size:0.74rem; font-weight:700;">
+                <div style="flex:1; height:1px; background:#E2E8F0;"></div>
+                <span style="padding:0 12px; color:#94A3B8;">OR CONTINUE WITH</span>
+                <div style="flex:1; height:1px; background:#E2E8F0;"></div>
+            </div>
+            """, unsafe_allow_html=True)
+
+            sc1, sc2, sc3 = st.columns(3)
+            with sc1:
+                if st.button("🔴 Google", use_container_width=True, key="btn_sso_g"):
+                    st.session_state["social_mode"] = "Google" if st.session_state.get("social_mode") != "Google" else None
                     st.rerun()
-            with q2:
-                if st.button("📊 Lead Analyst\n(@analyst)", use_container_width=True, help="One-click access as Lead Credit Analyst"):
-                    st.session_state["current_user"] = get_user_by_username("analyst") or authenticate_user("analyst", "password123")
+            with sc2:
+                if st.button("🍏 Apple", use_container_width=True, key="btn_sso_a"):
+                    st.session_state["social_mode"] = "Apple" if st.session_state.get("social_mode") != "Apple" else None
                     st.rerun()
-            with q3:
-                if st.button("🔍 Portfolio Auditor\n(@guest)", use_container_width=True, help="One-click access as Portfolio Auditor"):
-                    st.session_state["current_user"] = get_user_by_username("guest") or authenticate_user("guest", "guest123")
+            with sc3:
+                if st.button("📱 Phone", use_container_width=True, key="btn_sso_p"):
+                    st.session_state["social_mode"] = "Phone" if st.session_state.get("social_mode") != "Phone" else None
                     st.rerun()
 
-        with tab_sso:
+            # Social SSO Drawer
+            if st.session_state.get("social_mode") == "Google":
+                with st.container():
+                    st.markdown("---")
+                    st.info("🔴 **Google One-Tap / Workspace SSO**")
+                    g_mail = st.text_input("Enter your Google Account email:", placeholder="name@company.com or name@gmail.com", key="ig_g_mail")
+                    g_name = st.text_input("Display Name:", placeholder="e.g. Gitansh Garg", key="ig_g_name")
+                    g_role = st.selectbox("Designated Level:", ["CRO Level (Executive)", "Senior Analyst Level", "Credit Underwriting Manager", "Portfolio Risk Specialist", "Reviewer Level"], index=1, key="ig_g_role")
+                    if st.button("Continue with Google Workspace", type="primary", use_container_width=True, key="ig_btn_g_cont"):
+                        if g_mail.strip():
+                            u_rec = authenticate_or_register_social("Google", g_mail, g_name, g_role)
+                            if u_rec:
+                                st.session_state["current_user"] = u_rec
+                                st.session_state["social_mode"] = None
+                                st.rerun()
+                        else:
+                            st.error("Please enter a valid email address.")
+
+            elif st.session_state.get("social_mode") == "Apple":
+                with st.container():
+                    st.markdown("---")
+                    st.info("🍏 **Apple ID Secure Authentication**")
+                    a_mail = st.text_input("Enter your Apple ID email:", placeholder="name@icloud.com or name@privaterelay.appleid.com", key="ig_a_mail")
+                    a_name = st.text_input("Display Name:", placeholder="e.g. Gitansh Garg", key="ig_a_name")
+                    a_role = st.selectbox("Designated Level:", ["CRO Level (Executive)", "Senior Analyst Level", "Credit Underwriting Manager", "Portfolio Risk Specialist", "Reviewer Level"], index=1, key="ig_a_role")
+                    if st.button("Continue with Apple ID", type="primary", use_container_width=True, key="ig_btn_a_cont"):
+                        if a_mail.strip():
+                            u_rec = authenticate_or_register_social("Apple", a_mail, a_name, a_role)
+                            if u_rec:
+                                st.session_state["current_user"] = u_rec
+                                st.session_state["social_mode"] = None
+                                st.rerun()
+                        else:
+                            st.error("Please enter a valid Apple ID email address.")
+
+            elif st.session_state.get("social_mode") == "Phone":
+                with st.container():
+                    st.markdown("---")
+                    st.info("📱 **Phone Number / SMS Access**")
+                    p_num = st.text_input("Mobile Phone Number:", placeholder="+1 (555) 000-0000 or 9876543210", key="ig_p_num")
+                    p_name = st.text_input("Full Name (for new profiles):", placeholder="e.g. Alex Morgan", key="ig_p_name")
+                    p_pref = st.text_input("Preferred User ID (Optional):", placeholder="e.g. amorgan", key="ig_p_pref")
+                    p_role = st.selectbox("Designated Level:", ["CRO Level (Executive)", "Senior Analyst Level", "Credit Underwriting Manager", "Portfolio Risk Specialist", "Reviewer Level"], index=1, key="ig_p_role")
+                    
+                    if "phone_otp" not in st.session_state:
+                        st.session_state["phone_otp"] = None
+                    
+                    if st.button("Request Security Code", use_container_width=True, key="ig_btn_req_otp"):
+                        if p_num.strip():
+                            import random
+                            st.session_state["phone_otp"] = str(random.randint(100000, 999999))
+                            st.session_state["phone_target"] = p_num.strip()
+                            st.info(f"🔒 **Verification Code**: Your 6-digit access code is **`{st.session_state['phone_otp']}`**")
+                        else:
+                            st.error("Please enter a valid phone number.")
+
+                    if st.session_state.get("phone_otp"):
+                        p_code = st.text_input("Enter 6-digit code:", key="ig_p_code")
+                        if st.button("Verify Code & Log In", type="primary", use_container_width=True, key="ig_btn_p_verify"):
+                            if p_code.strip() == st.session_state["phone_otp"]:
+                                u_rec = authenticate_or_register_contact(st.session_state["phone_target"], full_name=p_name, role=p_role, preferred_id=p_pref)
+                                if u_rec:
+                                    st.session_state["current_user"] = u_rec
+                                    st.session_state["phone_otp"] = None
+                                    st.session_state["social_mode"] = None
+                                    st.rerun()
+                            else:
+                                st.error("Incorrect verification code.")
+
+            # Forgot Password link
+            st.markdown("<div style='margin-top: 18px;'></div>", unsafe_allow_html=True)
+            if st.button("Forgot password?", use_container_width=True, key="ig_link_forgot"):
+                st.session_state["auth_view"] = "forgot"
+                st.rerun()
+
+            # Secondary Bottom Card (Instagram style)
             st.markdown("<br>", unsafe_allow_html=True)
-            st.caption("Sign in securely through your institutional identity provider (Google Workspace or Apple ID).")
-            sso_provider = st.radio("Choose Identity Provider:", ["🔴 Google Workspace", "🍏 Apple ID"], horizontal=True)
+            st.markdown("""
+            <div class="ig-bottom-card">
+                Don't have an account?
+            </div>
+            """, unsafe_allow_html=True)
+            if st.button("Sign Up", use_container_width=True, key="ig_btn_go_signup"):
+                st.session_state["auth_view"] = "signup"
+                st.rerun()
 
-            if "Google" in sso_provider:
-                g_email = st.text_input("Google Workspace / Enterprise Email:", placeholder="e.g. yourname@firm.com or yourname@gmail.com", key="sso_g_email")
-                g_name = st.text_input("Your Full Name:", placeholder="e.g. John Doe", key="sso_g_name")
-                g_role = st.selectbox("Designated Institutional Level:", [
-                    "CRO Level (Executive)",
-                    "Senior Analyst Level",
-                    "Credit Underwriting Manager",
-                    "Portfolio Risk Specialist",
-                    "Reviewer Level"
-                ], index=1, key="sso_g_role")
+        # =====================================================================
+        # VIEW 2: SIGN UP (INSTAGRAM / SNAPCHAT STYLE)
+        # =====================================================================
+        elif auth_view == "signup":
+            st.markdown("""
+            <div class="ig-auth-card">
+                <div style="display: inline-flex; align-items: center; justify-content: center; width: 64px; height: 64px; border-radius: 20px; background: linear-gradient(45deg, #F58529, #FEDA77, #DD2A7B, #8134AF, #515BD4); box-shadow: 0 4px 18px rgba(221, 42, 123, 0.35); margin-bottom: 12px;">
+                    <span style="font-size: 32px;">🛡️</span>
+                </div>
+                <h1 style="font-size: 2.3rem; font-weight: 850; letter-spacing: -0.8px; margin: 0; background: linear-gradient(90deg, #2563EB 0%, #7C3AED 50%, #EC4899 100%); -webkit-background-clip: text; -webkit-text-fill-color: transparent;">CreditLens</h1>
+                <p style="color: #64748B; font-size: 0.86rem; margin-top: 4px; margin-bottom: 16px; font-weight: 500;">Sign up to view portfolios, analyze risk tiers, and model stress scenarios.</p>
+            </div>
+            """, unsafe_allow_html=True)
 
-                if st.button("Authenticate via Google Workspace", type="primary", use_container_width=True):
-                    if not g_email.strip():
-                        st.error("Please enter your Google Workspace email address.")
-                    else:
-                        user_rec = authenticate_or_register_social("Google", g_email, g_name, g_role)
-                        if user_rec:
-                            st.session_state["current_user"] = user_rec
-                            st.success(f"Authenticated as {user_rec['full_name']} (@{user_rec['username']}) via Google SSO!")
-                            st.rerun()
+            su_col1, su_col2 = st.columns(2)
+            with su_col1:
+                if st.button("🔴 Google Sign Up", use_container_width=True, key="ig_su_g"):
+                    st.session_state["social_mode"] = "Google"
+                    st.session_state["auth_view"] = "login"
+                    st.rerun()
+            with su_col2:
+                if st.button("🍏 Apple Sign Up", use_container_width=True, key="ig_su_a"):
+                    st.session_state["social_mode"] = "Apple"
+                    st.session_state["auth_view"] = "login"
+                    st.rerun()
 
-            else:
-                a_email = st.text_input("Apple ID / Private Relay Email:", placeholder="e.g. yourname@icloud.com or yourname@privaterelay.appleid.com", key="sso_a_email")
-                a_name = st.text_input("Your Full Name:", placeholder="e.g. John Doe", key="sso_a_name")
-                a_role = st.selectbox("Designated Institutional Level:", [
-                    "CRO Level (Executive)",
-                    "Senior Analyst Level",
-                    "Credit Underwriting Manager",
-                    "Portfolio Risk Specialist",
-                    "Reviewer Level"
-                ], index=1, key="sso_a_role")
+            st.markdown("""
+            <div style="display:flex; align-items:center; margin:16px 0 14px 0; color:#8E8E8E; font-size:0.74rem; font-weight:700;">
+                <div style="flex:1; height:1px; background:#E2E8F0;"></div>
+                <span style="padding:0 12px; color:#94A3B8;">OR SIGN UP WITH DETAILS</span>
+                <div style="flex:1; height:1px; background:#E2E8F0;"></div>
+            </div>
+            """, unsafe_allow_html=True)
 
-                if st.button("Authenticate via Apple ID", type="primary", use_container_width=True):
-                    if not a_email.strip():
-                        st.error("Please enter your Apple ID email address.")
-                    else:
-                        user_rec = authenticate_or_register_social("Apple", a_email, a_name, a_role)
-                        if user_rec:
-                            st.session_state["current_user"] = user_rec
-                            st.success(f"Authenticated as {user_rec['full_name']} (@{user_rec['username']}) via Apple ID!")
-                            st.rerun()
-
-        with tab_contact:
-            st.markdown("<br>", unsafe_allow_html=True)
-            st.caption("Sign in or self-register via your verified contact mobile number.")
-            c_phone = st.text_input("Mobile / Contact Phone Number:", placeholder="e.g. +1 (555) 234-5678 or 9876543210", key="contact_phone_in")
-            c_name = st.text_input("Your Full Name (for new profiles):", placeholder="e.g. Alex Morgan", key="contact_name_in")
-            c_pref = st.text_input("Preferred User ID (Optional):", placeholder="e.g. amorgan", key="contact_pref_in")
-            c_role = st.selectbox("Designated Institutional Level:", [
+            su_name = st.text_input("Full Display Name:", placeholder="e.g. Sarah Jenkins", key="ig_su_name")
+            su_user = st.text_input("Choose Username / ID:", placeholder="e.g. sjenkins", key="ig_su_user")
+            su_email = st.text_input("Work Email Address:", placeholder="e.g. sjenkins@bank.internal", key="ig_su_email")
+            su_phone = st.text_input("Mobile Phone (Optional):", placeholder="e.g. +1-555-0199", key="ig_su_phone")
+            su_pw = st.text_input("Choose Password:", type="password", placeholder="At least 4 characters", key="ig_su_pw")
+            su_role = st.selectbox("Designated Institutional Level:", [
                 "CRO Level (Executive)",
                 "Senior Analyst Level",
                 "Credit Underwriting Manager",
                 "Portfolio Risk Specialist",
                 "Reviewer Level"
-            ], index=1, key="contact_role_in")
+            ], index=1, key="ig_su_role")
 
-            if "c_otp_code" not in st.session_state:
-                st.session_state["c_otp_code"] = None
-                st.session_state["c_otp_phone"] = None
-
-            c_btn1, c_btn2 = st.columns(2)
-            with c_btn1:
-                if st.button("Request Security Token", use_container_width=True):
-                    if c_phone.strip():
-                        import random
-                        gen_code = str(random.randint(100000, 999999))
-                        st.session_state["c_otp_code"] = gen_code
-                        st.session_state["c_otp_phone"] = c_phone.strip()
-                        st.info(f"🔒 **Verification Token Dispatched**: Your 6-digit access code is **`{gen_code}`**")
-                    else:
-                        st.error("Please enter a valid mobile / contact number.")
-
-            with c_btn2:
-                if st.button("Reset Token", use_container_width=True):
-                    st.session_state["c_otp_code"] = None
-                    st.session_state["c_otp_phone"] = None
-                    st.rerun()
-
-            if st.session_state.get("c_otp_code"):
-                c_entered_code = st.text_input("Enter 6-Digit Token:", placeholder="6-digit verification code", key="contact_otp_in")
-                if st.button("Verify Token & Sign In", type="primary", use_container_width=True):
-                    if c_entered_code.strip() == st.session_state["c_otp_code"]:
-                        user_rec = authenticate_or_register_contact(
-                            st.session_state["c_otp_phone"],
-                            full_name=c_name,
-                            role=c_role,
-                            preferred_id=c_pref
-                        )
-                        if user_rec:
-                            st.session_state["current_user"] = user_rec
-                            st.session_state["c_otp_code"] = None
-                            st.session_state["c_otp_phone"] = None
-                            st.success(f"Authenticated as {user_rec['full_name']} (@{user_rec['username']})!")
-                            st.rerun()
-                    else:
-                        st.error("Invalid token. Please enter the correct 6-digit verification code.")
-
-        with tab_signup:
-            st.markdown("<br>", unsafe_allow_html=True)
-            st.caption("Create a new institutional profile for the CreditLens workbook.")
-            new_name = st.text_input("Full Display Name:", placeholder="e.g. Sarah Jenkins", key="signup_name")
-            new_username = st.text_input("Choose Username / User ID:", placeholder="e.g. sjenkins", key="signup_user")
-            new_email = st.text_input("Work Email Address (Optional):", placeholder="e.g. sjenkins@bank.internal", key="signup_email")
-            new_phone = st.text_input("Mobile Phone (Optional):", placeholder="e.g. +1-555-0199", key="signup_phone")
-            new_password = st.text_input("Choose Password:", type="password", placeholder="At least 4 characters", key="signup_pw")
-            new_role = st.selectbox("Organizational Level / Role:", [
-                "CRO Level (Executive)",
-                "Senior Analyst Level",
-                "Credit Underwriting Manager",
-                "Portfolio Risk Specialist",
-                "Reviewer Level"
-            ], key="signup_role")
-
-            if st.button("Create My Account", type="primary", use_container_width=True):
-                ok, msg = register_user(new_username, new_password, new_name, new_role, new_email, new_phone)
-                if ok:
-                    st.success(f"✅ {msg} You can now switch to the 'Sign In' tab to log in.")
+            if st.button("Sign Up", type="primary", use_container_width=True, key="ig_btn_submit_signup"):
+                if not su_name or not su_user or not su_pw:
+                    st.error("Please fill in your name, desired username, and password.")
                 else:
-                    st.error(f"❌ {msg}")
+                    ok, msg = register_user(su_user, su_pw, su_name, su_role, su_email, su_phone)
+                    if ok:
+                        st.success(f"✅ {msg} Redirecting to login...")
+                        st.session_state["auth_view"] = "login"
+                        st.rerun()
+                    else:
+                        st.error(f"❌ {msg}")
 
-        with tab_forgot:
             st.markdown("<br>", unsafe_allow_html=True)
-            st.caption("Forgot your password? Reset it easily using your registered username, corporate email, or contact number.")
-            f_ident = st.text_input("Username, Corporate Email, or Contact Number:", placeholder="e.g. admin or analyst@creditlens.internal", key="forgot_ident_tab")
-            f_new = st.text_input("New Desired Password:", type="password", placeholder="At least 4 characters", key="forgot_new_tab")
-            f_conf = st.text_input("Confirm New Password:", type="password", placeholder="Re-type new password", key="forgot_conf_tab")
+            st.markdown("""
+            <div class="ig-bottom-card">
+                Have an account?
+            </div>
+            """, unsafe_allow_html=True)
+            if st.button("Log In", use_container_width=True, key="ig_btn_back_login"):
+                st.session_state["auth_view"] = "login"
+                st.rerun()
 
-            if st.button("Reset Password Now", type="primary", use_container_width=True):
-                if not f_ident or not f_new:
+        # =====================================================================
+        # VIEW 3: FORGOT PASSWORD (INSTAGRAM TROUBLE LOGGING IN STYLE)
+        # =====================================================================
+        elif auth_view == "forgot":
+            st.markdown("""
+            <div class="ig-auth-card">
+                <div style="display: inline-flex; align-items: center; justify-content: center; width: 68px; height: 68px; border-radius: 50%; border: 2px solid #CBD5E1; margin-bottom: 12px; font-size: 32px;">
+                    🔒
+                </div>
+                <h3 style="margin: 0; font-weight: 800; font-size: 1.3rem;">Trouble Logging In?</h3>
+                <p style="color: #64748B; font-size: 0.85rem; margin-top: 6px; margin-bottom: 18px;">Enter your username, email, or contact number to reset your password and recover your account.</p>
+            </div>
+            """, unsafe_allow_html=True)
+
+            fg_ident = st.text_input("Username, Email, or Contact Number:", placeholder="e.g. admin or analyst@creditlens.internal", key="ig_fg_ident")
+            fg_new = st.text_input("New Password:", type="password", placeholder="At least 4 characters", key="ig_fg_new")
+            fg_conf = st.text_input("Confirm New Password:", type="password", placeholder="Re-type new password", key="ig_fg_conf")
+
+            if st.button("Reset Password", type="primary", use_container_width=True, key="ig_btn_reset_pw"):
+                if not fg_ident or not fg_new:
                     st.error("Please fill in all fields.")
-                elif f_new != f_conf:
+                elif fg_new != fg_conf:
                     st.error("New passwords do not match.")
                 else:
-                    ok, msg = reset_password_forgot(f_ident, f_new)
+                    ok, msg = reset_password_forgot(fg_ident, fg_new)
                     if ok:
                         st.success(f"✅ {msg}")
-                        st.info("👉 Switch to the '🔑 Sign In' tab to log in with your updated credentials.")
+                        st.info("👉 Redirecting to Log In...")
+                        st.session_state["auth_view"] = "login"
+                        st.rerun()
                     else:
                         st.error(f"❌ {msg}")
 
-        with tab_reset:
             st.markdown("<br>", unsafe_allow_html=True)
-            st.caption("Update your existing account password when you already know your current passkey.")
-            r_user = st.text_input("Username or Corporate Email:", placeholder="e.g. admin or analyst", key="reset_user_tab")
-            r_curr = st.text_input("Current Passkey / Password:", type="password", placeholder="Enter current passkey", key="reset_curr_tab")
-            r_new = st.text_input("New Passkey / Password:", type="password", placeholder="At least 4 characters", key="reset_new_tab")
-            r_conf = st.text_input("Confirm New Passkey:", type="password", placeholder="Repeat new passkey", key="reset_conf_tab")
-
-            if st.button("Update Passkey Now", type="primary", use_container_width=True):
-                if not r_user or not r_curr or not r_new:
-                    st.error("Please fill in all required fields.")
-                elif r_new != r_conf:
-                    st.error("New passwords do not match.")
-                elif not authenticate_user(r_user, r_curr):
-                    st.error("Verification failed: Username or current passkey does not match.")
-                else:
-                    ok, msg = update_password(r_user, r_new)
-                    if ok:
-                        st.success(f"✅ {msg} You can now sign in with your new passkey!")
-                    else:
-                        st.error(f"❌ {msg}")
+            st.markdown("""
+            <div class="ig-bottom-card">
+                Remember your credentials?
+            </div>
+            """, unsafe_allow_html=True)
+            if st.button("Back to Login", use_container_width=True, key="ig_btn_back_login_fg"):
+                st.session_state["auth_view"] = "login"
+                st.rerun()
 
 
 # =============================================================================
@@ -841,11 +990,17 @@ def main():
         u_username = f"@{current_u['username']}"
         u_level = current_u.get('role', 'Risk Analyst')
 
-        # Format requested: (user name , user id , cro level)
+        # Top-right encircled initial / profile photo badge: (user name , user id , cro level)
+        u_avatar_html = render_avatar_circle(current_u, size=36, font_size=0.95)
         st.markdown(f"""
-        <div style="text-align: right; margin-bottom: 6px;">
-            <span class="user-profile-badge">
-                👤 <b>{u_display_name}</b> &nbsp;|&nbsp; <code>{u_username}</code> &nbsp;|&nbsp; <span style="color:#2563EB; font-weight:700;">{u_level}</span>
+        <div style="display: flex; justify-content: flex-end; align-items: center; margin-bottom: 6px;">
+            <span class="user-profile-badge" style="display: inline-flex; align-items: center; gap: 8px; padding: 4px 14px 4px 6px; border-radius: 24px;">
+                {u_avatar_html}
+                <span style="font-weight: 750; font-size: 0.88rem;">{u_display_name}</span>
+                <span style="color: #94A3B8;">|</span>
+                <code>{u_username}</code>
+                <span style="color: #94A3B8;">|</span>
+                <span style="color:#2563EB; font-weight:700;">{u_level}</span>
             </span>
         </div>
         """, unsafe_allow_html=True)
@@ -853,8 +1008,50 @@ def main():
         c_act1, c_act2 = st.columns([1.8, 1])
         with c_act1:
             with st.popover("⚙️ Profile & ID Management", use_container_width=True):
-                st.markdown(f"**Current User:** `{u_display_name}` ({u_username})")
-                st.caption(f"Security Level: **{u_level}**")
+                lg_avatar_html = render_avatar_circle(current_u, size=64, font_size=1.8)
+                st.markdown(f"""
+                <div style="text-align: center; padding: 6px 0 10px 0;">
+                    {lg_avatar_html}
+                    <div style="font-weight: 800; font-size: 1.05rem; margin-top: 8px; color: var(--text-headline);">{u_display_name}</div>
+                    <div style="font-size: 0.82rem; color: #64748B;"><code>{u_username}</code> &nbsp;•&nbsp; <b>{u_level}</b></div>
+                </div>
+                """, unsafe_allow_html=True)
+
+                # Custom Profile Picture Uploader
+                with st.expander("📸 Add / Change Profile Picture", expanded=False):
+                    st.caption("Upload your custom photo to display encircled on the top right.")
+                    pfp_upload = st.file_uploader("Upload Profile Image (PNG, JPG):", type=["png", "jpg", "jpeg"], key="pfp_uploader_widget")
+                    if pfp_upload is not None:
+                        try:
+                            import io, base64
+                            from PIL import Image
+                            p_img = Image.open(pfp_upload)
+                            if p_img.mode not in ("RGB", "RGBA"):
+                                p_img = p_img.convert("RGBA")
+                            pw, ph = p_img.size
+                            p_min = min(pw, ph)
+                            p_img = p_img.crop(((pw - p_min)//2, (ph - p_min)//2, (pw + p_min)//2, (ph + p_min)//2))
+                            p_img.thumbnail((256, 256), Image.Resampling.LANCZOS)
+                            p_buf = io.BytesIO()
+                            p_img.save(p_buf, format="PNG", optimize=True)
+                            b64_str = f"data:image/png;base64,{base64.b64encode(p_buf.getvalue()).decode('utf-8')}"
+                            ok, msg = update_profile_avatar(current_u["username"], b64_str)
+                            if ok:
+                                st.session_state["current_user"]["avatar_data"] = b64_str
+                                st.success("✅ Profile picture updated successfully!")
+                                st.rerun()
+                            else:
+                                st.error(msg)
+                        except Exception as p_err:
+                            st.error(f"Image error: {p_err}")
+
+                    if current_u.get("avatar_data"):
+                        if st.button("🗑️ Remove Profile Photo (Restore Encircled Initial)", use_container_width=True, key="btn_remove_pfp"):
+                            update_profile_avatar(current_u["username"], "")
+                            st.session_state["current_user"]["avatar_data"] = ""
+                            st.success("Profile photo removed! Initial circle restored.")
+                            st.rerun()
+
                 st.divider()
 
                 pop_t1, pop_t2, pop_t3 = st.tabs(["👥 Switch ID", "🔑 Change Password", "✨ Create ID"])
