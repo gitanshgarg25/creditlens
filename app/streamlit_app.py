@@ -288,6 +288,108 @@ st.markdown("""
         box-shadow: 0 2px 6px rgba(0, 0, 0, 0.15);
         flex-shrink: 0;
     }
+
+    /* Clean Minimalist Social Logo Buttons (Zero Emojis, Pure Official SVGs) */
+    .social-btn-wrap {
+        display: flex;
+        justify-content: center;
+        align-items: center;
+        width: 100%;
+    }
+    .social-btn-wrap div[data-testid="stButton"] {
+        width: 100% !important;
+    }
+    .social-btn-wrap div[data-testid="stButton"] button {
+        height: 48px !important;
+        width: 100% !important;
+        border-radius: 12px !important;
+        background-repeat: no-repeat !important;
+        background-position: center !important;
+        background-size: 22px 22px !important;
+        border: 1px solid var(--card-border, #E2E8F0) !important;
+        background-color: var(--card-bg, #FFFFFF) !important;
+        box-shadow: 0 1px 4px rgba(0, 0, 0, 0.04) !important;
+        color: transparent !important;
+        font-size: 0 !important;
+        transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1) !important;
+    }
+    .social-btn-wrap div[data-testid="stButton"] button p {
+        display: none !important;
+    }
+    .social-btn-wrap div[data-testid="stButton"] button:hover {
+        transform: translateY(-2px) !important;
+        box-shadow: 0 5px 14px rgba(0, 0, 0, 0.09) !important;
+    }
+    .google-btn-wrap div[data-testid="stButton"] button {
+        background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24'%3E%3Cpath fill='%234285F4' d='M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z'/%3E%3Cpath fill='%2334A853' d='M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z'/%3E%3Cpath fill='%23FBBC05' d='M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.06H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.94l2.85-2.22.81-.63z'/%3E%3Cpath fill='%23EA4335' d='M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.06l3.66 2.84c.87-2.6 3.3-4.52 6.16-4.52z'/%3E%3C/svg%3E") !important;
+    }
+    .apple-btn-wrap div[data-testid="stButton"] button {
+        background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 170 170' fill='%23111827'%3E%3Cpath d='M150.37 130.25c-2.45 5.66-5.35 10.87-8.71 15.66-4.58 6.53-8.33 11.05-11.22 13.56-4.48 4.12-9.28 6.23-14.42 6.35-3.69 0-8.14-1.05-13.32-3.18-5.19-2.12-9.97-3.17-14.34-3.17-4.58 0-9.49 1.05-14.74 3.17-5.26 2.13-9.5 3.24-12.74 3.35-4.35.13-9.16-1.9-14.42-6.08-3.7-3.04-7.58-7.7-11.64-13.98-5.74-8.89-10.23-18.79-13.48-29.7-3.25-10.9-4.88-21.36-4.88-31.37 0-14.28 3.65-26.06 10.96-35.34 7.31-9.28 16.59-14.07 27.84-14.37 5.25 0 10.92 1.34 17.02 4.02 6.09 2.68 10.15 4.07 12.18 4.17 1.83 0 6.04-1.42 12.63-4.27 6.59-2.85 12.44-4.14 17.57-3.87 13.7.83 24.37 5.92 32.01 15.28-11.97 7.23-17.84 17.05-17.62 29.47.23 9.77 4.01 18.02 11.34 24.75 7.33 6.73 16.03 10.59 26.11 11.58-2.23 6.78-4.8 13.33-7.72 19.65zm-28.52-111.4c0 7.32-2.73 14.15-8.18 20.49-6.31 7.23-13.78 11.45-22.42 12.66-.46-1.63-.7-3.17-.7-4.63 0-7.33 3.01-14.62 9.03-21.87 6.02-7.25 13.47-11.55 22.36-12.9.15 2.08.23 4.17.23 6.25z'/%3E%3C/svg%3E") !important;
+    }
+    .phone-btn-wrap div[data-testid="stButton"] button {
+        background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%23334155' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='M22 16.92v3a2 2 0 0 1-2.18 2 19.79 19.79 0 0 1-8.63-3.07 19.5 19.5 0 0 1-6-6 19.79 19.79 0 0 1-3.07-8.67A2 2 0 0 1 4.11 2h3a2 2 0 0 1 2 1.72 12.84 12.84 0 0 0 .7 2.81 2 2 0 0 1-.45 2.11L8.09 9.91a16 16 0 0 0 6 6l1.27-1.27a2 2 0 0 1 2.11-.45 12.84 12.84 0 0 0 2.81.7A2 2 0 0 1 22 16.92z'/%3E%3C/svg%3E") !important;
+    }
+    [data-theme="dark"] .apple-btn-wrap div[data-testid="stButton"] button {
+        background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 170 170' fill='%23FFFFFF'%3E%3Cpath d='M150.37 130.25c-2.45 5.66-5.35 10.87-8.71 15.66-4.58 6.53-8.33 11.05-11.22 13.56-4.48 4.12-9.28 6.23-14.42 6.35-3.69 0-8.14-1.05-13.32-3.18-5.19-2.12-9.97-3.17-14.34-3.17-4.58 0-9.49 1.05-14.74 3.17-5.26 2.13-9.5 3.24-12.74 3.35-4.35.13-9.16-1.9-14.42-6.08-3.7-3.04-7.58-7.7-11.64-13.98-5.74-8.89-10.23-18.79-13.48-29.7-3.25-10.9-4.88-21.36-4.88-31.37 0-14.28 3.65-26.06 10.96-35.34 7.31-9.28 16.59-14.07 27.84-14.37 5.25 0 10.92 1.34 17.02 4.02 6.09 2.68 10.15 4.07 12.18 4.17 1.83 0 6.04-1.42 12.63-4.27 6.59-2.85 12.44-4.14 17.57-3.87 13.7.83 24.37 5.92 32.01 15.28-11.97 7.23-17.84 17.05-17.62 29.47.23 9.77 4.01 18.02 11.34 24.75 7.33 6.73 16.03 10.59 26.11 11.58-2.23 6.78-4.8 13.33-7.72 19.65zm-28.52-111.4c0 7.32-2.73 14.15-8.18 20.49-6.31 7.23-13.78 11.45-22.42 12.66-.46-1.63-.7-3.17-.7-4.63 0-7.33 3.01-14.62 9.03-21.87 6.02-7.25 13.47-11.55 22.36-12.9.15 2.08.23 4.17.23 6.25z'/%3E%3C/svg%3E") !important;
+    }
+    [data-theme="dark"] .phone-btn-wrap div[data-testid="stButton"] button {
+        background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%23F8FAFC' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='M22 16.92v3a2 2 0 0 1-2.18 2 19.79 19.79 0 0 1-8.63-3.07 19.5 19.5 0 0 1-6-6 19.79 19.79 0 0 1-3.07-8.67A2 2 0 0 1 4.11 2h3a2 2 0 0 1 2 1.72 12.84 12.84 0 0 0 .7 2.81 2 2 0 0 1-.45 2.11L8.09 9.91a16 16 0 0 0 6 6l1.27-1.27a2 2 0 0 1 2.11-.45 12.84 12.84 0 0 0 2.81.7A2 2 0 0 1 22 16.92z'/%3E%3C/svg%3E") !important;
+    }
+
+    /* Face ID Animation Card */
+    .faceid-modal-box {
+        background: var(--card-bg, #FFFFFF) !important;
+        border: 1px solid var(--card-border, #E2E8F0) !important;
+        border-radius: 20px;
+        padding: 30px 24px;
+        text-align: center;
+        box-shadow: 0 12px 32px rgba(0, 0, 0, 0.08);
+        margin-bottom: 16px;
+    }
+    .faceid-icon-circle {
+        width: 76px;
+        height: 76px;
+        margin: 0 auto 14px auto;
+        border-radius: 20px;
+        background: rgba(0, 113, 227, 0.08);
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        border: 2px solid rgba(0, 113, 227, 0.25);
+        animation: faceid-pulse 2.2s infinite ease-in-out;
+    }
+    @keyframes faceid-pulse {
+        0% { transform: scale(1); box-shadow: 0 0 0 0 rgba(0, 113, 227, 0.35); }
+        50% { transform: scale(1.04); box-shadow: 0 0 0 10px rgba(0, 113, 227, 0); }
+        100% { transform: scale(1); box-shadow: 0 0 0 0 rgba(0, 113, 227, 0); }
+    }
+
+    /* Google Popup Card */
+    .google-modal-box {
+        background: var(--card-bg, #FFFFFF) !important;
+        border: 1px solid var(--card-border, #E2E8F0) !important;
+        border-radius: 18px;
+        padding: 26px 22px;
+        box-shadow: 0 12px 32px rgba(0, 0, 0, 0.08);
+        margin-bottom: 16px;
+    }
+
+    /* Top-Right Account Popover Button */
+    div[data-testid="stPopover"] button {
+        border-radius: 24px !important;
+        border: 1px solid var(--card-border, #CBD5E1) !important;
+        background: var(--user-pill-bg, #F8FAFC) !important;
+        color: var(--user-pill-text, #0F172A) !important;
+        font-weight: 700 !important;
+        font-size: 0.88rem !important;
+        padding: 6px 16px !important;
+        box-shadow: 0 1px 4px rgba(0,0,0,0.04) !important;
+        transition: all 0.15s ease !important;
+    }
+    div[data-testid="stPopover"] button:hover {
+        border-color: #2563EB !important;
+        box-shadow: 0 3px 10px rgba(37, 99, 235, 0.12) !important;
+    }
 </style>
 """, unsafe_allow_html=True)
 
@@ -367,59 +469,201 @@ def render_auth_modal():
 
     with auth_box:
         # =====================================================================
-        # VIEW 1: LOG IN (INSTAGRAM / SNAPCHAT STYLE)
+        # DEDICATED SOCIAL MODAL 1: APPLE ID WITH FACE ID
         # =====================================================================
-        if auth_view == "login":
+        if st.session_state.get("social_mode") == "Apple":
             st.markdown("""
-            <div class="ig-auth-card">
-                <div style="display: inline-flex; align-items: center; justify-content: center; width: 64px; height: 64px; border-radius: 20px; background: linear-gradient(45deg, #F58529, #FEDA77, #DD2A7B, #8134AF, #515BD4); box-shadow: 0 4px 18px rgba(221, 42, 123, 0.35); margin-bottom: 12px;">
-                    <span style="font-size: 32px;">🛡️</span>
+            <div class="faceid-modal-box">
+                <div style="margin-bottom: 12px;">
+                    <svg width="34" height="34" viewBox="0 0 170 170" fill="currentColor" style="color: var(--text-headline);">
+                        <path d="M150.37 130.25c-2.45 5.66-5.35 10.87-8.71 15.66-4.58 6.53-8.33 11.05-11.22 13.56-4.48 4.12-9.28 6.23-14.42 6.35-3.69 0-8.14-1.05-13.32-3.18-5.19-2.12-9.97-3.17-14.34-3.17-4.58 0-9.49 1.05-14.74 3.17-5.26 2.13-9.5 3.24-12.74 3.35-4.35.13-9.16-1.9-14.42-6.08-3.7-3.04-7.58-7.7-11.64-13.98-5.74-8.89-10.23-18.79-13.48-29.7-3.25-10.9-4.88-21.36-4.88-31.37 0-14.28 3.65-26.06 10.96-35.34 7.31-9.28 16.59-14.07 27.84-14.37 5.25 0 10.92 1.34 17.02 4.02 6.09 2.68 10.15 4.07 12.18 4.17 1.83 0 6.04-1.42 12.63-4.27 6.59-2.85 12.44-4.14 17.57-3.87 13.7.83 24.37 5.92 32.01 15.28-11.97 7.23-17.84 17.05-17.62 29.47.23 9.77 4.01 18.02 11.34 24.75 7.33 6.73 16.03 10.59 26.11 11.58-2.23 6.78-4.8 13.33-7.72 19.65zm-28.52-111.4c0 7.32-2.73 14.15-8.18 20.49-6.31 7.23-13.78 11.45-22.42 12.66-.46-1.63-.7-3.17-.7-4.63 0-7.33 3.01-14.62 9.03-21.87 6.02-7.25 13.47-11.55 22.36-12.9.15 2.08.23 4.17.23 6.25z"/>
+                    </svg>
                 </div>
-                <h1 style="font-size: 2.3rem; font-weight: 850; letter-spacing: -0.8px; margin: 0; background: linear-gradient(90deg, #2563EB 0%, #7C3AED 50%, #EC4899 100%); -webkit-background-clip: text; -webkit-text-fill-color: transparent;">CreditLens</h1>
-                <p style="color: #64748B; font-size: 0.86rem; margin-top: 4px; margin-bottom: 18px; font-weight: 500;">Institutional Credit Risk & Portfolio Intelligence</p>
+                <div class="faceid-icon-circle">
+                    <svg width="42" height="42" viewBox="0 0 64 64" fill="none" stroke="#0071E3" stroke-width="3" stroke-linecap="round" stroke-linejoin="round">
+                        <path d="M16 8H10a4 4 0 0 0-4 4v6M48 8h6a4 4 0 0 1 4 4v6M16 56h-6a4 4 0 0 1-4-4v-6M48 56h6a4 4 0 0 0 4-4v-6"/>
+                        <circle cx="23" cy="26" r="2.5" fill="#0071E3"/>
+                        <circle cx="41" cy="26" r="2.5" fill="#0071E3"/>
+                        <path d="M32 25v13l-4-2"/>
+                        <path d="M22 43c3 4 17 4 20 0"/>
+                    </svg>
+                </div>
+                <h3 style="font-weight: 750; font-size: 1.3rem; margin: 2px 0 6px 0; color: var(--text-headline);">Sign in with Face ID</h3>
+                <p style="color: #64748B; font-size: 0.86rem; margin: 0 0 18px 0;">Look directly at your device camera to authenticate into CreditLens.</p>
+                <div style="background: rgba(0, 113, 227, 0.05); border: 1px solid rgba(0, 113, 227, 0.16); border-radius: 12px; padding: 12px 14px; font-size: 0.86rem; color: #0071E3; font-weight: 600; margin-bottom: 20px;">
+                    Apple ID: gitansh.apple@icloud.internal
+                </div>
             </div>
             """, unsafe_allow_html=True)
 
-            # --- Instagram Saved Profile Quick Login ---
+            if st.button("Authenticate with Face ID", type="primary", use_container_width=True, key="btn_faceid_scan"):
+                import time
+                with st.spinner("Scanning Face ID..."):
+                    time.sleep(0.5)
+                u_rec = authenticate_or_register_social("Apple", "gitansh.apple@icloud.internal", "Gitansh Garg", "CRO Level (Executive)")
+                if u_rec:
+                    st.session_state["current_user"] = u_rec
+                    st.session_state["social_mode"] = None
+                    st.success("Face ID Verified ✓")
+                    st.rerun()
+
+            if st.button("Cancel", use_container_width=True, key="btn_faceid_cancel"):
+                st.session_state["social_mode"] = None
+                st.rerun()
+
+        # =====================================================================
+        # DEDICATED SOCIAL MODAL 2: GOOGLE ACCOUNTS POPUP (login.google.com)
+        # =====================================================================
+        elif st.session_state.get("social_mode") == "Google":
+            st.markdown("""
+            <div class="google-modal-box">
+                <div style="display: flex; align-items: center; justify-content: center; gap: 8px; margin-bottom: 8px;">
+                    <svg width="24" height="24" viewBox="0 0 24 24">
+                        <path fill="#4285F4" d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z"/>
+                        <path fill="#34A853" d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z"/>
+                        <path fill="#FBBC05" d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.06H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.94l2.85-2.22.81-.63z"/>
+                        <path fill="#EA4335" d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.06l3.66 2.84c.87-2.6 3.3-4.52 6.16-4.52z"/>
+                    </svg>
+                    <span style="font-size: 1.15rem; font-weight: 600; color: var(--text-headline);">Google</span>
+                </div>
+                <h3 style="margin: 0; font-size: 1.25rem; font-weight: 600; color: var(--text-headline);">Sign in with Google</h3>
+                <p style="color: #5F6368; font-size: 0.85rem; margin: 4px 0 16px 0;">to continue to <b>login.google.com</b> / CreditLens</p>
+                
+                <div style="display: flex; align-items: center; gap: 12px; padding: 12px 14px; border: 1px solid #DADCE0; border-radius: 10px; background: rgba(66, 133, 244, 0.04); margin-bottom: 16px; text-align: left;">
+                    <div style="width: 40px; height: 40px; border-radius: 50%; background: #4285F4; color: white; display: flex; align-items: center; justify-content: center; font-weight: 700; font-size: 1.05rem;">G</div>
+                    <div style="flex: 1;">
+                        <div style="font-weight: 600; font-size: 0.94rem; color: var(--text-headline);">Gitansh Garg</div>
+                        <div style="font-size: 0.8rem; color: #5F6368;">gitanshgarg@gmail.com</div>
+                    </div>
+                    <div style="color: #1A73E8; font-size: 0.82rem; font-weight: 600;">Active</div>
+                </div>
+            </div>
+            """, unsafe_allow_html=True)
+
+            if st.button("Continue as Gitansh", type="primary", use_container_width=True, key="btn_g_continue"):
+                u_rec = authenticate_or_register_social("Google", "gitanshgarg@gmail.com", "Gitansh Garg", "CRO Level (Executive)")
+                if u_rec:
+                    st.session_state["current_user"] = u_rec
+                    st.session_state["social_mode"] = None
+                    st.rerun()
+
+            with st.expander("Use another Google account", expanded=False):
+                g_other_email = st.text_input("Email or phone:", placeholder="user@gmail.com or workspace account", key="g_other_mail")
+                g_other_name = st.text_input("Display Name:", placeholder="e.g. John Doe", key="g_other_name")
+                if st.button("Next", use_container_width=True, key="btn_g_other_submit"):
+                    if g_other_email.strip():
+                        u_rec = authenticate_or_register_social("Google", g_other_email.strip(), g_other_name.strip() or "Google User", "Senior Analyst Level")
+                        if u_rec:
+                            st.session_state["current_user"] = u_rec
+                            st.session_state["social_mode"] = None
+                            st.rerun()
+                    else:
+                        st.error("Please enter a valid Google email.")
+
+            if st.button("Cancel", use_container_width=True, key="btn_g_cancel"):
+                st.session_state["social_mode"] = None
+                st.rerun()
+
+        # =====================================================================
+        # DEDICATED SOCIAL MODAL 3: PHONE / SMS ACCESS
+        # =====================================================================
+        elif st.session_state.get("social_mode") == "Phone":
+            st.markdown("""
+            <div class="google-modal-box">
+                <div style="display: flex; align-items: center; justify-content: center; margin-bottom: 8px;">
+                    <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="#2563EB" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                        <path d="M22 16.92v3a2 2 0 0 1-2.18 2 19.79 19.79 0 0 1-8.63-3.07 19.5 19.5 0 0 1-6-6 19.79 19.79 0 0 1-3.07-8.67A2 2 0 0 1 4.11 2h3a2 2 0 0 1 2 1.72 12.84 12.84 0 0 0 .7 2.81 2 2 0 0 1-.45 2.11L8.09 9.91a16 16 0 0 0 6 6l1.27-1.27a2 2 0 0 1 2.11-.45 12.84 12.84 0 0 0 2.81.7A2 2 0 0 1 22 16.92z"/>
+                    </svg>
+                </div>
+                <h3 style="margin: 0; font-size: 1.25rem; font-weight: 700; color: var(--text-headline);">Sign in with Phone</h3>
+                <p style="color: #64748B; font-size: 0.85rem; margin: 4px 0 16px 0;">Enter your mobile number to receive a secure SMS access code.</p>
+            </div>
+            """, unsafe_allow_html=True)
+
+            p_num = st.text_input("Mobile Phone Number:", placeholder="+1 (555) 000-0000 or 9876543210", key="ig_p_num")
+            if "phone_otp" not in st.session_state:
+                st.session_state["phone_otp"] = None
+
+            if st.button("Request Security Code", use_container_width=True, key="ig_btn_req_otp"):
+                if p_num.strip():
+                    import random
+                    st.session_state["phone_otp"] = str(random.randint(100000, 999999))
+                    st.session_state["phone_target"] = p_num.strip()
+                    st.info(f"Verification Code: Your 6-digit access code is **`{st.session_state['phone_otp']}`**")
+                else:
+                    st.error("Please enter a valid phone number.")
+
+            if st.session_state.get("phone_otp"):
+                p_code = st.text_input("Enter 6-digit code:", key="ig_p_code")
+                if st.button("Verify Code & Log In", type="primary", use_container_width=True, key="ig_btn_p_verify"):
+                    if p_code.strip() == st.session_state["phone_otp"]:
+                        u_rec = authenticate_or_register_contact(st.session_state["phone_target"], full_name="Gitansh Garg", role="CRO Level (Executive)")
+                        if u_rec:
+                            st.session_state["current_user"] = u_rec
+                            st.session_state["phone_otp"] = None
+                            st.session_state["social_mode"] = None
+                            st.rerun()
+                    else:
+                        st.error("Incorrect verification code.")
+
+            if st.button("Cancel", use_container_width=True, key="btn_p_cancel"):
+                st.session_state["social_mode"] = None
+                st.rerun()
+
+        # =====================================================================
+        # STANDARD VIEW 1: CLEAN MINIMALIST LOG IN
+        # =====================================================================
+        elif auth_view == "login":
+            st.markdown("""
+            <div class="ig-auth-card">
+                <div style="display: inline-flex; align-items: center; justify-content: center; width: 56px; height: 56px; border-radius: 16px; background: linear-gradient(135deg, #2563EB 0%, #1D4ED8 100%); box-shadow: 0 4px 14px rgba(37, 99, 235, 0.25); margin-bottom: 10px;">
+                    <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="#FFFFFF" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
+                        <path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/>
+                    </svg>
+                </div>
+                <h1 style="font-size: 2.1rem; font-weight: 850; letter-spacing: -0.8px; margin: 0; background: linear-gradient(90deg, #2563EB 0%, #0284C7 50%, #38BDF8 100%); -webkit-background-clip: text; -webkit-text-fill-color: transparent;">CreditLens</h1>
+                <p style="color: #64748B; font-size: 0.85rem; margin-top: 4px; margin-bottom: 16px; font-weight: 500;">Institutional Credit Risk & Portfolio Intelligence</p>
+            </div>
+            """, unsafe_allow_html=True)
+
+            # --- Saved Profile Quick Login ---
             default_u = get_user_by_username("admin")
             if default_u:
-                def_av_html = render_avatar_circle(default_u, size=64, font_size=1.7)
+                def_av_html = render_avatar_circle(default_u, size=52, font_size=1.4)
                 st.markdown(f"""
-                <div style="text-align: center; padding: 14px 16px; background: rgba(37, 99, 235, 0.05); border: 1px solid rgba(37, 99, 235, 0.15); border-radius: 14px; margin-bottom: 14px;">
+                <div style="text-align: center; padding: 14px 16px; background: rgba(37, 99, 235, 0.04); border: 1px solid rgba(37, 99, 235, 0.14); border-radius: 14px; margin-bottom: 12px;">
                     <div style="margin-bottom: 8px;">{def_av_html}</div>
                     <div style="font-weight: 750; font-size: 0.96rem; color: var(--text-headline);">{default_u['full_name']}</div>
                     <div style="font-size: 0.78rem; color: #64748B;">@{default_u['username']} &nbsp;•&nbsp; <span style="color:#2563EB; font-weight:600;">{default_u['role']}</span></div>
                 </div>
                 """, unsafe_allow_html=True)
 
-                if st.button(f"Log In as {default_u['full_name']}", type="primary", use_container_width=True, key="ig_btn_quick_admin"):
+                if st.button(f"Continue as {default_u['full_name']}", type="primary", use_container_width=True, key="btn_quick_admin"):
                     st.session_state["current_user"] = default_u
                     st.rerun()
 
-                # Fast chips for other profiles
-                c_chip1, c_chip2 = st.columns(2)
-                with c_chip1:
+                c_q1, c_q2 = st.columns(2)
+                with c_q1:
                     u_ana = get_user_by_username("analyst")
-                    if st.button("📊 Lead Analyst (@analyst)", use_container_width=True, key="ig_chip_analyst"):
+                    if st.button("Lead Analyst (@analyst)", use_container_width=True, key="btn_quick_analyst"):
                         st.session_state["current_user"] = u_ana or authenticate_user("analyst", "password123")
                         st.rerun()
-                with c_chip2:
+                with c_q2:
                     u_gst = get_user_by_username("guest")
-                    if st.button("🔍 Auditor (@guest)", use_container_width=True, key="ig_chip_guest"):
+                    if st.button("Portfolio Auditor (@guest)", use_container_width=True, key="btn_quick_guest"):
                         st.session_state["current_user"] = u_gst or authenticate_user("guest", "guest123")
                         st.rerun()
 
             # --- Divider ---
             st.markdown("""
-            <div style="display:flex; align-items:center; margin:18px 0 14px 0; color:#8E8E8E; font-size:0.74rem; font-weight:700;">
-                <div style="flex:1; height:1px; background:#E2E8F0;"></div>
+            <div style="display:flex; align-items:center; margin:16px 0 12px 0; color:#8E8E8E; font-size:0.72rem; font-weight:700;">
+                <div style="flex:1; height:1px; background:var(--card-border, #E2E8F0);"></div>
                 <span style="padding:0 12px; color:#94A3B8;">OR LOG IN WITH CREDENTIALS</span>
-                <div style="flex:1; height:1px; background:#E2E8F0;"></div>
+                <div style="flex:1; height:1px; background:var(--card-border, #E2E8F0);"></div>
             </div>
             """, unsafe_allow_html=True)
 
-            # --- Standard Inputs ---
-            l_ident = st.text_input("Username, email, or contact:", placeholder="Phone number, username, or email", key="ig_field_ident")
+            l_ident = st.text_input("Username or email:", placeholder="Username, email, or phone", key="ig_field_ident")
             l_pass = st.text_input("Password:", placeholder="Password", type="password", key="ig_field_pass")
 
             if st.button("Log In", type="primary", use_container_width=True, key="ig_btn_submit_login"):
@@ -432,107 +676,44 @@ def render_auth_modal():
                         st.success(f"Welcome back, {u_rec['full_name']}!")
                         st.rerun()
                     else:
-                        st.error("Incorrect username or password. Check your credentials or reset your password.")
+                        st.error("Incorrect username or password.")
 
-            # --- Social SSO Buttons (Instagram & Snapchat style) ---
+            # --- Clean Social Buttons (Pure SVG Logos, Zero Emojis) ---
             st.markdown("""
-            <div style="display:flex; align-items:center; margin:16px 0 12px 0; color:#8E8E8E; font-size:0.74rem; font-weight:700;">
-                <div style="flex:1; height:1px; background:#E2E8F0;"></div>
+            <div style="display:flex; align-items:center; margin:16px 0 12px 0; color:#8E8E8E; font-size:0.72rem; font-weight:700;">
+                <div style="flex:1; height:1px; background:var(--card-border, #E2E8F0);"></div>
                 <span style="padding:0 12px; color:#94A3B8;">OR CONTINUE WITH</span>
-                <div style="flex:1; height:1px; background:#E2E8F0;"></div>
+                <div style="flex:1; height:1px; background:var(--card-border, #E2E8F0);"></div>
             </div>
             """, unsafe_allow_html=True)
 
             sc1, sc2, sc3 = st.columns(3)
             with sc1:
-                if st.button("🔴 Google", use_container_width=True, key="btn_sso_g"):
-                    st.session_state["social_mode"] = "Google" if st.session_state.get("social_mode") != "Google" else None
+                st.markdown('<div class="social-btn-wrap google-btn-wrap">', unsafe_allow_html=True)
+                if st.button("Google", use_container_width=True, key="btn_sso_g", help="Sign in with Google"):
+                    st.session_state["social_mode"] = "Google"
                     st.rerun()
+                st.markdown('</div>', unsafe_allow_html=True)
+
             with sc2:
-                if st.button("🍏 Apple", use_container_width=True, key="btn_sso_a"):
-                    st.session_state["social_mode"] = "Apple" if st.session_state.get("social_mode") != "Apple" else None
+                st.markdown('<div class="social-btn-wrap apple-btn-wrap">', unsafe_allow_html=True)
+                if st.button("Apple", use_container_width=True, key="btn_sso_a", help="Sign in with Apple (Face ID)"):
+                    st.session_state["social_mode"] = "Apple"
                     st.rerun()
+                st.markdown('</div>', unsafe_allow_html=True)
+
             with sc3:
-                if st.button("📱 Phone", use_container_width=True, key="btn_sso_p"):
-                    st.session_state["social_mode"] = "Phone" if st.session_state.get("social_mode") != "Phone" else None
+                st.markdown('<div class="social-btn-wrap phone-btn-wrap">', unsafe_allow_html=True)
+                if st.button("Phone", use_container_width=True, key="btn_sso_p", help="Sign in with Phone"):
+                    st.session_state["social_mode"] = "Phone"
                     st.rerun()
+                st.markdown('</div>', unsafe_allow_html=True)
 
-            # Social SSO Drawer
-            if st.session_state.get("social_mode") == "Google":
-                with st.container():
-                    st.markdown("---")
-                    st.info("🔴 **Google One-Tap / Workspace SSO**")
-                    g_mail = st.text_input("Enter your Google Account email:", placeholder="name@company.com or name@gmail.com", key="ig_g_mail")
-                    g_name = st.text_input("Display Name:", placeholder="e.g. Gitansh Garg", key="ig_g_name")
-                    g_role = st.selectbox("Designated Level:", ["CRO Level (Executive)", "Senior Analyst Level", "Credit Underwriting Manager", "Portfolio Risk Specialist", "Reviewer Level"], index=1, key="ig_g_role")
-                    if st.button("Continue with Google Workspace", type="primary", use_container_width=True, key="ig_btn_g_cont"):
-                        if g_mail.strip():
-                            u_rec = authenticate_or_register_social("Google", g_mail, g_name, g_role)
-                            if u_rec:
-                                st.session_state["current_user"] = u_rec
-                                st.session_state["social_mode"] = None
-                                st.rerun()
-                        else:
-                            st.error("Please enter a valid email address.")
-
-            elif st.session_state.get("social_mode") == "Apple":
-                with st.container():
-                    st.markdown("---")
-                    st.info("🍏 **Apple ID Secure Authentication**")
-                    a_mail = st.text_input("Enter your Apple ID email:", placeholder="name@icloud.com or name@privaterelay.appleid.com", key="ig_a_mail")
-                    a_name = st.text_input("Display Name:", placeholder="e.g. Gitansh Garg", key="ig_a_name")
-                    a_role = st.selectbox("Designated Level:", ["CRO Level (Executive)", "Senior Analyst Level", "Credit Underwriting Manager", "Portfolio Risk Specialist", "Reviewer Level"], index=1, key="ig_a_role")
-                    if st.button("Continue with Apple ID", type="primary", use_container_width=True, key="ig_btn_a_cont"):
-                        if a_mail.strip():
-                            u_rec = authenticate_or_register_social("Apple", a_mail, a_name, a_role)
-                            if u_rec:
-                                st.session_state["current_user"] = u_rec
-                                st.session_state["social_mode"] = None
-                                st.rerun()
-                        else:
-                            st.error("Please enter a valid Apple ID email address.")
-
-            elif st.session_state.get("social_mode") == "Phone":
-                with st.container():
-                    st.markdown("---")
-                    st.info("📱 **Phone Number / SMS Access**")
-                    p_num = st.text_input("Mobile Phone Number:", placeholder="+1 (555) 000-0000 or 9876543210", key="ig_p_num")
-                    p_name = st.text_input("Full Name (for new profiles):", placeholder="e.g. Alex Morgan", key="ig_p_name")
-                    p_pref = st.text_input("Preferred User ID (Optional):", placeholder="e.g. amorgan", key="ig_p_pref")
-                    p_role = st.selectbox("Designated Level:", ["CRO Level (Executive)", "Senior Analyst Level", "Credit Underwriting Manager", "Portfolio Risk Specialist", "Reviewer Level"], index=1, key="ig_p_role")
-                    
-                    if "phone_otp" not in st.session_state:
-                        st.session_state["phone_otp"] = None
-                    
-                    if st.button("Request Security Code", use_container_width=True, key="ig_btn_req_otp"):
-                        if p_num.strip():
-                            import random
-                            st.session_state["phone_otp"] = str(random.randint(100000, 999999))
-                            st.session_state["phone_target"] = p_num.strip()
-                            st.info(f"🔒 **Verification Code**: Your 6-digit access code is **`{st.session_state['phone_otp']}`**")
-                        else:
-                            st.error("Please enter a valid phone number.")
-
-                    if st.session_state.get("phone_otp"):
-                        p_code = st.text_input("Enter 6-digit code:", key="ig_p_code")
-                        if st.button("Verify Code & Log In", type="primary", use_container_width=True, key="ig_btn_p_verify"):
-                            if p_code.strip() == st.session_state["phone_otp"]:
-                                u_rec = authenticate_or_register_contact(st.session_state["phone_target"], full_name=p_name, role=p_role, preferred_id=p_pref)
-                                if u_rec:
-                                    st.session_state["current_user"] = u_rec
-                                    st.session_state["phone_otp"] = None
-                                    st.session_state["social_mode"] = None
-                                    st.rerun()
-                            else:
-                                st.error("Incorrect verification code.")
-
-            # Forgot Password link
-            st.markdown("<div style='margin-top: 18px;'></div>", unsafe_allow_html=True)
+            st.markdown("<div style='margin-top: 14px;'></div>", unsafe_allow_html=True)
             if st.button("Forgot password?", use_container_width=True, key="ig_link_forgot"):
                 st.session_state["auth_view"] = "forgot"
                 st.rerun()
 
-            # Secondary Bottom Card (Instagram style)
             st.markdown("<br>", unsafe_allow_html=True)
             st.markdown("""
             <div class="ig-bottom-card">
@@ -544,36 +725,43 @@ def render_auth_modal():
                 st.rerun()
 
         # =====================================================================
-        # VIEW 2: SIGN UP (INSTAGRAM / SNAPCHAT STYLE)
+        # VIEW 2: SIGN UP
         # =====================================================================
         elif auth_view == "signup":
             st.markdown("""
             <div class="ig-auth-card">
-                <div style="display: inline-flex; align-items: center; justify-content: center; width: 64px; height: 64px; border-radius: 20px; background: linear-gradient(45deg, #F58529, #FEDA77, #DD2A7B, #8134AF, #515BD4); box-shadow: 0 4px 18px rgba(221, 42, 123, 0.35); margin-bottom: 12px;">
-                    <span style="font-size: 32px;">🛡️</span>
+                <div style="display: inline-flex; align-items: center; justify-content: center; width: 56px; height: 56px; border-radius: 16px; background: linear-gradient(135deg, #2563EB 0%, #1D4ED8 100%); box-shadow: 0 4px 14px rgba(37, 99, 235, 0.25); margin-bottom: 10px;">
+                    <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="#FFFFFF" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
+                        <path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/>
+                    </svg>
                 </div>
-                <h1 style="font-size: 2.3rem; font-weight: 850; letter-spacing: -0.8px; margin: 0; background: linear-gradient(90deg, #2563EB 0%, #7C3AED 50%, #EC4899 100%); -webkit-background-clip: text; -webkit-text-fill-color: transparent;">CreditLens</h1>
-                <p style="color: #64748B; font-size: 0.86rem; margin-top: 4px; margin-bottom: 16px; font-weight: 500;">Sign up to view portfolios, analyze risk tiers, and model stress scenarios.</p>
+                <h1 style="font-size: 2.1rem; font-weight: 850; letter-spacing: -0.8px; margin: 0; background: linear-gradient(90deg, #2563EB 0%, #0284C7 50%, #38BDF8 100%); -webkit-background-clip: text; -webkit-text-fill-color: transparent;">CreditLens</h1>
+                <p style="color: #64748B; font-size: 0.85rem; margin-top: 4px; margin-bottom: 16px; font-weight: 500;">Register an institutional credit analyst account.</p>
             </div>
             """, unsafe_allow_html=True)
 
             su_col1, su_col2 = st.columns(2)
             with su_col1:
-                if st.button("🔴 Google Sign Up", use_container_width=True, key="ig_su_g"):
+                st.markdown('<div class="social-btn-wrap google-btn-wrap">', unsafe_allow_html=True)
+                if st.button("Google", use_container_width=True, key="ig_su_g", help="Sign up with Google"):
                     st.session_state["social_mode"] = "Google"
                     st.session_state["auth_view"] = "login"
                     st.rerun()
+                st.markdown('</div>', unsafe_allow_html=True)
+
             with su_col2:
-                if st.button("🍏 Apple Sign Up", use_container_width=True, key="ig_su_a"):
+                st.markdown('<div class="social-btn-wrap apple-btn-wrap">', unsafe_allow_html=True)
+                if st.button("Apple", use_container_width=True, key="ig_su_a", help="Sign up with Apple"):
                     st.session_state["social_mode"] = "Apple"
                     st.session_state["auth_view"] = "login"
                     st.rerun()
+                st.markdown('</div>', unsafe_allow_html=True)
 
             st.markdown("""
-            <div style="display:flex; align-items:center; margin:16px 0 14px 0; color:#8E8E8E; font-size:0.74rem; font-weight:700;">
-                <div style="flex:1; height:1px; background:#E2E8F0;"></div>
+            <div style="display:flex; align-items:center; margin:16px 0 14px 0; color:#8E8E8E; font-size:0.72rem; font-weight:700;">
+                <div style="flex:1; height:1px; background:var(--card-border, #E2E8F0);"></div>
                 <span style="padding:0 12px; color:#94A3B8;">OR SIGN UP WITH DETAILS</span>
-                <div style="flex:1; height:1px; background:#E2E8F0;"></div>
+                <div style="flex:1; height:1px; background:var(--card-border, #E2E8F0);"></div>
             </div>
             """, unsafe_allow_html=True)
 
@@ -596,11 +784,11 @@ def render_auth_modal():
                 else:
                     ok, msg = register_user(su_user, su_pw, su_name, su_role, su_email, su_phone)
                     if ok:
-                        st.success(f"✅ {msg} Redirecting to login...")
+                        st.success(f"{msg} Redirecting to login...")
                         st.session_state["auth_view"] = "login"
                         st.rerun()
                     else:
-                        st.error(f"❌ {msg}")
+                        st.error(f"{msg}")
 
             st.markdown("<br>", unsafe_allow_html=True)
             st.markdown("""
@@ -613,16 +801,19 @@ def render_auth_modal():
                 st.rerun()
 
         # =====================================================================
-        # VIEW 3: FORGOT PASSWORD (INSTAGRAM TROUBLE LOGGING IN STYLE)
+        # VIEW 3: FORGOT PASSWORD
         # =====================================================================
         elif auth_view == "forgot":
             st.markdown("""
             <div class="ig-auth-card">
-                <div style="display: inline-flex; align-items: center; justify-content: center; width: 68px; height: 68px; border-radius: 50%; border: 2px solid #CBD5E1; margin-bottom: 12px; font-size: 32px;">
-                    🔒
+                <div style="display: inline-flex; align-items: center; justify-content: center; width: 56px; height: 56px; border-radius: 50%; border: 2px solid #CBD5E1; margin-bottom: 10px;">
+                    <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="#2563EB" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                        <rect x="3" y="11" width="18" height="11" rx="2" ry="2"></rect>
+                        <path d="M7 11V7a5 5 0 0 1 10 0v4"></path>
+                    </svg>
                 </div>
-                <h3 style="margin: 0; font-weight: 800; font-size: 1.3rem;">Trouble Logging In?</h3>
-                <p style="color: #64748B; font-size: 0.85rem; margin-top: 6px; margin-bottom: 18px;">Enter your username, email, or contact number to reset your password and recover your account.</p>
+                <h3 style="margin: 0; font-weight: 800; font-size: 1.25rem;">Trouble Logging In?</h3>
+                <p style="color: #64748B; font-size: 0.85rem; margin-top: 4px; margin-bottom: 16px;">Enter your username, email, or contact number to reset your password.</p>
             </div>
             """, unsafe_allow_html=True)
 
@@ -638,12 +829,12 @@ def render_auth_modal():
                 else:
                     ok, msg = reset_password_forgot(fg_ident, fg_new)
                     if ok:
-                        st.success(f"✅ {msg}")
-                        st.info("👉 Redirecting to Log In...")
+                        st.success(f"{msg}")
+                        st.info("Redirecting to Log In...")
                         st.session_state["auth_view"] = "login"
                         st.rerun()
                     else:
-                        st.error(f"❌ {msg}")
+                        st.error(f"{msg}")
 
             st.markdown("<br>", unsafe_allow_html=True)
             st.markdown("""
@@ -1016,136 +1207,129 @@ def main():
         u_display_name = current_u['full_name']
         u_username = f"@{current_u['username']}"
         u_level = current_u.get('role', 'Risk Analyst')
+        u_avatar_html = render_avatar_circle(current_u, size=32, font_size=0.88)
 
-        # Top-right encircled initial / profile photo badge: (user name , user id , cro level)
-        u_avatar_html = render_avatar_circle(current_u, size=36, font_size=0.95)
+        # Unified Top-Right Status Badge
         st.markdown(f"""
         <div style="display: flex; justify-content: flex-end; align-items: center; margin-bottom: 6px;">
-            <span class="user-profile-badge" style="display: inline-flex; align-items: center; gap: 8px; padding: 4px 14px 4px 6px; border-radius: 24px;">
+            <div style="display: inline-flex; align-items: center; gap: 8px; background: var(--user-pill-bg, #F8FAFC); border: 1px solid var(--card-border, #CBD5E1); padding: 4px 14px 4px 6px; border-radius: 20px; box-shadow: 0 1px 3px rgba(0,0,0,0.03);">
                 {u_avatar_html}
-                <span style="font-weight: 750; font-size: 0.88rem;">{u_display_name}</span>
+                <span style="font-weight: 750; font-size: 0.88rem; color: var(--text-headline);">{u_display_name}</span>
                 <span style="color: #94A3B8;">|</span>
-                <code>{u_username}</code>
+                <code style="font-size: 0.82rem;">{u_username}</code>
                 <span style="color: #94A3B8;">|</span>
-                <span style="color:#2563EB; font-weight:700;">{u_level}</span>
-            </span>
+                <span style="color: #2563EB; font-weight: 700; font-size: 0.82rem;">{u_level}</span>
+            </div>
         </div>
         """, unsafe_allow_html=True)
 
-        c_act1, c_act2 = st.columns([1.8, 1])
-        with c_act1:
-            with st.popover("⚙️ Profile & ID Management", use_container_width=True):
-                lg_avatar_html = render_avatar_circle(current_u, size=64, font_size=1.8)
-                st.markdown(f"""
-                <div style="text-align: center; padding: 6px 0 10px 0;">
-                    {lg_avatar_html}
-                    <div style="font-weight: 800; font-size: 1.05rem; margin-top: 8px; color: var(--text-headline);">{u_display_name}</div>
-                    <div style="font-size: 0.82rem; color: #64748B;"><code>{u_username}</code> &nbsp;•&nbsp; <b>{u_level}</b></div>
-                </div>
-                """, unsafe_allow_html=True)
+        # Single Unified Popover for 1-Click ID Switching & Account Settings
+        with st.popover(f"Switch ID / Account Settings ▾", use_container_width=True):
+            # 1. Active Account Banner
+            lg_avatar_html = render_avatar_circle(current_u, size=52, font_size=1.4)
+            st.markdown(f"""
+            <div style="text-align: center; padding: 6px 0 12px 0; border-bottom: 1px solid var(--card-border, #E2E8F0); margin-bottom: 12px;">
+                <div style="margin-bottom: 6px;">{lg_avatar_html}</div>
+                <div style="font-weight: 800; font-size: 1.02rem; color: var(--text-headline);">{u_display_name}</div>
+                <div style="font-size: 0.82rem; color: #64748B;"><code>{u_username}</code> &nbsp;•&nbsp; <span style="color:#2563EB; font-weight:700;">{u_level}</span></div>
+            </div>
+            """, unsafe_allow_html=True)
 
-                # Custom Profile Picture Uploader
-                with st.expander("📸 Add / Change Profile Picture", expanded=False):
-                    st.caption("Upload your custom photo to display encircled on the top right.")
-                    pfp_upload = st.file_uploader("Upload Profile Image (PNG, JPG):", type=["png", "jpg", "jpeg"], key="pfp_uploader_widget")
-                    if pfp_upload is not None:
-                        try:
-                            import io, base64
-                            from PIL import Image
-                            p_img = Image.open(pfp_upload)
-                            if p_img.mode not in ("RGB", "RGBA"):
-                                p_img = p_img.convert("RGBA")
-                            pw, ph = p_img.size
-                            p_min = min(pw, ph)
-                            p_img = p_img.crop(((pw - p_min)//2, (ph - p_min)//2, (pw + p_min)//2, (ph + p_min)//2))
-                            p_img.thumbnail((256, 256), Image.Resampling.LANCZOS)
-                            p_buf = io.BytesIO()
-                            p_img.save(p_buf, format="PNG", optimize=True)
-                            b64_str = f"data:image/png;base64,{base64.b64encode(p_buf.getvalue()).decode('utf-8')}"
-                            ok, msg = update_profile_avatar(current_u["username"], b64_str)
-                            if ok:
-                                st.session_state["current_user"]["avatar_data"] = b64_str
-                                st.success("✅ Profile picture updated successfully!")
-                                st.rerun()
-                            else:
-                                st.error(msg)
-                        except Exception as p_err:
-                            st.error(f"Image error: {p_err}")
-
-                    if current_u.get("avatar_data"):
-                        if st.button("🗑️ Remove Profile Photo (Restore Encircled Initial)", use_container_width=True, key="btn_remove_pfp"):
-                            update_profile_avatar(current_u["username"], "")
-                            st.session_state["current_user"]["avatar_data"] = ""
-                            st.success("Profile photo removed! Initial circle restored.")
-                            st.rerun()
-
-                st.divider()
-
-                pop_t1, pop_t2, pop_t3 = st.tabs(["👥 Switch ID", "🔑 Change Password", "✨ Create ID"])
-
-                with pop_t1:
-                    st.markdown("##### Switch Profile Account")
-                    clean_users = list_users(exclude_temp=True)
-                    u_map = {f"{u['full_name']} (@{u['username']} · {u['role']})": u['username'] for u in clean_users}
-
-                    cur_label = next((k for k, v in u_map.items() if v == current_u["username"]), list(u_map.keys())[0] if u_map else "")
-                    sel_acc = st.selectbox("Select Account:", list(u_map.keys()), index=list(u_map.keys()).index(cur_label) if cur_label in u_map else 0, key="top_sel_acc")
-
-                    if st.button("Switch to Selected Account", type="primary", use_container_width=True, key="top_btn_switch"):
-                        target_user = u_map[sel_acc]
-                        u_target = get_user_by_username(target_user)
+            # 2. Fast 1-Tap Account Switcher (Clean & Instant)
+            st.markdown('<div style="font-size: 0.72rem; font-weight: 800; color: #94A3B8; text-transform: uppercase; letter-spacing: 0.6px; margin-bottom: 8px;">SWITCH ACCOUNT</div>', unsafe_allow_html=True)
+            clean_users = list_users(exclude_temp=True)
+            for acc in clean_users:
+                acc_un = acc["username"]
+                is_curr = (acc_un == current_u["username"])
+                acc_label = f"{acc['full_name']} (@{acc_un})"
+                if is_curr:
+                    st.button(f"✓ {acc_label} · Active", key=f"top_acc_{acc_un}", disabled=True, use_container_width=True)
+                else:
+                    if st.button(f"Switch to {acc_label}", key=f"top_acc_{acc_un}", use_container_width=True):
+                        u_target = get_user_by_username(acc_un)
                         if u_target:
                             st.session_state["current_user"] = u_target
                             st.rerun()
+
+            st.markdown('<div style="height: 1px; background: var(--card-border, #E2E8F0); margin: 12px 0;"></div>', unsafe_allow_html=True)
+
+            # 3. Clean Settings (Photo, Password, Create ID)
+            with st.expander("📸 Profile Photo", expanded=False):
+                pfp_upload = st.file_uploader("Upload Profile Image (PNG, JPG):", type=["png", "jpg", "jpeg"], key="pfp_uploader_widget")
+                if pfp_upload is not None:
+                    try:
+                        import io, base64
+                        from PIL import Image
+                        p_img = Image.open(pfp_upload)
+                        if p_img.mode not in ("RGB", "RGBA"):
+                            p_img = p_img.convert("RGBA")
+                        pw, ph = p_img.size
+                        p_min = min(pw, ph)
+                        p_img = p_img.crop(((pw - p_min)//2, (ph - p_min)//2, (pw + p_min)//2, (ph + p_min)//2))
+                        p_img.thumbnail((256, 256), Image.Resampling.LANCZOS)
+                        p_buf = io.BytesIO()
+                        p_img.save(p_buf, format="PNG", optimize=True)
+                        b64_str = f"data:image/png;base64,{base64.b64encode(p_buf.getvalue()).decode('utf-8')}"
+                        ok, msg = update_profile_avatar(current_u["username"], b64_str)
+                        if ok:
+                            st.session_state["current_user"]["avatar_data"] = b64_str
+                            st.success("Profile photo updated successfully!")
+                            st.rerun()
                         else:
-                            st.error(f"Could not load account details for @{target_user}.")
+                            st.error(msg)
+                    except Exception as p_err:
+                        st.error(f"Image error: {p_err}")
 
-                with pop_t2:
-                    st.markdown("##### Change Your Passkey / Password")
-                    with st.form("top_change_pw_form", clear_on_submit=True):
-                        tp_curr = st.text_input("Current Password:", type="password", key="top_cpw_curr")
-                        tp_new = st.text_input("New Password:", type="password", key="top_cpw_new")
-                        tp_conf = st.text_input("Confirm New Password:", type="password", key="top_cpw_conf")
-                        tp_sub = st.form_submit_button("Update Password", use_container_width=True)
+                if current_u.get("avatar_data"):
+                    if st.button("Remove Profile Photo", use_container_width=True, key="btn_remove_pfp"):
+                        update_profile_avatar(current_u["username"], "")
+                        st.session_state["current_user"]["avatar_data"] = ""
+                        st.success("Profile photo removed.")
+                        st.rerun()
 
-                        if tp_sub:
-                            if not tp_curr or not tp_new:
-                                st.error("Please fill in all fields.")
-                            elif tp_new != tp_conf:
-                                st.error("New passwords do not match.")
-                            elif not authenticate_user(current_u["username"], tp_curr):
-                                st.error("Current password incorrect.")
-                            else:
-                                ok, msg = update_password(current_u["username"], tp_new)
-                                if ok:
-                                    st.success(f"✅ {msg}")
-                                else:
-                                    st.error(f"❌ {msg}")
-
-                with pop_t3:
-                    st.markdown("##### Register a New User ID")
-                    with st.form("top_reg_form", clear_on_submit=True):
-                        reg_name = st.text_input("Full Display Name:", placeholder="e.g. Elena Rostova", key="top_reg_name")
-                        reg_user = st.text_input("Username / ID:", placeholder="e.g. erostova", key="top_reg_user")
-                        reg_role = st.selectbox("Organizational Level:", [
-                            "CRO Level (Executive)",
-                            "Senior Analyst Level",
-                            "Credit Underwriting Manager",
-                            "Portfolio Risk Specialist",
-                            "Reviewer Level"
-                        ], key="top_reg_role")
-                        reg_pw = st.text_input("Password:", type="password", placeholder="Min 4 characters", key="top_reg_pw")
-                        reg_sub = st.form_submit_button("Create Account ID", use_container_width=True)
-
-                        if reg_sub:
-                            ok, msg = register_user(reg_user, reg_pw, reg_name, reg_role)
+            with st.expander("🔑 Change Password", expanded=False):
+                with st.form("top_change_pw_form", clear_on_submit=True):
+                    tp_curr = st.text_input("Current Password:", type="password", key="top_cpw_curr")
+                    tp_new = st.text_input("New Password:", type="password", key="top_cpw_new")
+                    tp_conf = st.text_input("Confirm New Password:", type="password", key="top_cpw_conf")
+                    tp_sub = st.form_submit_button("Update Password", use_container_width=True)
+                    if tp_sub:
+                        if not tp_curr or not tp_new:
+                            st.error("Please fill in all fields.")
+                        elif tp_new != tp_conf:
+                            st.error("New passwords do not match.")
+                        elif not authenticate_user(current_u["username"], tp_curr):
+                            st.error("Current password incorrect.")
+                        else:
+                            ok, msg = update_password(current_u["username"], tp_new)
                             if ok:
-                                st.success(f"✅ {msg} You can now switch to @{reg_user.lower()}.")
+                                st.success(f"{msg}")
                             else:
-                                st.error(f"❌ {msg}")
+                                st.error(f"{msg}")
 
-        with c_act2:
-            if st.button("🚪 Sign Out", use_container_width=True, key="top_btn_signout"):
+            with st.expander("✨ Register New Account ID", expanded=False):
+                with st.form("top_reg_form", clear_on_submit=True):
+                    reg_name = st.text_input("Full Display Name:", placeholder="e.g. Elena Rostova", key="top_reg_name")
+                    reg_user = st.text_input("Username / ID:", placeholder="e.g. erostova", key="top_reg_user")
+                    reg_role = st.selectbox("Organizational Level:", [
+                        "CRO Level (Executive)",
+                        "Senior Analyst Level",
+                        "Credit Underwriting Manager",
+                        "Portfolio Risk Specialist",
+                        "Reviewer Level"
+                    ], key="top_reg_role")
+                    reg_pw = st.text_input("Password:", type="password", placeholder="Min 4 characters", key="top_reg_pw")
+                    reg_sub = st.form_submit_button("Create Account", use_container_width=True)
+                    if reg_sub:
+                        ok, msg = register_user(reg_user, reg_pw, reg_name, reg_role)
+                        if ok:
+                            st.success(f"{msg}")
+                            st.rerun()
+                        else:
+                            st.error(f"{msg}")
+
+            st.markdown('<div style="height: 10px;"></div>', unsafe_allow_html=True)
+            if st.button("Sign Out", use_container_width=True, key="top_btn_signout"):
                 st.session_state["current_user"] = None
                 st.rerun()
 
