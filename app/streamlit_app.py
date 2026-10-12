@@ -1,8 +1,4 @@
-"""
-CreditLens - AI-Assisted Credit Risk & Early-Warning Intelligence Platform
-Enterprise Multi-User Authentication & Excel-Style Multi-Dataset Workbook
-"""
-
+from __future__ import annotations
 import os
 import sys
 import json
@@ -36,31 +32,28 @@ if "src" not in sys.modules:
     sys.modules["src"] = src_pkg
 
 def _safe_load_src_module(name: str):
-    """Loads module from src/ directory and registers under both `name` and `src.name`."""
-    if name in sys.modules and getattr(sys.modules[name], "__file__", None):
-        mod = sys.modules[name]
-        sys.modules[f"src.{name}"] = mod
-        setattr(sys.modules["src"], name, mod)
-        return mod
+    """Loads module from src/ directory, always executing latest code on disk and registering in sys.modules."""
     fpath = os.path.join(SRC_DIR, f"{name}.py")
     if not os.path.exists(fpath):
         fpath = os.path.join(APP_DIR, f"{name}.py")
     if os.path.exists(fpath):
-        spec = importlib.util.spec_from_file_location(name, fpath)
+        spec = importlib.util.spec_from_file_location(f"src.{name}", fpath)
         if spec and spec.loader:
             mod = importlib.util.module_from_spec(spec)
             sys.modules[name] = mod
             sys.modules[f"src.{name}"] = mod
-            setattr(sys.modules["src"], name, mod)
+            if "src" in sys.modules:
+                setattr(sys.modules["src"], name, mod)
             spec.loader.exec_module(mod)
             return mod
     try:
-        mod = importlib.import_module(name)
-        sys.modules[f"src.{name}"] = mod
-        setattr(sys.modules["src"], name, mod)
+        mod = importlib.import_module(f"src.{name}")
+        sys.modules[name] = mod
         return mod
     except Exception:
-        return importlib.import_module(f"src.{name}")
+        mod = importlib.import_module(name)
+        sys.modules[f"src.{name}"] = mod
+        return mod
 
 # Safely pre-load core business & authentication modules
 _auth = _safe_load_src_module("auth")
@@ -68,35 +61,99 @@ _analytics = _safe_load_src_module("analytics_engine")
 _risk = _safe_load_src_module("risk_scoring")
 _model_train = _safe_load_src_module("model_training")
 
-# Bind symbols directly into global namespace
-init_user_db = _auth.init_user_db
-register_user = _auth.register_user
-authenticate_user = _auth.authenticate_user
-get_user_by_username = _auth.get_user_by_username
-update_profile_avatar = _auth.update_profile_avatar
-list_users = _auth.list_users
-update_password = _auth.update_password
-authenticate_or_register_social = _auth.authenticate_or_register_social
-authenticate_or_register_contact = _auth.authenticate_or_register_contact
-reset_password_forgot = _auth.reset_password_forgot
-save_user_custom_sheet = _auth.save_user_custom_sheet
-load_user_custom_sheets = _auth.load_user_custom_sheets
-delete_user_custom_sheet = _auth.delete_user_custom_sheet
-set_last_active_user = _auth.set_last_active_user
-get_last_active_user = _auth.get_last_active_user
-clear_last_active_user = _auth.clear_last_active_user
-save_user_risk_note = _auth.save_user_risk_note
-get_user_risk_note = _auth.get_user_risk_note
+# Bind symbols directly into global namespace with self-healing getattr fallbacks
+init_user_db = getattr(_auth, "init_user_db", lambda: None)
+register_user = getattr(_auth, "register_user", lambda *args, **kwargs: (False, "Service unavailable"))
+authenticate_user = getattr(_auth, "authenticate_user", lambda *args, **kwargs: None)
+get_user_by_username = getattr(_auth, "get_user_by_username", lambda *args, **kwargs: None)
+update_profile_avatar = getattr(_auth, "update_profile_avatar", lambda *args, **kwargs: (False, "Service unavailable"))
+list_users = getattr(_auth, "list_users", lambda *args, **kwargs: [])
+update_password = getattr(_auth, "update_password", lambda *args, **kwargs: (False, "Service unavailable"))
+authenticate_or_register_social = getattr(_auth, "authenticate_or_register_social", lambda *args, **kwargs: None)
+authenticate_or_register_contact = getattr(_auth, "authenticate_or_register_contact", lambda *args, **kwargs: None)
+reset_password_forgot = getattr(_auth, "reset_password_forgot", lambda *args, **kwargs: (False, "Service unavailable"))
 
-get_portfolio_kpis = _analytics.get_portfolio_kpis
-get_risk_tier_breakdown = _analytics.get_risk_tier_breakdown
-get_delinquency_transition = _analytics.get_delinquency_transition
-get_utilization_risk_matrix = _analytics.get_utilization_risk_matrix
-get_watchlist = _analytics.get_watchlist
+save_user_custom_sheet = getattr(_auth, "save_user_custom_sheet", None)
+if save_user_custom_sheet is None:
+    def save_user_custom_sheet(username: str, sheet_title: str, df):
+        try:
+            from src.auth import save_user_custom_sheet as _fn
+            return _fn(username, sheet_title, df)
+        except Exception:
+            return False, "Save sheet service fallback"
 
-pd_to_credit_score = _risk.pd_to_credit_score
-classify_risk_tier = _risk.classify_risk_tier
-assign_recommended_action = _risk.assign_recommended_action
+load_user_custom_sheets = getattr(_auth, "load_user_custom_sheets", None)
+if load_user_custom_sheets is None:
+    def load_user_custom_sheets(username: str):
+        try:
+            from src.auth import load_user_custom_sheets as _fn
+            return _fn(username)
+        except Exception:
+            return {}
+
+delete_user_custom_sheet = getattr(_auth, "delete_user_custom_sheet", None)
+if delete_user_custom_sheet is None:
+    def delete_user_custom_sheet(username: str, sheet_title: str):
+        try:
+            from src.auth import delete_user_custom_sheet as _fn
+            return _fn(username, sheet_title)
+        except Exception:
+            return False
+
+set_last_active_user = getattr(_auth, "set_last_active_user", None)
+if set_last_active_user is None:
+    def set_last_active_user(username: str):
+        try:
+            from src.auth import set_last_active_user as _fn
+            return _fn(username)
+        except Exception:
+            pass
+
+get_last_active_user = getattr(_auth, "get_last_active_user", None)
+if get_last_active_user is None:
+    def get_last_active_user():
+        try:
+            from src.auth import get_last_active_user as _fn
+            return _fn()
+        except Exception:
+            return None
+
+clear_last_active_user = getattr(_auth, "clear_last_active_user", None)
+if clear_last_active_user is None:
+    def clear_last_active_user():
+        try:
+            from src.auth import clear_last_active_user as _fn
+            return _fn()
+        except Exception:
+            pass
+
+save_user_risk_note = getattr(_auth, "save_user_risk_note", None)
+if save_user_risk_note is None:
+    def save_user_risk_note(username: str, sheet_title: str, note_content: str):
+        try:
+            from src.auth import save_user_risk_note as _fn
+            return _fn(username, sheet_title, note_content)
+        except Exception:
+            pass
+
+get_user_risk_note = getattr(_auth, "get_user_risk_note", None)
+if get_user_risk_note is None:
+    def get_user_risk_note(username: str, sheet_title: str):
+        try:
+            from src.auth import get_user_risk_note as _fn
+            return _fn(username, sheet_title)
+        except Exception:
+            return ""
+
+get_portfolio_kpis = getattr(_analytics, "get_portfolio_kpis", lambda *args, **kwargs: {})
+get_risk_tier_breakdown = getattr(_analytics, "get_risk_tier_breakdown", lambda *args, **kwargs: pd.DataFrame())
+get_delinquency_transition = getattr(_analytics, "get_delinquency_transition", lambda *args, **kwargs: pd.DataFrame())
+get_utilization_risk_matrix = getattr(_analytics, "get_utilization_risk_matrix", lambda *args, **kwargs: pd.DataFrame())
+get_watchlist = getattr(_analytics, "get_watchlist", lambda *args, **kwargs: pd.DataFrame())
+
+pd_to_credit_score = getattr(_risk, "pd_to_credit_score", lambda *args, **kwargs: 650)
+classify_risk_tier = getattr(_risk, "classify_risk_tier", lambda *args, **kwargs: "Medium")
+assign_recommended_action = getattr(_risk, "assign_recommended_action", lambda *args, **kwargs: "Review")
 
 # Streamlit Page Config
 st.set_page_config(

@@ -4,6 +4,7 @@ Standardizes credit default probabilities into 300-850 Credit Risk Scores,
 segments borrowers into risk tiers, and generates policy-driven risk actions.
 """
 
+from __future__ import annotations
 import numpy as np
 import pandas as pd
 

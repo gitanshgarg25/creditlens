@@ -5,6 +5,7 @@ Supports multi-user sign-up, sign-in, social OAuth (Google, Apple), Contact/Phon
 and "Forgot Password" self-service recovery.
 """
 
+from __future__ import annotations
 import os
 import sqlite3
 import hashlib

@@ -4,6 +4,7 @@ Computes core credit risk portfolio aggregations, delinquency migration,
 risk concentration, and portfolio watchlists for dashboards and reports.
 """
 
+from __future__ import annotations
 import pandas as pd
 import numpy as np
 

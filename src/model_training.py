@@ -4,6 +4,7 @@ Trains, compares, calibrates, and evaluates machine learning models for credit d
 Computes ROC-AUC, PR-AUC, KS Statistic, Confusion Matrix, and feature importances.
 """
 
+from __future__ import annotations
 import os
 import json
 import joblib

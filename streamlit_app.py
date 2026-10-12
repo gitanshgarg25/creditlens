@@ -1,8 +1,4 @@
-"""
-CreditLens - Enterprise Credit Risk Intelligence Platform
-Root Forwarder Entry Point for Streamlit Cloud Deployments
-"""
-
+from __future__ import annotations
 import os
 import sys
 
