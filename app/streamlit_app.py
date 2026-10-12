@@ -13,58 +13,82 @@ import plotly.express as px
 import plotly.graph_objects as go
 import streamlit as st
 
-# Setup Project Path (Robust resolution for both local development & Streamlit Cloud container)
+# Setup Project Path & Dynamic Module Ingestion
+# Robust resolution for Streamlit Cloud container (/mount/src/creditlens/...) and local environments
+import types
+import importlib.util
+
 BASE_DIR = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 SRC_DIR = os.path.join(BASE_DIR, "src")
+APP_DIR = os.path.dirname(os.path.abspath(__file__))
 
-# Prepend SRC_DIR and BASE_DIR so /mount/src on Streamlit Cloud never conflicts
-for _p in [SRC_DIR, BASE_DIR]:
+# Strip any conflicting /mount/src or /mount namespace collisions on Streamlit Cloud
+sys.path = [p for p in sys.path if os.path.abspath(p) not in ("/mount/src", "/mount")]
+for _p in [SRC_DIR, BASE_DIR, APP_DIR]:
     while _p in sys.path:
         sys.path.remove(_p)
     sys.path.insert(0, _p)
 
-try:
-    from auth import (
-        init_user_db,
-        register_user,
-        authenticate_user,
-        get_user_by_username,
-        update_profile_avatar,
-        list_users,
-        update_password,
-        authenticate_or_register_social,
-        authenticate_or_register_contact,
-        reset_password_forgot
-    )
-    from analytics_engine import (
-        get_portfolio_kpis,
-        get_risk_tier_breakdown,
-        get_delinquency_transition,
-        get_utilization_risk_matrix,
-        get_watchlist
-    )
-    from risk_scoring import pd_to_credit_score, classify_risk_tier, assign_recommended_action
-except (ImportError, ModuleNotFoundError):
-    from src.auth import (
-        init_user_db,
-        register_user,
-        authenticate_user,
-        get_user_by_username,
-        update_profile_avatar,
-        list_users,
-        update_password,
-        authenticate_or_register_social,
-        authenticate_or_register_contact,
-        reset_password_forgot
-    )
-    from src.analytics_engine import (
-        get_portfolio_kpis,
-        get_risk_tier_breakdown,
-        get_delinquency_transition,
-        get_utilization_risk_matrix,
-        get_watchlist
-    )
-    from src.risk_scoring import pd_to_credit_score, classify_risk_tier, assign_recommended_action
+# Ensure 'src' package namespace exists in sys.modules
+if "src" not in sys.modules:
+    src_pkg = types.ModuleType("src")
+    src_pkg.__path__ = [SRC_DIR]
+    sys.modules["src"] = src_pkg
+
+def _safe_load_src_module(name: str):
+    """Loads module from src/ directory and registers under both `name` and `src.name`."""
+    if name in sys.modules and getattr(sys.modules[name], "__file__", None):
+        mod = sys.modules[name]
+        sys.modules[f"src.{name}"] = mod
+        setattr(sys.modules["src"], name, mod)
+        return mod
+    fpath = os.path.join(SRC_DIR, f"{name}.py")
+    if not os.path.exists(fpath):
+        fpath = os.path.join(APP_DIR, f"{name}.py")
+    if os.path.exists(fpath):
+        spec = importlib.util.spec_from_file_location(name, fpath)
+        if spec and spec.loader:
+            mod = importlib.util.module_from_spec(spec)
+            sys.modules[name] = mod
+            sys.modules[f"src.{name}"] = mod
+            setattr(sys.modules["src"], name, mod)
+            spec.loader.exec_module(mod)
+            return mod
+    try:
+        mod = importlib.import_module(name)
+        sys.modules[f"src.{name}"] = mod
+        setattr(sys.modules["src"], name, mod)
+        return mod
+    except Exception:
+        return importlib.import_module(f"src.{name}")
+
+# Safely pre-load core business & authentication modules
+_auth = _safe_load_src_module("auth")
+_analytics = _safe_load_src_module("analytics_engine")
+_risk = _safe_load_src_module("risk_scoring")
+_model_train = _safe_load_src_module("model_training")
+
+# Bind symbols directly into global namespace
+init_user_db = _auth.init_user_db
+register_user = _auth.register_user
+authenticate_user = _auth.authenticate_user
+get_user_by_username = _auth.get_user_by_username
+update_profile_avatar = _auth.update_profile_avatar
+list_users = _auth.list_users
+update_password = _auth.update_password
+authenticate_or_register_social = _auth.authenticate_or_register_social
+authenticate_or_register_contact = _auth.authenticate_or_register_contact
+reset_password_forgot = _auth.reset_password_forgot
+
+get_portfolio_kpis = _analytics.get_portfolio_kpis
+get_risk_tier_breakdown = _analytics.get_risk_tier_breakdown
+get_delinquency_transition = _analytics.get_delinquency_transition
+get_utilization_risk_matrix = _analytics.get_utilization_risk_matrix
+get_watchlist = _analytics.get_watchlist
+
+pd_to_credit_score = _risk.pd_to_credit_score
+classify_risk_tier = _risk.classify_risk_tier
+assign_recommended_action = _risk.assign_recommended_action
 
 # Streamlit Page Config
 st.set_page_config(
@@ -299,11 +323,14 @@ def load_dataset_from_disk(relative_path):
         return pd.read_csv(full_path)
     main_path = os.path.join(BASE_DIR, "data", "processed", "credit_lens_tableau_extract.csv")
     if not os.path.exists(main_path):
-        try:
-            from model_training import train_and_evaluate_models
-        except (ImportError, ModuleNotFoundError):
-            from src.model_training import train_and_evaluate_models
-        train_and_evaluate_models()
+        if _model_train and hasattr(_model_train, "train_and_evaluate_models"):
+            _model_train.train_and_evaluate_models()
+        else:
+            try:
+                from model_training import train_and_evaluate_models
+            except (ImportError, ModuleNotFoundError):
+                from src.model_training import train_and_evaluate_models
+            train_and_evaluate_models()
     return pd.read_csv(main_path)
 
 
