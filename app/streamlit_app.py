@@ -28,6 +28,7 @@ try:
         init_user_db,
         register_user,
         authenticate_user,
+        get_user_by_username,
         list_users,
         update_password,
         authenticate_or_register_social,
@@ -47,6 +48,7 @@ except (ImportError, ModuleNotFoundError):
         init_user_db,
         register_user,
         authenticate_user,
+        get_user_by_username,
         list_users,
         update_password,
         authenticate_or_register_social,
@@ -250,174 +252,195 @@ DEFAULT_SHEETS = {
 # AUTHENTICATION & SOCIAL-STYLE USER ACCOUNT SYSTEM
 # =============================================================================
 def render_auth_modal():
-    """Renders social-media style Log In and Sign Up interface."""
+    """Renders a clean, executive FinTech sign-in and account management portal."""
     st.markdown("<br>", unsafe_allow_html=True)
-    _, auth_box, _ = st.columns([1, 1.4, 1])
+    _, auth_box, _ = st.columns([1, 1.6, 1])
 
     with auth_box:
         st.markdown("""
-        <div style="background: #0F172A; border-radius: 12px; padding: 26px 32px; color: #FFFFFF; text-align: center; box-shadow: 0 10px 25px rgba(0,0,0,0.25);">
-            <img src="https://img.icons8.com/fluency/96/shield.png" width="60" style="margin-bottom: 8px;" />
-            <h2 style="color: #FFFFFF; font-size: 1.6rem; font-weight: 800; margin: 0; letter-spacing: -0.5px;">CREDITLENS PORTAL</h2>
-            <p style="color: #94A3B8; font-size: 0.85rem; margin-top: 4px;">Sign in to your account or create a new user profile</p>
+        <div style="background: linear-gradient(135deg, #0F172A 0%, #1E293B 100%); border-radius: 14px; padding: 26px 24px; color: #FFFFFF; text-align: center; box-shadow: 0 12px 30px rgba(0,0,0,0.22); border: 1px solid #334155; margin-bottom: 14px;">
+            <div style="display: inline-flex; align-items: center; justify-content: center; width: 54px; height: 54px; background: rgba(37, 99, 235, 0.2); border-radius: 12px; margin-bottom: 10px; border: 1px solid rgba(56, 189, 248, 0.4);">
+                <span style="font-size: 26px;">🛡️</span>
+            </div>
+            <h2 style="color: #FFFFFF; font-size: 1.65rem; font-weight: 800; margin: 0; letter-spacing: -0.5px;">CREDITLENS PORTAL</h2>
+            <p style="color: #94A3B8; font-size: 0.86rem; margin-top: 5px; margin-bottom: 10px; font-weight: 500;">Institutional Credit Risk & Portfolio Intelligence Engine</p>
+            <div style="display: inline-flex; gap: 8px; font-size: 0.72rem; color: #38BDF8; background: rgba(56, 189, 248, 0.1); padding: 4px 14px; border-radius: 20px; font-weight: 600;">
+                🔒 Enterprise Multi-Tenant Session &nbsp;•&nbsp; SHA-256 Encrypted
+            </div>
         </div>
         """, unsafe_allow_html=True)
 
-        st.markdown("<p style='font-size: 0.75rem; font-weight: 700; color: #64748B; margin-top: 14px; margin-bottom: 6px; text-transform: uppercase;'>⚡ Instant Social & Contact Sign-In:</p>", unsafe_allow_html=True)
-        
-        col_g, col_a, col_c = st.columns(3)
-        with col_g:
-            if st.button("🔴 Google", use_container_width=True, help="Sign in with your Google account"):
-                st.session_state["social_login_tab"] = "Google"
-
-        with col_a:
-            if st.button("🍏 Apple ID", use_container_width=True, help="Sign in with your Apple ID"):
-                st.session_state["social_login_tab"] = "Apple"
-
-        with col_c:
-            if st.button("📱 Mobile / SMS", use_container_width=True, help="Sign in with Mobile Phone / Contact"):
-                st.session_state["social_login_tab"] = "Contact"
-
-        # Expandable Social SSO Drawer if one is activated
-        if st.session_state.get("social_login_tab") == "Google":
-            with st.container():
-                st.info("🔴 **Google One-Tap / SSO Authentication**")
-                g_email = st.text_input("Enter your Google Account email:", value="analyst.google@gmail.com", key="g_email_input")
-                g_name = st.text_input("Display Name:", value="Google Risk Analyst", key="g_name_input")
-                cg1, cg2 = st.columns(2)
-                with cg1:
-                    if st.button("Continue with Google", type="primary", use_container_width=True):
-                        user_rec = authenticate_or_register_social("Google", g_email, g_name)
-                        if user_rec:
-                            st.session_state["current_user"] = user_rec
-                            st.session_state["social_login_tab"] = None
-                            st.success(f"Signed in as {user_rec['full_name']} via Google SSO!")
-                            st.rerun()
-                with cg2:
-                    if st.button("Cancel Google Sign In", use_container_width=True):
-                        st.session_state["social_login_tab"] = None
-                        st.rerun()
-
-        elif st.session_state.get("social_login_tab") == "Apple":
-            with st.container():
-                st.info("🍏 **Apple ID Secure Authentication**")
-                a_email = st.text_input("Enter your Apple ID email:", value="officer.apple@privaterelay.appleid.com", key="a_email_input")
-                a_name = st.text_input("Display Name:", value="Apple Risk Officer", key="a_name_input")
-                ca1, ca2 = st.columns(2)
-                with ca1:
-                    if st.button("Continue with Apple", type="primary", use_container_width=True):
-                        user_rec = authenticate_or_register_social("Apple", a_email, a_name)
-                        if user_rec:
-                            st.session_state["current_user"] = user_rec
-                            st.session_state["social_login_tab"] = None
-                            st.success(f"Signed in as {user_rec['full_name']} via Apple ID!")
-                            st.rerun()
-                with ca2:
-                    if st.button("Cancel Apple Sign In", use_container_width=True):
-                        st.session_state["social_login_tab"] = None
-                        st.rerun()
-
-        elif st.session_state.get("social_login_tab") == "Contact":
-            with st.container():
-                st.info("📱 **Mobile Phone / SMS OTP Authentication**")
-                phone_in = st.text_input("Mobile Phone / Contact Number:", placeholder="+1 555-0199 or 9876543210", key="phone_input")
-                
-                if "otp_code" not in st.session_state:
-                    st.session_state["otp_code"] = None
-
-                cp1, cp2 = st.columns(2)
-                with cp1:
-                    if st.button("Send SMS Code", use_container_width=True):
-                        if phone_in.strip():
-                            import random
-                            gen_otp = str(random.randint(100000, 999999))
-                            st.session_state["otp_code"] = gen_otp
-                            st.session_state["otp_phone"] = phone_in.strip()
-                        else:
-                            st.error("Please enter a valid phone number first.")
-                
-                with cp2:
-                    if st.button("Cancel Mobile Sign In", use_container_width=True):
-                        st.session_state["social_login_tab"] = None
-                        st.session_state["otp_code"] = None
-                        st.rerun()
-
-                if st.session_state.get("otp_code"):
-                    st.success(f"📬 **Simulation SMS**: Your 6-digit OTP code is `{st.session_state['otp_code']}`")
-                    entered_otp = st.text_input("Enter 6-Digit OTP:", key="otp_verify_input")
-                    if st.button("Verify OTP & Log In", type="primary", use_container_width=True):
-                        if entered_otp.strip() == st.session_state["otp_code"]:
-                            user_rec = authenticate_or_register_contact(st.session_state["otp_phone"])
-                            if user_rec:
-                                st.session_state["current_user"] = user_rec
-                                st.session_state["otp_code"] = None
-                                st.session_state["social_login_tab"] = None
-                                st.success(f"Verified! Welcome {user_rec['full_name']}")
-                                st.rerun()
-                        else:
-                            st.error("Invalid OTP code. Please enter the 6-digit code shown above.")
-
-        st.markdown("<div style='text-align: center; color: #94A3B8; font-size: 0.72rem; margin: 12px 0 10px 0; border-bottom: 1px solid #E2E8F0; line-height: 0.1em;'><span style='background:#FFFFFF; padding:0 8px; font-weight:700;'>OR LOG IN WITH CREDENTIALS</span></div>", unsafe_allow_html=True)
-
-        tab_login, tab_signup, tab_forgot, tab_reset = st.tabs([
+        tab_login, tab_sso, tab_contact, tab_signup, tab_forgot, tab_reset = st.tabs([
             "🔑 Sign In",
-            "✨ Create Account",
-            "🆘 Forgot Password?",
-            "🔄 Change Passkey"
+            "🌐 Corporate SSO",
+            "📱 Mobile Access",
+            "✨ Create Profile",
+            "🆘 Forgot Password",
+            "🔄 Passkey Reset"
         ])
 
         with tab_login:
             st.markdown("<br>", unsafe_allow_html=True)
-            login_user = st.text_input("Username, Email, or Phone:", placeholder="e.g. admin or analyst@creditlens.internal", key="login_username_field")
-            login_pass = st.text_input("Password:", type="password", placeholder="Enter your password", key="login_pass_field")
+            login_user = st.text_input("Username, Corporate Email, or Contact:", placeholder="e.g. admin or analyst@creditlens.internal", key="login_username_field")
+            login_pass = st.text_input("Passkey / Password:", type="password", placeholder="Enter your passkey", key="login_pass_field")
 
-            if st.button("Log In to CreditLens", type="primary", use_container_width=True):
-                user_record = authenticate_user(login_user, login_pass)
-                if user_record:
-                    st.session_state["current_user"] = user_record
-                    st.success(f"Welcome back, {user_record['full_name']}!")
-                    st.rerun()
+            if st.button("Sign In to CreditLens", type="primary", use_container_width=True):
+                if not login_user or not login_pass:
+                    st.error("Please enter both username/email and password.")
                 else:
-                    st.error("Invalid username/email or password. If you forgot your password, switch to the '🆘 Forgot Password?' tab.")
+                    user_record = authenticate_user(login_user, login_pass)
+                    if user_record:
+                        st.session_state["current_user"] = user_record
+                        st.success(f"Welcome back, {user_record['full_name']}!")
+                        st.rerun()
+                    else:
+                        st.error("Authentication failed. Invalid credentials. If you forgot your password, switch to the '🆘 Forgot Password' tab.")
 
             st.markdown("<br>", unsafe_allow_html=True)
-            st.markdown("##### ⚡ Quick Demo Logins")
-            q_col1, q_col2 = st.columns(2)
-            with q_col1:
-                if st.button("Log in as Admin (CRO)", use_container_width=True):
-                    st.session_state["current_user"] = authenticate_user("admin", "password123")
+            st.markdown("<p style='font-size: 0.74rem; font-weight: 700; color: #64748B; text-transform: uppercase; margin-bottom: 8px;'>⚡ Instant Executive Evaluation Profiles:</p>", unsafe_allow_html=True)
+            q1, q2, q3 = st.columns(3)
+            with q1:
+                if st.button("👔 Chief Risk Officer\n(@admin)", use_container_width=True, help="One-click access as Chief Risk Officer"):
+                    st.session_state["current_user"] = get_user_by_username("admin") or authenticate_user("admin", "password123")
                     st.rerun()
-            with q_col2:
-                if st.button("Log in as Analyst", use_container_width=True):
-                    st.session_state["current_user"] = authenticate_user("analyst", "password123")
+            with q2:
+                if st.button("📊 Lead Analyst\n(@analyst)", use_container_width=True, help="One-click access as Lead Credit Analyst"):
+                    st.session_state["current_user"] = get_user_by_username("analyst") or authenticate_user("analyst", "password123")
                     st.rerun()
+            with q3:
+                if st.button("🔍 Portfolio Auditor\n(@guest)", use_container_width=True, help="One-click access as Portfolio Auditor"):
+                    st.session_state["current_user"] = get_user_by_username("guest") or authenticate_user("guest", "guest123")
+                    st.rerun()
+
+        with tab_sso:
+            st.markdown("<br>", unsafe_allow_html=True)
+            st.caption("Sign in securely through your institutional identity provider (Google Workspace or Apple ID).")
+            sso_provider = st.radio("Choose Identity Provider:", ["🔴 Google Workspace", "🍏 Apple ID"], horizontal=True)
+
+            if "Google" in sso_provider:
+                g_email = st.text_input("Google Workspace / Enterprise Email:", placeholder="e.g. yourname@firm.com or yourname@gmail.com", key="sso_g_email")
+                g_name = st.text_input("Your Full Name:", placeholder="e.g. John Doe", key="sso_g_name")
+                g_role = st.selectbox("Designated Institutional Level:", [
+                    "CRO Level (Executive)",
+                    "Senior Analyst Level",
+                    "Credit Underwriting Manager",
+                    "Portfolio Risk Specialist",
+                    "Reviewer Level"
+                ], index=1, key="sso_g_role")
+
+                if st.button("Authenticate via Google Workspace", type="primary", use_container_width=True):
+                    if not g_email.strip():
+                        st.error("Please enter your Google Workspace email address.")
+                    else:
+                        user_rec = authenticate_or_register_social("Google", g_email, g_name, g_role)
+                        if user_rec:
+                            st.session_state["current_user"] = user_rec
+                            st.success(f"Authenticated as {user_rec['full_name']} (@{user_rec['username']}) via Google SSO!")
+                            st.rerun()
+
+            else:
+                a_email = st.text_input("Apple ID / Private Relay Email:", placeholder="e.g. yourname@icloud.com or yourname@privaterelay.appleid.com", key="sso_a_email")
+                a_name = st.text_input("Your Full Name:", placeholder="e.g. John Doe", key="sso_a_name")
+                a_role = st.selectbox("Designated Institutional Level:", [
+                    "CRO Level (Executive)",
+                    "Senior Analyst Level",
+                    "Credit Underwriting Manager",
+                    "Portfolio Risk Specialist",
+                    "Reviewer Level"
+                ], index=1, key="sso_a_role")
+
+                if st.button("Authenticate via Apple ID", type="primary", use_container_width=True):
+                    if not a_email.strip():
+                        st.error("Please enter your Apple ID email address.")
+                    else:
+                        user_rec = authenticate_or_register_social("Apple", a_email, a_name, a_role)
+                        if user_rec:
+                            st.session_state["current_user"] = user_rec
+                            st.success(f"Authenticated as {user_rec['full_name']} (@{user_rec['username']}) via Apple ID!")
+                            st.rerun()
+
+        with tab_contact:
+            st.markdown("<br>", unsafe_allow_html=True)
+            st.caption("Sign in or self-register via your verified contact mobile number.")
+            c_phone = st.text_input("Mobile / Contact Phone Number:", placeholder="e.g. +1 (555) 234-5678 or 9876543210", key="contact_phone_in")
+            c_name = st.text_input("Your Full Name (for new profiles):", placeholder="e.g. Alex Morgan", key="contact_name_in")
+            c_pref = st.text_input("Preferred User ID (Optional):", placeholder="e.g. amorgan", key="contact_pref_in")
+            c_role = st.selectbox("Designated Institutional Level:", [
+                "CRO Level (Executive)",
+                "Senior Analyst Level",
+                "Credit Underwriting Manager",
+                "Portfolio Risk Specialist",
+                "Reviewer Level"
+            ], index=1, key="contact_role_in")
+
+            if "c_otp_code" not in st.session_state:
+                st.session_state["c_otp_code"] = None
+                st.session_state["c_otp_phone"] = None
+
+            c_btn1, c_btn2 = st.columns(2)
+            with c_btn1:
+                if st.button("Request Security Token", use_container_width=True):
+                    if c_phone.strip():
+                        import random
+                        gen_code = str(random.randint(100000, 999999))
+                        st.session_state["c_otp_code"] = gen_code
+                        st.session_state["c_otp_phone"] = c_phone.strip()
+                        st.info(f"🔒 **Verification Token Dispatched**: Your 6-digit access code is **`{gen_code}`**")
+                    else:
+                        st.error("Please enter a valid mobile / contact number.")
+
+            with c_btn2:
+                if st.button("Reset Token", use_container_width=True):
+                    st.session_state["c_otp_code"] = None
+                    st.session_state["c_otp_phone"] = None
+                    st.rerun()
+
+            if st.session_state.get("c_otp_code"):
+                c_entered_code = st.text_input("Enter 6-Digit Token:", placeholder="6-digit verification code", key="contact_otp_in")
+                if st.button("Verify Token & Sign In", type="primary", use_container_width=True):
+                    if c_entered_code.strip() == st.session_state["c_otp_code"]:
+                        user_rec = authenticate_or_register_contact(
+                            st.session_state["c_otp_phone"],
+                            full_name=c_name,
+                            role=c_role,
+                            preferred_id=c_pref
+                        )
+                        if user_rec:
+                            st.session_state["current_user"] = user_rec
+                            st.session_state["c_otp_code"] = None
+                            st.session_state["c_otp_phone"] = None
+                            st.success(f"Authenticated as {user_rec['full_name']} (@{user_rec['username']})!")
+                            st.rerun()
+                    else:
+                        st.error("Invalid token. Please enter the correct 6-digit verification code.")
 
         with tab_signup:
             st.markdown("<br>", unsafe_allow_html=True)
-            new_name = st.text_input("Full Display Name:", placeholder="e.g. John Doe", key="signup_name")
-            new_username = st.text_input("Choose Username:", placeholder="e.g. johndoe", key="signup_user")
-            new_email = st.text_input("Email Address (Optional):", placeholder="e.g. john@example.com", key="signup_email")
-            new_phone = st.text_input("Mobile Phone (Optional):", placeholder="e.g. +1-555-0100", key="signup_phone")
+            st.caption("Create a new institutional profile for the CreditLens workbook.")
+            new_name = st.text_input("Full Display Name:", placeholder="e.g. Sarah Jenkins", key="signup_name")
+            new_username = st.text_input("Choose Username / User ID:", placeholder="e.g. sjenkins", key="signup_user")
+            new_email = st.text_input("Work Email Address (Optional):", placeholder="e.g. sjenkins@bank.internal", key="signup_email")
+            new_phone = st.text_input("Mobile Phone (Optional):", placeholder="e.g. +1-555-0199", key="signup_phone")
             new_password = st.text_input("Choose Password:", type="password", placeholder="At least 4 characters", key="signup_pw")
-            new_role = st.selectbox("Role / Job Title:", [
-                "Senior Risk Analyst",
-                "Chief Risk Officer (CRO)",
+            new_role = st.selectbox("Organizational Level / Role:", [
+                "CRO Level (Executive)",
+                "Senior Analyst Level",
                 "Credit Underwriting Manager",
-                "Portfolio Analytics Specialist",
-                "Guest Reviewer"
+                "Portfolio Risk Specialist",
+                "Reviewer Level"
             ], key="signup_role")
 
             if st.button("Create My Account", type="primary", use_container_width=True):
                 ok, msg = register_user(new_username, new_password, new_name, new_role, new_email, new_phone)
                 if ok:
-                    st.success(f"{msg} You can now switch to the 'Sign In' tab to log in.")
+                    st.success(f"✅ {msg} You can now switch to the 'Sign In' tab to log in.")
                 else:
-                    st.error(msg)
+                    st.error(f"❌ {msg}")
 
         with tab_forgot:
             st.markdown("<br>", unsafe_allow_html=True)
-            st.caption("Forgot your password? Reset it easily using your registered username, email, or contact number.")
-            f_ident = st.text_input("Username, Email, or Mobile Contact:", placeholder="e.g. admin or analyst@creditlens.internal", key="forgot_ident_tab")
+            st.caption("Forgot your password? Reset it easily using your registered username, corporate email, or contact number.")
+            f_ident = st.text_input("Username, Corporate Email, or Contact Number:", placeholder="e.g. admin or analyst@creditlens.internal", key="forgot_ident_tab")
             f_new = st.text_input("New Desired Password:", type="password", placeholder="At least 4 characters", key="forgot_new_tab")
             f_conf = st.text_input("Confirm New Password:", type="password", placeholder="Re-type new password", key="forgot_conf_tab")
 
@@ -437,7 +460,7 @@ def render_auth_modal():
         with tab_reset:
             st.markdown("<br>", unsafe_allow_html=True)
             st.caption("Update your existing account password when you already know your current passkey.")
-            r_user = st.text_input("Username or Email:", placeholder="e.g. admin or analyst", key="reset_user_tab")
+            r_user = st.text_input("Username or Corporate Email:", placeholder="e.g. admin or analyst", key="reset_user_tab")
             r_curr = st.text_input("Current Passkey / Password:", type="password", placeholder="Enter current passkey", key="reset_curr_tab")
             r_new = st.text_input("New Passkey / Password:", type="password", placeholder="At least 4 characters", key="reset_new_tab")
             r_conf = st.text_input("Confirm New Passkey:", type="password", placeholder="Repeat new passkey", key="reset_conf_tab")
@@ -448,7 +471,7 @@ def render_auth_modal():
                 elif r_new != r_conf:
                     st.error("New passwords do not match.")
                 elif not authenticate_user(r_user, r_curr):
-                    st.error("Verification failed: Username or current password does not match.")
+                    st.error("Verification failed: Username or current passkey does not match.")
                 else:
                     ok, msg = update_password(r_user, r_new)
                     if ok:
@@ -715,7 +738,7 @@ def main():
     # Session state for user authentication
     if "current_user" not in st.session_state:
         # Default to admin so user immediately sees the working dashboard!
-        st.session_state["current_user"] = authenticate_user("admin", "password123")
+        st.session_state["current_user"] = get_user_by_username("admin") or authenticate_user("admin", "password123")
 
     # Session state for workbook sheets (datasets)
     if "workbook_sheets" not in st.session_state:
@@ -846,8 +869,12 @@ def main():
 
                     if st.button("Switch to Selected Account", type="primary", use_container_width=True, key="top_btn_switch"):
                         target_user = u_map[sel_acc]
-                        st.session_state["current_user"] = authenticate_user(target_user, "password123") or {"username": target_user, "full_name": sel_acc.split(" (")[0], "role": "Senior Analyst Level"}
-                        st.rerun()
+                        u_target = get_user_by_username(target_user)
+                        if u_target:
+                            st.session_state["current_user"] = u_target
+                            st.rerun()
+                        else:
+                            st.error(f"Could not load account details for @{target_user}.")
 
                 with pop_t2:
                     st.markdown("##### Change Your Passkey / Password")

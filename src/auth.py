@@ -49,6 +49,20 @@ def init_user_db():
         except sqlite3.OperationalError:
             pass  # column already exists
 
+    # Purge any legacy temporary or test accounts
+    cursor.execute("""
+    DELETE FROM app_users 
+    WHERE username LIKE 'mobile_%' 
+       OR username LIKE 'user_%' 
+       OR username LIKE 'temp_%' 
+       OR username LIKE 'test_%'
+       OR username LIKE '%_demo'
+       OR username LIKE '%_user'
+       OR username = 'officer_apple'
+       OR username = 'analyst_google';
+    """)
+    conn.commit()
+
     # Seed default accounts if empty
     cursor.execute("SELECT COUNT(*) FROM app_users;")
     count = cursor.fetchone()[0]
@@ -64,6 +78,32 @@ def init_user_db():
         """, default_users)
         conn.commit()
     conn.close()
+
+
+def get_user_by_username(username: str):
+    """Fetches user record dict by username."""
+    init_user_db()
+    conn = sqlite3.connect(DB_PATH)
+    cursor = conn.cursor()
+    cursor.execute("""
+    SELECT user_id, username, full_name, role, created_at, email, phone, auth_provider
+    FROM app_users
+    WHERE username = ?;
+    """, (username.strip().lower(),))
+    row = cursor.fetchone()
+    conn.close()
+    if row:
+        return {
+            "user_id": row[0],
+            "username": row[1],
+            "full_name": row[2],
+            "role": row[3],
+            "created_at": row[4],
+            "email": row[5] or "",
+            "phone": row[6] or "",
+            "auth_provider": row[7] or "local"
+        }
+    return None
 
 
 def register_user(username: str, password: str, full_name: str, role: str = "Risk Analyst", email: str = "", phone: str = "", auth_provider: str = "local"):
@@ -128,9 +168,10 @@ def authenticate_user(username_or_email: str, password: str):
     return None
 
 
-def authenticate_or_register_social(provider: str, email_or_id: str, display_name: str = "", role: str = "Risk Analyst"):
+def authenticate_or_register_social(provider: str, email_or_id: str, display_name: str = "", role: str = "Senior Analyst Level"):
     """
-    Authenticates or instantly registers a user signing in via Google or Apple ID.
+    Authenticates or instantly registers a user signing in via Google Workspace or Apple ID.
+    Derives clean, authentic usernames and display names (never creates dummy or fake IDs).
     Returns authenticated user dict.
     """
     init_user_db()
@@ -138,9 +179,18 @@ def authenticate_or_register_social(provider: str, email_or_id: str, display_nam
     if not ident:
         return None
 
-    # Derive base username from email (e.g. 'john' from 'john@gmail.com')
-    base_user = ident.split("@")[0].replace(".", "_").replace("-", "_")
-    base_user = "".join(c for c in base_user if c.isalnum() or c == "_")[:20] or f"{provider.lower()}_user"
+    # Derive clean institutional username
+    display_clean = display_name.strip()
+    if display_clean:
+        base_user = "".join(c for c in display_clean.lower() if c.isalnum())[:18]
+    else:
+        email_prefix = ident.split("@")[0].replace(".", "").replace("-", "").replace("_", "")
+        base_user = "".join(c for c in email_prefix.lower() if c.isalnum())[:18]
+
+    if not base_user:
+        base_user = "officer"
+
+    final_display_name = display_clean or (ident.split("@")[0].replace(".", " ").replace("_", " ").title())
 
     conn = sqlite3.connect(DB_PATH)
     cursor = conn.cursor()
@@ -165,20 +215,20 @@ def authenticate_or_register_social(provider: str, email_or_id: str, display_nam
         conn.close()
         return user_dict
 
-    # New user: auto-create account
-    random_pw = f"{provider}Secure_{os.urandom(4).hex()}"
+    # New user: auto-create account with clean username
+    random_pw = f"{provider}Key_{os.urandom(4).hex()}"
     final_username = base_user
-    suffix = 1
+    suffix = 2
     while True:
         try:
             cursor.execute("""
             INSERT INTO app_users (username, password_hash, full_name, role, email, auth_provider)
             VALUES (?, ?, ?, ?, ?, ?);
-            """, (final_username, hash_password(random_pw), display_name.strip() or base_user.title(), role, ident, provider.lower()))
+            """, (final_username, hash_password(random_pw), final_display_name, role, ident, provider.lower()))
             conn.commit()
             break
         except sqlite3.IntegrityError:
-            final_username = f"{base_user}_{suffix}"
+            final_username = f"{base_user}{suffix}"
             suffix += 1
 
     cursor.execute("""
@@ -201,10 +251,11 @@ def authenticate_or_register_social(provider: str, email_or_id: str, display_nam
     }
 
 
-def authenticate_or_register_contact(phone: str, full_name: str = "", role: str = "Risk Analyst"):
+def authenticate_or_register_contact(phone: str, full_name: str = "", role: str = "Senior Analyst Level", preferred_id: str = ""):
     """
-    Authenticates or instantly registers a user signing in via Mobile / Contact number.
-    Returns authenticated user dict.
+    Authenticates or registers a user signing in via Mobile / Contact number.
+    Derives clean professional username (from preferred_id, full_name, or sanitized name).
+    Never produces temporary, fake, or dummy IDs (no mobile_XXXXXX).
     """
     init_user_db()
     phone_clean = phone.strip()
@@ -234,21 +285,34 @@ def authenticate_or_register_contact(phone: str, full_name: str = "", role: str 
         conn.close()
         return user_dict
 
-    digits_only = "".join(c for c in phone_clean if c.isdigit())[-6:] or "user"
-    base_user = f"mobile_{digits_only}"
-    random_pw = f"PhonePass_{os.urandom(4).hex()}"
+    clean_name = full_name.strip()
+    clean_pref = preferred_id.strip().lower()
+
+    if clean_pref:
+        base_user = "".join(c for c in clean_pref if c.isalnum() or c == "_")[:18]
+    elif clean_name:
+        base_user = "".join(c for c in clean_name.lower() if c.isalnum())[:18]
+    else:
+        digits_only = "".join(c for c in phone_clean if c.isdigit())[-4:] or "01"
+        base_user = f"officer{digits_only}"
+
+    if not base_user:
+        base_user = "officer"
+
+    final_display_name = clean_name or f"Credit Officer ({phone_clean[-4:]})"
+    random_pw = f"Pass_{os.urandom(4).hex()}"
     final_username = base_user
-    suffix = 1
+    suffix = 2
     while True:
         try:
             cursor.execute("""
             INSERT INTO app_users (username, password_hash, full_name, role, phone, auth_provider)
             VALUES (?, ?, ?, ?, ?, ?);
-            """, (final_username, hash_password(random_pw), full_name.strip() or f"User ({phone_clean})", role, phone_clean, "contact"))
+            """, (final_username, hash_password(random_pw), final_display_name, role, phone_clean, "contact"))
             conn.commit()
             break
         except sqlite3.IntegrityError:
-            final_username = f"{base_user}_{suffix}"
+            final_username = f"{base_user}{suffix}"
             suffix += 1
 
     cursor.execute("""
@@ -334,7 +398,12 @@ def list_users(exclude_temp: bool = True):
     for r in rows:
         un, fn, rl, ap = r[0], r[1], r[2], r[3] or "local"
         if exclude_temp:
-            if un.startswith("mobile_") or un.startswith("user_") or un.endswith("_demo"):
+            un_l = un.lower()
+            if (un_l.startswith("mobile_") or un_l.startswith("user_") or 
+                un_l.startswith("temp_") or un_l.startswith("test_") or 
+                un_l.endswith("_demo") or un_l.endswith("_user") or
+                "demo" in un_l or "dummy" in un_l or "fake" in un_l or
+                un_l in ("officer_apple", "analyst_google")):
                 continue
         users.append({"username": un, "full_name": fn, "role": rl, "auth_provider": ap})
     return users
