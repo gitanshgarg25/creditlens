@@ -321,8 +321,12 @@ st.markdown("""
         font-size: 0 !important;
         transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1) !important;
     }
-    .social-btn-wrap div[data-testid="stButton"] button p {
+    .social-btn-wrap div[data-testid="stButton"] button * {
         display: none !important;
+        visibility: hidden !important;
+        font-size: 0 !important;
+        line-height: 0 !important;
+        opacity: 0 !important;
     }
     .social-btn-wrap div[data-testid="stButton"] button:hover {
         transform: translateY(-2px) !important;
@@ -332,13 +336,13 @@ st.markdown("""
         background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24'%3E%3Cpath fill='%234285F4' d='M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z'/%3E%3Cpath fill='%2334A853' d='M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z'/%3E%3Cpath fill='%23FBBC05' d='M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.06H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.94l2.85-2.22.81-.63z'/%3E%3Cpath fill='%23EA4335' d='M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.06l3.66 2.84c.87-2.6 3.3-4.52 6.16-4.52z'/%3E%3C/svg%3E") !important;
     }
     .apple-btn-wrap div[data-testid="stButton"] button {
-        background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 170 170' fill='%23111827'%3E%3Cpath d='M150.37 130.25c-2.45 5.66-5.35 10.87-8.71 15.66-4.58 6.53-8.33 11.05-11.22 13.56-4.48 4.12-9.28 6.23-14.42 6.35-3.69 0-8.14-1.05-13.32-3.18-5.19-2.12-9.97-3.17-14.34-3.17-4.58 0-9.49 1.05-14.74 3.17-5.26 2.13-9.5 3.24-12.74 3.35-4.35.13-9.16-1.9-14.42-6.08-3.7-3.04-7.58-7.7-11.64-13.98-5.74-8.89-10.23-18.79-13.48-29.7-3.25-10.9-4.88-21.36-4.88-31.37 0-14.28 3.65-26.06 10.96-35.34 7.31-9.28 16.59-14.07 27.84-14.37 5.25 0 10.92 1.34 17.02 4.02 6.09 2.68 10.15 4.07 12.18 4.17 1.83 0 6.04-1.42 12.63-4.27 6.59-2.85 12.44-4.14 17.57-3.87 13.7.83 24.37 5.92 32.01 15.28-11.97 7.23-17.84 17.05-17.62 29.47.23 9.77 4.01 18.02 11.34 24.75 7.33 6.73 16.03 10.59 26.11 11.58-2.23 6.78-4.8 13.33-7.72 19.65zm-28.52-111.4c0 7.32-2.73 14.15-8.18 20.49-6.31 7.23-13.78 11.45-22.42 12.66-.46-1.63-.7-3.17-.7-4.63 0-7.33 3.01-14.62 9.03-21.87 6.02-7.25 13.47-11.55 22.36-12.9.15 2.08.23 4.17.23 6.25z'/%3E%3C/svg%3E") !important;
+        background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='%23111827'%3E%3Cpath d='M18.71 19.5c-.83 1.24-1.71 2.45-3.05 2.47-1.34.03-1.77-.79-3.29-.79-1.53 0-2 .77-3.27.82-1.31.05-2.3-1.32-3.14-2.53C4.25 17 2.94 12.45 4.7 9.39c.87-1.52 2.43-2.48 4.12-2.51 1.28-.02 2.5.87 3.29.87.78 0 2.26-1.07 3.81-.91.65.03 2.47.26 3.64 1.98-.09.06-2.17 1.28-2.15 3.81.03 3.02 2.65 4.03 2.68 4.04-.03.07-.42 1.44-1.38 2.83M15.97 4.54c.66-.8 1.11-1.92.99-3.04-.96.04-2.12.64-2.8 1.44-.61.71-1.14 1.85-.99 2.95 1.07.08 2.15-.55 2.8-1.35'/%3E%3C/svg%3E") !important;
     }
     .phone-btn-wrap div[data-testid="stButton"] button {
         background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%23334155' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='M22 16.92v3a2 2 0 0 1-2.18 2 19.79 19.79 0 0 1-8.63-3.07 19.5 19.5 0 0 1-6-6 19.79 19.79 0 0 1-3.07-8.67A2 2 0 0 1 4.11 2h3a2 2 0 0 1 2 1.72 12.84 12.84 0 0 0 .7 2.81 2 2 0 0 1-.45 2.11L8.09 9.91a16 16 0 0 0 6 6l1.27-1.27a2 2 0 0 1 2.11-.45 12.84 12.84 0 0 0 2.81.7A2 2 0 0 1 22 16.92z'/%3E%3C/svg%3E") !important;
     }
     [data-theme="dark"] .apple-btn-wrap div[data-testid="stButton"] button {
-        background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 170 170' fill='%23FFFFFF'%3E%3Cpath d='M150.37 130.25c-2.45 5.66-5.35 10.87-8.71 15.66-4.58 6.53-8.33 11.05-11.22 13.56-4.48 4.12-9.28 6.23-14.42 6.35-3.69 0-8.14-1.05-13.32-3.18-5.19-2.12-9.97-3.17-14.34-3.17-4.58 0-9.49 1.05-14.74 3.17-5.26 2.13-9.5 3.24-12.74 3.35-4.35.13-9.16-1.9-14.42-6.08-3.7-3.04-7.58-7.7-11.64-13.98-5.74-8.89-10.23-18.79-13.48-29.7-3.25-10.9-4.88-21.36-4.88-31.37 0-14.28 3.65-26.06 10.96-35.34 7.31-9.28 16.59-14.07 27.84-14.37 5.25 0 10.92 1.34 17.02 4.02 6.09 2.68 10.15 4.07 12.18 4.17 1.83 0 6.04-1.42 12.63-4.27 6.59-2.85 12.44-4.14 17.57-3.87 13.7.83 24.37 5.92 32.01 15.28-11.97 7.23-17.84 17.05-17.62 29.47.23 9.77 4.01 18.02 11.34 24.75 7.33 6.73 16.03 10.59 26.11 11.58-2.23 6.78-4.8 13.33-7.72 19.65zm-28.52-111.4c0 7.32-2.73 14.15-8.18 20.49-6.31 7.23-13.78 11.45-22.42 12.66-.46-1.63-.7-3.17-.7-4.63 0-7.33 3.01-14.62 9.03-21.87 6.02-7.25 13.47-11.55 22.36-12.9.15 2.08.23 4.17.23 6.25z'/%3E%3C/svg%3E") !important;
+        background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='%23FFFFFF'%3E%3Cpath d='M18.71 19.5c-.83 1.24-1.71 2.45-3.05 2.47-1.34.03-1.77-.79-3.29-.79-1.53 0-2 .77-3.27.82-1.31.05-2.3-1.32-3.14-2.53C4.25 17 2.94 12.45 4.7 9.39c.87-1.52 2.43-2.48 4.12-2.51 1.28-.02 2.5.87 3.29.87.78 0 2.26-1.07 3.81-.91.65.03 2.47.26 3.64 1.98-.09.06-2.17 1.28-2.15 3.81.03 3.02 2.65 4.03 2.68 4.04-.03.07-.42 1.44-1.38 2.83M15.97 4.54c.66-.8 1.11-1.92.99-3.04-.96.04-2.12.64-2.8 1.44-.61.71-1.14 1.85-.99 2.95 1.07.08 2.15-.55 2.8-1.35'/%3E%3C/svg%3E") !important;
     }
     [data-theme="dark"] .phone-btn-wrap div[data-testid="stButton"] button {
         background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%23F8FAFC' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='M22 16.92v3a2 2 0 0 1-2.18 2 19.79 19.79 0 0 1-8.63-3.07 19.5 19.5 0 0 1-6-6 19.79 19.79 0 0 1-3.07-8.67A2 2 0 0 1 4.11 2h3a2 2 0 0 1 2 1.72 12.84 12.84 0 0 0 .7 2.81 2 2 0 0 1-.45 2.11L8.09 9.91a16 16 0 0 0 6 6l1.27-1.27a2 2 0 0 1 2.11-.45 12.84 12.84 0 0 0 2.81.7A2 2 0 0 1 22 16.92z'/%3E%3C/svg%3E") !important;
@@ -499,13 +503,13 @@ def render_auth_modal():
         if st.session_state.get("social_mode") == "Apple":
             st.markdown("""
             <div class="faceid-modal-box">
-                <div style="margin-bottom: 12px;">
-                    <svg width="34" height="34" viewBox="0 0 170 170" fill="currentColor" style="color: var(--text-headline);">
-                        <path d="M150.37 130.25c-2.45 5.66-5.35 10.87-8.71 15.66-4.58 6.53-8.33 11.05-11.22 13.56-4.48 4.12-9.28 6.23-14.42 6.35-3.69 0-8.14-1.05-13.32-3.18-5.19-2.12-9.97-3.17-14.34-3.17-4.58 0-9.49 1.05-14.74 3.17-5.26 2.13-9.5 3.24-12.74 3.35-4.35.13-9.16-1.9-14.42-6.08-3.7-3.04-7.58-7.7-11.64-13.98-5.74-8.89-10.23-18.79-13.48-29.7-3.25-10.9-4.88-21.36-4.88-31.37 0-14.28 3.65-26.06 10.96-35.34 7.31-9.28 16.59-14.07 27.84-14.37 5.25 0 10.92 1.34 17.02 4.02 6.09 2.68 10.15 4.07 12.18 4.17 1.83 0 6.04-1.42 12.63-4.27 6.59-2.85 12.44-4.14 17.57-3.87 13.7.83 24.37 5.92 32.01 15.28-11.97 7.23-17.84 17.05-17.62 29.47.23 9.77 4.01 18.02 11.34 24.75 7.33 6.73 16.03 10.59 26.11 11.58-2.23 6.78-4.8 13.33-7.72 19.65zm-28.52-111.4c0 7.32-2.73 14.15-8.18 20.49-6.31 7.23-13.78 11.45-22.42 12.66-.46-1.63-.7-3.17-.7-4.63 0-7.33 3.01-14.62 9.03-21.87 6.02-7.25 13.47-11.55 22.36-12.9.15 2.08.23 4.17.23 6.25z"/>
+                <div style="display: flex; justify-content: center; margin-bottom: 16px;">
+                    <svg width="40" height="40" viewBox="0 0 24 24" fill="currentColor" style="color: var(--text-headline);">
+                        <path d="M18.71 19.5c-.83 1.24-1.71 2.45-3.05 2.47-1.34.03-1.77-.79-3.29-.79-1.53 0-2 .77-3.27.82-1.31.05-2.3-1.32-3.14-2.53C4.25 17 2.94 12.45 4.7 9.39c.87-1.52 2.43-2.48 4.12-2.51 1.28-.02 2.5.87 3.29.87.78 0 2.26-1.07 3.81-.91.65.03 2.47.26 3.64 1.98-.09.06-2.17 1.28-2.15 3.81.03 3.02 2.65 4.03 2.68 4.04-.03.07-.42 1.44-1.38 2.83M15.97 4.54c.66-.8 1.11-1.92.99-3.04-.96.04-2.12.64-2.8 1.44-.61.71-1.14 1.85-.99 2.95 1.07.08 2.15-.55 2.8-1.35"/>
                     </svg>
                 </div>
                 <div class="faceid-icon-circle">
-                    <svg width="42" height="42" viewBox="0 0 64 64" fill="none" stroke="#0071E3" stroke-width="3" stroke-linecap="round" stroke-linejoin="round">
+                    <svg width="40" height="40" viewBox="0 0 64 64" fill="none" stroke="#0071E3" stroke-width="3" stroke-linecap="round" stroke-linejoin="round">
                         <path d="M16 8H10a4 4 0 0 0-4 4v6M48 8h6a4 4 0 0 1 4 4v6M16 56h-6a4 4 0 0 1-4-4v-6M48 56h6a4 4 0 0 0 4-4v-6"/>
                         <circle cx="23" cy="26" r="2.5" fill="#0071E3"/>
                         <circle cx="41" cy="26" r="2.5" fill="#0071E3"/>
@@ -513,17 +517,15 @@ def render_auth_modal():
                         <path d="M22 43c3 4 17 4 20 0"/>
                     </svg>
                 </div>
-                <h3 style="font-weight: 750; font-size: 1.3rem; margin: 2px 0 6px 0; color: var(--text-headline);">Sign in with Face ID</h3>
-                <p style="color: #64748B; font-size: 0.86rem; margin: 0 0 18px 0;">Look directly at your device camera to authenticate into CreditLens.</p>
-                <div style="background: rgba(0, 113, 227, 0.05); border: 1px solid rgba(0, 113, 227, 0.16); border-radius: 12px; padding: 12px 14px; font-size: 0.86rem; color: #0071E3; font-weight: 600; margin-bottom: 20px;">
-                    Apple ID: gitansh.apple@icloud.internal
+                <div style="background: rgba(0, 113, 227, 0.05); border: 1px solid rgba(0, 113, 227, 0.16); border-radius: 12px; padding: 10px 14px; font-size: 0.86rem; color: #0071E3; font-weight: 600; margin-bottom: 20px;">
+                    gitansh.apple@icloud.internal
                 </div>
             </div>
             """, unsafe_allow_html=True)
 
-            if st.button("Authenticate with Face ID", type="primary", use_container_width=True, key="btn_faceid_scan"):
+            if st.button("Authenticate", type="primary", use_container_width=True, key="btn_faceid_scan"):
                 import time
-                with st.spinner("Scanning Face ID..."):
+                with st.spinner("Scanning..."):
                     time.sleep(0.5)
                 u_rec = authenticate_or_register_social("Apple", "gitansh.apple@icloud.internal", "Gitansh Garg", "CRO Level (Executive)")
                 if u_rec:
@@ -544,30 +546,26 @@ def render_auth_modal():
         elif st.session_state.get("social_mode") == "Google":
             st.markdown("""
             <div class="google-modal-box">
-                <div style="display: flex; align-items: center; justify-content: center; gap: 8px; margin-bottom: 8px;">
-                    <svg width="24" height="24" viewBox="0 0 24 24">
+                <div style="display: flex; align-items: center; justify-content: center; margin-bottom: 18px;">
+                    <svg width="42" height="42" viewBox="0 0 24 24">
                         <path fill="#4285F4" d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z"/>
                         <path fill="#34A853" d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z"/>
                         <path fill="#FBBC05" d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.06H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.94l2.85-2.22.81-.63z"/>
                         <path fill="#EA4335" d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.06l3.66 2.84c.87-2.6 3.3-4.52 6.16-4.52z"/>
                     </svg>
-                    <span style="font-size: 1.15rem; font-weight: 600; color: var(--text-headline);">Google</span>
                 </div>
-                <h3 style="margin: 0; font-size: 1.25rem; font-weight: 600; color: var(--text-headline);">Sign in with Google</h3>
-                <p style="color: #5F6368; font-size: 0.85rem; margin: 4px 0 16px 0;">to continue to <b>login.google.com</b> / CreditLens</p>
                 
-                <div style="display: flex; align-items: center; gap: 12px; padding: 12px 14px; border: 1px solid #DADCE0; border-radius: 10px; background: rgba(66, 133, 244, 0.04); margin-bottom: 16px; text-align: left;">
-                    <div style="width: 40px; height: 40px; border-radius: 50%; background: #4285F4; color: white; display: flex; align-items: center; justify-content: center; font-weight: 700; font-size: 1.05rem;">G</div>
+                <div style="display: flex; align-items: center; gap: 12px; padding: 12px 14px; border: 1px solid var(--card-border, #DADCE0); border-radius: 12px; background: rgba(66, 133, 244, 0.04); margin-bottom: 18px; text-align: left;">
+                    <div style="width: 38px; height: 38px; border-radius: 50%; background: #4285F4; color: white; display: flex; align-items: center; justify-content: center; font-weight: 750; font-size: 1rem;">G</div>
                     <div style="flex: 1;">
-                        <div style="font-weight: 600; font-size: 0.94rem; color: var(--text-headline);">Gitansh Garg</div>
-                        <div style="font-size: 0.8rem; color: #5F6368;">gitanshgarg@gmail.com</div>
+                        <div style="font-weight: 700; font-size: 0.94rem; color: var(--text-headline);">Gitansh Garg</div>
+                        <div style="font-size: 0.8rem; color: #64748B;">gitanshgarg@gmail.com</div>
                     </div>
-                    <div style="color: #1A73E8; font-size: 0.82rem; font-weight: 600;">Active</div>
                 </div>
             </div>
             """, unsafe_allow_html=True)
 
-            if st.button("Continue as Gitansh", type="primary", use_container_width=True, key="btn_g_continue"):
+            if st.button("Continue", type="primary", use_container_width=True, key="btn_g_continue"):
                 u_rec = authenticate_or_register_social("Google", "gitanshgarg@gmail.com", "Gitansh Garg", "CRO Level (Executive)")
                 if u_rec:
                     st.session_state["current_user"] = u_rec
@@ -576,10 +574,10 @@ def render_auth_modal():
                     st.session_state["social_mode"] = None
                     st.rerun()
 
-            with st.expander("Use another Google account", expanded=False):
-                g_other_email = st.text_input("Email or phone:", placeholder="user@gmail.com or workspace account", key="g_other_mail")
-                g_other_name = st.text_input("Display Name:", placeholder="e.g. John Doe", key="g_other_name")
-                if st.button("Next", use_container_width=True, key="btn_g_other_submit"):
+            with st.expander("Use another account", expanded=False):
+                g_other_email = st.text_input("Account email:", placeholder="username@gmail.com", key="g_other_mail")
+                g_other_name = st.text_input("Display Name:", placeholder="Display name", key="g_other_name")
+                if st.button("Proceed", use_container_width=True, key="btn_g_other_submit"):
                     if g_other_email.strip():
                         u_rec = authenticate_or_register_social("Google", g_other_email.strip(), g_other_name.strip() or "Google User", "Senior Analyst Level")
                         if u_rec:
@@ -589,7 +587,7 @@ def render_auth_modal():
                             st.session_state["social_mode"] = None
                             st.rerun()
                     else:
-                        st.error("Please enter a valid Google email.")
+                        st.error("Please enter a valid email.")
 
             if st.button("Cancel", use_container_width=True, key="btn_g_cancel"):
                 st.session_state["social_mode"] = None
@@ -601,13 +599,13 @@ def render_auth_modal():
         elif st.session_state.get("social_mode") == "Phone":
             st.markdown("""
             <div class="google-modal-box">
-                <div style="display: flex; align-items: center; justify-content: center; margin-bottom: 8px;">
-                    <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="#2563EB" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                        <path d="M22 16.92v3a2 2 0 0 1-2.18 2 19.79 19.79 0 0 1-8.63-3.07 19.5 19.5 0 0 1-6-6 19.79 19.79 0 0 1-3.07-8.67A2 2 0 0 1 4.11 2h3a2 2 0 0 1 2 1.72 12.84 12.84 0 0 0 .7 2.81 2 2 0 0 1-.45 2.11L8.09 9.91a16 16 0 0 0 6 6l1.27-1.27a2 2 0 0 1 2.11-.45 12.84 12.84 0 0 0 2.81.7A2 2 0 0 1 22 16.92z"/>
-                    </svg>
+                <div style="display: flex; align-items: center; justify-content: center; margin-bottom: 18px;">
+                    <div style="width: 50px; height: 50px; border-radius: 50%; background: rgba(37, 99, 235, 0.08); display: flex; align-items: center; justify-content: center;">
+                        <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="#2563EB" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
+                            <path d="M22 16.92v3a2 2 0 0 1-2.18 2 19.79 19.79 0 0 1-8.63-3.07 19.5 19.5 0 0 1-6-6 19.79 19.79 0 0 1-3.07-8.67A2 2 0 0 1 4.11 2h3a2 2 0 0 1 2 1.72 12.84 12.84 0 0 0 .7 2.81 2 2 0 0 1-.45 2.11L8.09 9.91a16 16 0 0 0 6 6l1.27-1.27a2 2 0 0 1 2.11-.45 12.84 12.84 0 0 0 2.81.7A2 2 0 0 1 22 16.92z"/>
+                        </svg>
+                    </div>
                 </div>
-                <h3 style="margin: 0; font-size: 1.25rem; font-weight: 700; color: var(--text-headline);">Sign in with Phone</h3>
-                <p style="color: #64748B; font-size: 0.85rem; margin: 4px 0 16px 0;">Enter your mobile number to receive a secure SMS access code.</p>
             </div>
             """, unsafe_allow_html=True)
 
@@ -615,18 +613,18 @@ def render_auth_modal():
             if "phone_otp" not in st.session_state:
                 st.session_state["phone_otp"] = None
 
-            if st.button("Request Security Code", use_container_width=True, key="ig_btn_req_otp"):
+            if st.button("Send Security Code", use_container_width=True, key="ig_btn_req_otp"):
                 if p_num.strip():
                     import random
                     st.session_state["phone_otp"] = str(random.randint(100000, 999999))
                     st.session_state["phone_target"] = p_num.strip()
-                    st.info(f"Verification Code: Your 6-digit access code is **`{st.session_state['phone_otp']}`**")
+                    st.info(f"Access Code: **`{st.session_state['phone_otp']}`**")
                 else:
                     st.error("Please enter a valid phone number.")
 
             if st.session_state.get("phone_otp"):
-                p_code = st.text_input("Enter 6-digit code:", key="ig_p_code")
-                if st.button("Verify Code & Log In", type="primary", use_container_width=True, key="ig_btn_p_verify"):
+                p_code = st.text_input("Enter code:", key="ig_p_code")
+                if st.button("Verify & Log In", type="primary", use_container_width=True, key="ig_btn_p_verify"):
                     if p_code.strip() == st.session_state["phone_otp"]:
                         u_rec = authenticate_or_register_contact(st.session_state["phone_target"], full_name="Gitansh Garg", role="CRO Level (Executive)")
                         if u_rec:
@@ -636,13 +634,13 @@ def render_auth_modal():
                             st.session_state["phone_otp"] = None
                             st.session_state["social_mode"] = None
                             st.rerun()
-
                     else:
                         st.error("Incorrect verification code.")
 
             if st.button("Cancel", use_container_width=True, key="btn_p_cancel"):
                 st.session_state["social_mode"] = None
                 st.rerun()
+
 
         # =====================================================================
         # STANDARD VIEW 1: CLEAN MINIMALIST LOG IN
@@ -751,21 +749,21 @@ def render_auth_modal():
             sc1, sc2, sc3 = st.columns(3)
             with sc1:
                 st.markdown('<div class="social-btn-wrap google-btn-wrap">', unsafe_allow_html=True)
-                if st.button("Google", use_container_width=True, key="btn_sso_g", help="Sign in with Google"):
+                if st.button(" ", use_container_width=True, key="btn_sso_g", help="Google"):
                     st.session_state["social_mode"] = "Google"
                     st.rerun()
                 st.markdown('</div>', unsafe_allow_html=True)
 
             with sc2:
                 st.markdown('<div class="social-btn-wrap apple-btn-wrap">', unsafe_allow_html=True)
-                if st.button("Apple", use_container_width=True, key="btn_sso_a", help="Sign in with Apple (Face ID)"):
+                if st.button(" ", use_container_width=True, key="btn_sso_a", help="Apple"):
                     st.session_state["social_mode"] = "Apple"
                     st.rerun()
                 st.markdown('</div>', unsafe_allow_html=True)
 
             with sc3:
                 st.markdown('<div class="social-btn-wrap phone-btn-wrap">', unsafe_allow_html=True)
-                if st.button("Phone", use_container_width=True, key="btn_sso_p", help="Sign in with Phone"):
+                if st.button(" ", use_container_width=True, key="btn_sso_p", help="Phone"):
                     st.session_state["social_mode"] = "Phone"
                     st.rerun()
                 st.markdown('</div>', unsafe_allow_html=True)
@@ -804,7 +802,7 @@ def render_auth_modal():
             su_col1, su_col2 = st.columns(2)
             with su_col1:
                 st.markdown('<div class="social-btn-wrap google-btn-wrap">', unsafe_allow_html=True)
-                if st.button("Google", use_container_width=True, key="ig_su_g", help="Sign up with Google"):
+                if st.button(" ", use_container_width=True, key="ig_su_g", help="Google"):
                     st.session_state["social_mode"] = "Google"
                     st.session_state["auth_view"] = "login"
                     st.rerun()
@@ -812,7 +810,7 @@ def render_auth_modal():
 
             with su_col2:
                 st.markdown('<div class="social-btn-wrap apple-btn-wrap">', unsafe_allow_html=True)
-                if st.button("Apple", use_container_width=True, key="ig_su_a", help="Sign up with Apple"):
+                if st.button(" ", use_container_width=True, key="ig_su_a", help="Apple"):
                     st.session_state["social_mode"] = "Apple"
                     st.session_state["auth_view"] = "login"
                     st.rerun()
