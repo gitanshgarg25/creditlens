@@ -207,11 +207,12 @@ def authenticate_user(username_or_email: str, password: str):
     return None
 
 
-def authenticate_or_register_social(provider: str, email_or_id: str, display_name: str = "", role: str = "Senior Analyst Level"):
+def authenticate_or_register_social(provider: str, email_or_id: str, display_name: str = "", role: str = "Senior Analyst Level", password: str = ""):
     """
-    Authenticates or instantly registers a user signing in via Google Workspace or Apple ID.
+    Authenticates or registers a user signing in via Google Workspace or Apple ID.
+    Supports real user credential validation and password persistence.
     Derives clean, authentic usernames and display names (never creates dummy or fake IDs).
-    Returns authenticated user dict.
+    Returns authenticated user dict, or None if credentials are invalid.
     """
     init_user_db()
     ident = email_or_id.strip().lower()
@@ -234,13 +235,24 @@ def authenticate_or_register_social(provider: str, email_or_id: str, display_nam
     conn = sqlite3.connect(DB_PATH)
     cursor = conn.cursor()
     cursor.execute("""
-    SELECT user_id, username, full_name, role, created_at, email, phone, auth_provider, avatar_data
+    SELECT user_id, username, full_name, role, created_at, email, phone, auth_provider, avatar_data, password_hash
     FROM app_users
-    WHERE email = ? OR username = ?;
-    """, (ident, base_user))
+    WHERE email = ?;
+    """, (ident,))
     row = cursor.fetchone()
 
     if row:
+        stored_pw_hash = row[9]
+        # If user supplied a password, verify against existing account
+        if password and stored_pw_hash:
+            # If the stored hash is an internal random key placeholder, update to user's real password
+            if "Key_" in stored_pw_hash or stored_pw_hash.startswith("temp_"):
+                cursor.execute("UPDATE app_users SET password_hash = ? WHERE user_id = ?;", (hash_password(password), row[0]))
+                conn.commit()
+            elif stored_pw_hash != hash_password(password):
+                conn.close()
+                return None  # Password mismatch!
+
         current_name = row[2]
         if display_clean and display_clean != current_name:
             cursor.execute("UPDATE app_users SET full_name = ? WHERE user_id = ?;", (display_clean, row[0]))
@@ -261,8 +273,8 @@ def authenticate_or_register_social(provider: str, email_or_id: str, display_nam
         conn.close()
         return user_dict
 
-    # New user: auto-create account with clean username
-    random_pw = f"{provider}Key_{os.urandom(4).hex()}"
+    # New user: create account with real password hash
+    user_pw = password if password else f"{provider}Key_{os.urandom(4).hex()}"
     final_username = base_user
     suffix = 2
     while True:
@@ -270,7 +282,7 @@ def authenticate_or_register_social(provider: str, email_or_id: str, display_nam
             cursor.execute("""
             INSERT INTO app_users (username, password_hash, full_name, role, email, auth_provider)
             VALUES (?, ?, ?, ?, ?, ?);
-            """, (final_username, hash_password(random_pw), final_display_name, role, ident, provider.lower()))
+            """, (final_username, hash_password(user_pw), final_display_name, role, ident, provider.lower()))
             conn.commit()
             break
         except sqlite3.IntegrityError:
