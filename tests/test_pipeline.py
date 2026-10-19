@@ -15,7 +15,12 @@ if BASE_DIR not in sys.path:
 
 from src.risk_scoring import pd_to_credit_score, classify_risk_tier, assign_recommended_action
 from src.feature_engineering import engineer_features
-from src.analytics_engine import get_portfolio_kpis
+from src.analytics_engine import (
+    get_portfolio_kpis,
+    get_executive_insights,
+    get_underwriting_policy_tradeoff,
+    load_model_metrics
+)
 
 
 class TestCreditLensPipeline(unittest.TestCase):
@@ -72,6 +77,37 @@ class TestCreditLensPipeline(unittest.TestCase):
         kpis = get_portfolio_kpis(df)
         self.assertEqual(kpis["total_borrowers"], 1)
         self.assertEqual(kpis["total_exposure"], 100000.0)
+
+    def test_executive_insights(self):
+        """Verifies executive insights calculations."""
+        test_df = pd.DataFrame([
+            {"PAY_0": 0, "LIMIT_BAL": 250000, "AVG_UTILIZATION_RATE": 0.2, "DEFAULT_NEXT_MONTH": 0, "BILL_AMT1": 50000, "RISK_TIER": "Prime", "PREDICTED_PD": 0.05},
+            {"PAY_0": 2, "LIMIT_BAL": 40000, "AVG_UTILIZATION_RATE": 0.9, "DEFAULT_NEXT_MONTH": 1, "BILL_AMT1": 36000, "RISK_TIER": "High Risk", "PREDICTED_PD": 0.85}
+        ])
+        insights = get_executive_insights(test_df)
+        self.assertIn("delinq_multiplier", insights)
+        self.assertIn("limit_multiplier", insights)
+        self.assertIn("util_multiplier", insights)
+        self.assertEqual(insights["distressed_accounts"], 1)
+
+    def test_underwriting_policy_tradeoff(self):
+        """Verifies policy cutoff trade-off calculations."""
+        test_df = pd.DataFrame([
+            {"CREDIT_RISK_SCORE": 750, "DEFAULT_NEXT_MONTH": 0, "BILL_AMT1": 50000},
+            {"CREDIT_RISK_SCORE": 520, "DEFAULT_NEXT_MONTH": 1, "BILL_AMT1": 40000}
+        ])
+        tradeoff = get_underwriting_policy_tradeoff(test_df, score_cutoff=620)
+        self.assertEqual(tradeoff["approved_count"], 1)
+        self.assertEqual(tradeoff["rejected_count"], 1)
+        self.assertEqual(tradeoff["avoided_defaults"], 1)
+        self.assertEqual(tradeoff["approved_default_rate"], 0.0)
+
+    def test_load_model_metrics(self):
+        """Verifies loading saved model metrics JSON."""
+        metrics = load_model_metrics()
+        self.assertIn("champion_model", metrics)
+        self.assertIn("champion_metrics", metrics)
+        self.assertIn("roc_auc", metrics["champion_metrics"])
 
 
 if __name__ == "__main__":

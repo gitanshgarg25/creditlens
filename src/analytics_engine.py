@@ -5,6 +5,8 @@ risk concentration, and portfolio watchlists for dashboards and reports.
 """
 
 from __future__ import annotations
+import os
+import json
 import pandas as pd
 import numpy as np
 
@@ -148,3 +150,152 @@ def get_watchlist(df: pd.DataFrame, top_n: int = 25) -> pd.DataFrame:
     ]
     cols = [c for c in cols if c in sorted_wl.columns]
     return sorted_wl[cols].head(top_n)
+
+
+def get_executive_insights(df: pd.DataFrame) -> dict:
+    """
+    Computes key executive business insights and risk drivers from the portfolio data.
+    """
+    total_acc = len(df)
+    if total_acc == 0:
+        return {}
+
+    # 1. Delinquency Driver (PAY_0)
+    has_pay0 = "PAY_0" in df.columns and "DEFAULT_NEXT_MONTH" in df.columns
+    if has_pay0:
+        delinq_mask = df["PAY_0"] > 0
+        nondelinq_mask = df["PAY_0"] <= 0
+        delinq_dr = float(df[delinq_mask]["DEFAULT_NEXT_MONTH"].mean()) if delinq_mask.any() else 0.0
+        nondelinq_dr = float(df[nondelinq_mask]["DEFAULT_NEXT_MONTH"].mean()) if nondelinq_mask.any() else 0.0
+        delinq_mult = round(delinq_dr / max(nondelinq_dr, 0.001), 1)
+        delinq_count = int(delinq_mask.sum())
+    else:
+        delinq_dr, nondelinq_dr, delinq_mult, delinq_count = 0.0, 0.0, 1.0, 0
+
+    # 2. Credit Line Driver (LIMIT_BAL)
+    has_limit = "LIMIT_BAL" in df.columns and "DEFAULT_NEXT_MONTH" in df.columns
+    if has_limit:
+        low_lim_mask = df["LIMIT_BAL"] <= 50000
+        high_lim_mask = df["LIMIT_BAL"] >= 200000
+        low_lim_dr = float(df[low_lim_mask]["DEFAULT_NEXT_MONTH"].mean()) if low_lim_mask.any() else 0.0
+        high_lim_dr = float(df[high_lim_mask]["DEFAULT_NEXT_MONTH"].mean()) if high_lim_mask.any() else 0.0
+        limit_mult = round(low_lim_dr / max(high_lim_dr, 0.001), 1)
+    else:
+        low_lim_dr, high_lim_dr, limit_mult = 0.0, 0.0, 1.0
+
+    # 3. Utilization Driver (AVG_UTILIZATION_RATE)
+    has_util = "AVG_UTILIZATION_RATE" in df.columns and "DEFAULT_NEXT_MONTH" in df.columns
+    if has_util:
+        high_util_mask = df["AVG_UTILIZATION_RATE"] > 0.80
+        low_util_mask = df["AVG_UTILIZATION_RATE"] <= 0.30
+        high_util_dr = float(df[high_util_mask]["DEFAULT_NEXT_MONTH"].mean()) if high_util_mask.any() else 0.0
+        low_util_dr = float(df[low_util_mask]["DEFAULT_NEXT_MONTH"].mean()) if low_util_mask.any() else 0.0
+        util_mult = round(high_util_dr / max(low_util_dr, 0.001), 1)
+        high_util_count = int(high_util_mask.sum())
+    else:
+        high_util_dr, low_util_dr, util_mult, high_util_count = 0.0, 0.0, 1.0, 0
+
+    # 4. Distressed Capital Preservation (Subprime & High Risk)
+    if "RISK_TIER" in df.columns and "BILL_AMT1" in df.columns:
+        sub_mask = df["RISK_TIER"].isin(["Subprime", "High Risk"])
+        distressed_accounts = int(sub_mask.sum())
+        distressed_balance = float(df[sub_mask]["BILL_AMT1"].sum())
+        if "PREDICTED_PD" in df.columns:
+            expected_loss = float((df[sub_mask]["BILL_AMT1"] * df[sub_mask]["PREDICTED_PD"]).sum())
+        else:
+            expected_loss = distressed_balance * 0.45
+    else:
+        distressed_accounts, distressed_balance, expected_loss = 0, 0.0, 0.0
+
+    return {
+        "delinq_dr": round(delinq_dr * 100, 1),
+        "nondelinq_dr": round(nondelinq_dr * 100, 1),
+        "delinq_multiplier": delinq_mult,
+        "delinq_count": delinq_count,
+        "low_limit_dr": round(low_lim_dr * 100, 1),
+        "high_limit_dr": round(high_lim_dr * 100, 1),
+        "limit_multiplier": limit_mult,
+        "high_util_dr": round(high_util_dr * 100, 1),
+        "low_util_dr": round(low_util_dr * 100, 1),
+        "util_multiplier": util_mult,
+        "high_util_count": high_util_count,
+        "distressed_accounts": distressed_accounts,
+        "distressed_balance": distressed_balance,
+        "expected_loss_safeguarded": expected_loss
+    }
+
+
+def get_underwriting_policy_tradeoff(df: pd.DataFrame, score_cutoff: int = 620) -> dict:
+    """
+    Simulates business trade-offs (Volume Approved vs. Losses Prevented)
+    for a chosen minimum FICO risk score cut-off threshold.
+    """
+    total = len(df)
+    if total == 0 or "CREDIT_RISK_SCORE" not in df.columns:
+        return {}
+
+    approved_mask = df["CREDIT_RISK_SCORE"] >= score_cutoff
+    rejected_mask = ~approved_mask
+
+    approved_count = int(approved_mask.sum())
+    rejected_count = total - approved_count
+    approved_pct = round((approved_count / total) * 100, 1)
+
+    has_target = "DEFAULT_NEXT_MONTH" in df.columns
+    total_defaults = int(df["DEFAULT_NEXT_MONTH"].sum()) if has_target else 0
+    portfolio_default_rate = round((total_defaults / max(total, 1)) * 100, 2)
+
+    if has_target:
+        approved_defaults = int(df[approved_mask]["DEFAULT_NEXT_MONTH"].sum())
+        approved_default_rate = round((approved_defaults / max(approved_count, 1)) * 100, 2)
+        avoided_defaults = int(df[rejected_mask]["DEFAULT_NEXT_MONTH"].sum())
+        avoided_defaults_pct = round((avoided_defaults / max(total_defaults, 1)) * 100, 1)
+    else:
+        approved_defaults = 0
+        approved_default_rate = 0.0
+        avoided_defaults = 0
+        avoided_defaults_pct = 0.0
+
+    # Financial translation:
+    # Avoided credit losses = billed balance of rejected default accounts
+    if has_target and "BILL_AMT1" in df.columns:
+        rej_defaults_balance = float(df[rejected_mask & (df["DEFAULT_NEXT_MONTH"] == 1)]["BILL_AMT1"].sum())
+        # Opportunity cost: interest income lost on rejected performing accounts (assume 15% APR)
+        rej_good_balance = float(df[rejected_mask & (df["DEFAULT_NEXT_MONTH"] == 0)]["BILL_AMT1"].sum())
+        lost_interest_income = rej_good_balance * 0.15
+        net_financial_benefit = rej_defaults_balance - lost_interest_income
+    else:
+        rej_defaults_balance = 0.0
+        lost_interest_income = 0.0
+        net_financial_benefit = 0.0
+
+    return {
+        "score_cutoff": score_cutoff,
+        "total_accounts": total,
+        "approved_count": approved_count,
+        "approved_pct": approved_pct,
+        "rejected_count": rejected_count,
+        "portfolio_default_rate": portfolio_default_rate,
+        "approved_default_rate": approved_default_rate,
+        "avoided_defaults": avoided_defaults,
+        "avoided_defaults_pct": avoided_defaults_pct,
+        "avoided_losses_ntd": rej_defaults_balance,
+        "lost_interest_income": lost_interest_income,
+        "net_financial_benefit": net_financial_benefit
+    }
+
+
+def load_model_metrics() -> dict:
+    """
+    Loads saved model evaluation metrics, benchmark comparison, and feature importances.
+    """
+    base_dir = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
+    metrics_path = os.path.join(base_dir, "models", "model_metrics.json")
+    if os.path.exists(metrics_path):
+        try:
+            with open(metrics_path, "r") as f:
+                return json.load(f)
+        except Exception:
+            pass
+    return {}
+
