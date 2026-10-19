@@ -10,7 +10,6 @@ import numpy as np
 import plotly.express as px
 import plotly.graph_objects as go
 import streamlit as st
-import streamlit.components.v1 as components
 
 # Setup Project Path & Dynamic Module Ingestion
 # Robust resolution for Streamlit Cloud container (/mount/src/creditlens/...) and local environments
@@ -357,142 +356,6 @@ st.markdown("""
         flex-shrink: 0;
     }
 
-    /* Clean Minimalist Social Logo Buttons (Zero Emojis, Pure Official SVGs) */
-    .st-key-btn_sso_g button,
-    .st-key-btn_sso_a button,
-    .st-key-btn_sso_p button,
-    .st-key-ig_su_g button,
-    .st-key-ig_su_a button {
-        height: 48px !important;
-        min-height: 48px !important;
-        max-height: 48px !important;
-        width: 100% !important;
-        border-radius: 12px !important;
-        background-repeat: no-repeat !important;
-        background-position: center center !important;
-        background-size: 24px 24px !important;
-        border: 1px solid var(--card-border, #CBD5E1) !important;
-        background-color: var(--card-bg, #FFFFFF) !important;
-        box-shadow: 0 1px 4px rgba(0, 0, 0, 0.05) !important;
-        color: transparent !important;
-        font-size: 0 !important;
-        cursor: pointer !important;
-        transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1) !important;
-    }
-    .st-key-btn_sso_g button *,
-    .st-key-btn_sso_a button *,
-    .st-key-btn_sso_p button *,
-    .st-key-ig_su_g button *,
-    .st-key-ig_su_a button * {
-        display: none !important;
-        visibility: hidden !important;
-        font-size: 0 !important;
-        line-height: 0 !important;
-        opacity: 0 !important;
-    }
-    .st-key-btn_sso_g button:hover,
-    .st-key-btn_sso_a button:hover,
-    .st-key-btn_sso_p button:hover,
-    .st-key-ig_su_g button:hover,
-    .st-key-ig_su_a button:hover {
-        transform: translateY(-2px) !important;
-        box-shadow: 0 6px 16px rgba(0, 0, 0, 0.12) !important;
-        border-color: #3B82F6 !important;
-    }
-    /* Google 4-Color Vector - ONLY for Google buttons */
-    .st-key-btn_sso_g button,
-    .st-key-ig_su_g button {
-        background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24'%3E%3Cpath fill='%234285F4' d='M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z'/%3E%3Cpath fill='%2334A853' d='M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z'/%3E%3Cpath fill='%23FBBC05' d='M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.06H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.94l2.85-2.22.81-.63z'/%3E%3Cpath fill='%23EA4335' d='M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.06l3.66 2.84c.87-2.6 3.3-4.52 6.16-4.52z'/%3E%3C/svg%3E") !important;
-    }
-    /* Apple Official Vector - ONLY for Apple buttons (Light Mode) */
-    .st-key-btn_sso_a button,
-    .st-key-ig_su_a button {
-        background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='%23111827'%3E%3Cpath d='M18.71 19.5c-.83 1.24-1.71 2.45-3.05 2.47-1.34.03-1.77-.79-3.29-.79-1.53 0-2 .77-3.27.82-1.31.05-2.3-1.32-3.14-2.53C4.25 17 2.94 12.45 4.7 9.39c.87-1.52 2.43-2.48 4.12-2.51 1.28-.02 2.5.87 3.29.87.78 0 2.26-1.07 3.81-.91.65.03 2.47.26 3.64 1.98-.09.06-2.17 1.28-2.15 3.81.03 3.02 2.65 4.03 2.68 4.04-.03.07-.42 1.44-1.38 2.83M15.97 4.54c.66-.8 1.11-1.92.99-3.04-.96.04-2.12.64-2.8 1.44-.61.71-1.14 1.85-.99 2.95 1.07.08 2.15-.55 2.8-1.35'/%3E%3C/svg%3E") !important;
-    }
-    /* Apple Official Vector - ONLY for Apple buttons (Dark Mode) */
-    @media (prefers-color-scheme: dark) {
-        .st-key-btn_sso_a button,
-        .st-key-ig_su_a button {
-            background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='%23FFFFFF'%3E%3Cpath d='M18.71 19.5c-.83 1.24-1.71 2.45-3.05 2.47-1.34.03-1.77-.79-3.29-.79-1.53 0-2 .77-3.27.82-1.31.05-2.3-1.32-3.14-2.53C4.25 17 2.94 12.45 4.7 9.39c.87-1.52 2.43-2.48 4.12-2.51 1.28-.02 2.5.87 3.29.87.78 0 2.26-1.07 3.81-.91.65.03 2.47.26 3.64 1.98-.09.06-2.17 1.28-2.15 3.81.03 3.02 2.65 4.03 2.68 4.04-.03.07-.42 1.44-1.38 2.83M15.97 4.54c.66-.8 1.11-1.92.99-3.04-.96.04-2.12.64-2.8 1.44-.61.71-1.14 1.85-.99 2.95 1.07.08 2.15-.55 2.8-1.35'/%3E%3C/svg%3E") !important;
-        }
-    }
-    [data-theme="dark"] .st-key-btn_sso_a button,
-    [data-theme="dark"] .st-key-ig_su_a button,
-    .stApp[data-theme="dark"] .st-key-btn_sso_a button,
-    .stApp[data-theme="dark"] .st-key-ig_su_a button {
-        background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='%23FFFFFF'%3E%3Cpath d='M18.71 19.5c-.83 1.24-1.71 2.45-3.05 2.47-1.34.03-1.77-.79-3.29-.79-1.53 0-2 .77-3.27.82-1.31.05-2.3-1.32-3.14-2.53C4.25 17 2.94 12.45 4.7 9.39c.87-1.52 2.43-2.48 4.12-2.51 1.28-.02 2.5.87 3.29.87.78 0 2.26-1.07 3.81-.91.65.03 2.47.26 3.64 1.98-.09.06-2.17 1.28-2.15 3.81.03 3.02 2.65 4.03 2.68 4.04-.03.07-.42 1.44-1.38 2.83M15.97 4.54c.66-.8 1.11-1.92.99-3.04-.96.04-2.12.64-2.8 1.44-.61.71-1.14 1.85-.99 2.95 1.07.08 2.15-.55 2.8-1.35'/%3E%3C/svg%3E") !important;
-    }
-    /* Phone Vector - ONLY for Phone button (Light Mode) */
-    .st-key-btn_sso_p button {
-        background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%232563EB' stroke-width='2.2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='M22 16.92v3a2 2 0 0 1-2.18 2 19.79 19.79 0 0 1-8.63-3.07 19.5 19.5 0 0 1-6-6 19.79 19.79 0 0 1-3.07-8.67A2 2 0 0 1 4.11 2h3a2 2 0 0 1 2 1.72 12.84 12.84 0 0 0 .7 2.81 2 2 0 0 1-.45 2.11L8.09 9.91a16 16 0 0 0 6 6l1.27-1.27a2 2 0 0 1 2.11-.45 12.84 12.84 0 0 0 2.81.7A2 2 0 0 1 22 16.92z'/%3E%3C/svg%3E") !important;
-    }
-    /* Phone Vector - ONLY for Phone button (Dark Mode) */
-    @media (prefers-color-scheme: dark) {
-        .st-key-btn_sso_p button {
-            background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%2338BDF8' stroke-width='2.2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='M22 16.92v3a2 2 0 0 1-2.18 2 19.79 19.79 0 0 1-8.63-3.07 19.5 19.5 0 0 1-6-6 19.79 19.79 0 0 1-3.07-8.67A2 2 0 0 1 4.11 2h3a2 2 0 0 1 2 1.72 12.84 12.84 0 0 0 .7 2.81 2 2 0 0 1-.45 2.11L8.09 9.91a16 16 0 0 0 6 6l1.27-1.27a2 2 0 0 1 2.11-.45 12.84 12.84 0 0 0 2.81.7A2 2 0 0 1 22 16.92z'/%3E%3C/svg%3E") !important;
-        }
-    }
-    [data-theme="dark"] .st-key-btn_sso_p button,
-    .stApp[data-theme="dark"] .st-key-btn_sso_p button {
-        background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%2338BDF8' stroke-width='2.2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='M22 16.92v3a2 2 0 0 1-2.18 2 19.79 19.79 0 0 1-8.63-3.07 19.5 19.5 0 0 1-6-6 19.79 19.79 0 0 1-3.07-8.67A2 2 0 0 1 4.11 2h3a2 2 0 0 1 2 1.72 12.84 12.84 0 0 0 .7 2.81 2 2 0 0 1-.45 2.11L8.09 9.91a16 16 0 0 0 6 6l1.27-1.27a2 2 0 0 1 2.11-.45 12.84 12.84 0 0 0 2.81.7A2 2 0 0 1 22 16.92z'/%3E%3C/svg%3E") !important;
-    }
-
-    /* Face ID Animation Card */
-    .faceid-modal-box {
-        background: var(--card-bg, #FFFFFF) !important;
-        border: 1px solid var(--card-border, #E2E8F0) !important;
-        border-radius: 20px;
-        padding: 30px 24px;
-        text-align: center;
-        box-shadow: 0 12px 32px rgba(0, 0, 0, 0.08);
-        margin-bottom: 16px;
-    }
-    .faceid-icon-circle {
-        width: 76px;
-        height: 76px;
-        margin: 0 auto 14px auto;
-        border-radius: 20px;
-        background: rgba(0, 113, 227, 0.08);
-        display: flex;
-        align-items: center;
-        justify-content: center;
-        border: 2px solid rgba(0, 113, 227, 0.25);
-        animation: faceid-pulse 2.2s infinite ease-in-out;
-    }
-    @keyframes faceid-pulse {
-        0% { transform: scale(1); box-shadow: 0 0 0 0 rgba(0, 113, 227, 0.35); }
-        50% { transform: scale(1.04); box-shadow: 0 0 0 10px rgba(0, 113, 227, 0); }
-        100% { transform: scale(1); box-shadow: 0 0 0 0 rgba(0, 113, 227, 0); }
-    }
-
-    .touchid-icon-circle {
-        width: 76px;
-        height: 76px;
-        margin: 0 auto 14px auto;
-        border-radius: 50%;
-        background: rgba(16, 185, 129, 0.08);
-        display: flex;
-        align-items: center;
-        justify-content: center;
-        border: 2px solid rgba(16, 185, 129, 0.25);
-        animation: touchid-pulse 2.2s infinite ease-in-out;
-    }
-    @keyframes touchid-pulse {
-        0% { transform: scale(1); box-shadow: 0 0 0 0 rgba(16, 185, 129, 0.35); }
-        50% { transform: scale(1.04); box-shadow: 0 0 0 10px rgba(16, 185, 129, 0); }
-        100% { transform: scale(1); box-shadow: 0 0 0 0 rgba(16, 185, 129, 0); }
-    }
-
-    /* Google Popup Card */
-    .google-modal-box {
-        background: var(--card-bg, #FFFFFF) !important;
-        border: 1px solid var(--card-border, #E2E8F0) !important;
-        border-radius: 18px;
-        padding: 26px 22px;
-        box-shadow: 0 12px 32px rgba(0, 0, 0, 0.08);
-        margin-bottom: 16px;
-    }
-
     /* Top-Right Account Popover Button */
     div[data-testid="stPopover"] button {
         border-radius: 24px !important;
@@ -508,126 +371,6 @@ st.markdown("""
     div[data-testid="stPopover"] button:hover {
         border-color: #2563EB !important;
         box-shadow: 0 3px 10px rgba(37, 99, 235, 0.12) !important;
-    }
-
-    /* -------------------------------------------------------------------------
-       Authentic Google & Apple Authentication Dialog Modals
-       ------------------------------------------------------------------------- */
-    div[data-testid="stDialog"] div[role="dialog"] {
-        background-color: #131314 !important;
-        border-radius: 28px !important;
-        border: 1px solid rgba(255, 255, 255, 0.08) !important;
-        box-shadow: 0 24px 64px rgba(0, 0, 0, 0.75) !important;
-        padding: 30px 34px !important;
-        color: #E8EAED !important;
-    }
-
-    div[data-testid="stDialog"] div[data-testid="stDialogHeader"] {
-        display: none !important;
-    }
-
-    div[data-testid="stDialog"] label,
-    div[data-testid="stDialog"] p,
-    div[data-testid="stDialog"] span {
-        color: #E8EAED !important;
-    }
-
-    /* Google Password Input */
-    div[data-testid="stDialog"] input {
-        background-color: #131314 !important;
-        color: #E8EAED !important;
-        border: 1px solid #8E918F !important;
-        border-radius: 4px !important;
-        height: 50px !important;
-        font-size: 15px !important;
-        box-shadow: none !important;
-    }
-    div[data-testid="stDialog"] input:focus {
-        border-color: #A8C7FA !important;
-        box-shadow: 0 0 0 1px #A8C7FA !important;
-    }
-
-    /* Google Next Blue Pill Button */
-    .st-key-g_dlg_btn_next button {
-        background-color: #A8C7FA !important;
-        color: #062E6F !important;
-        font-weight: 600 !important;
-        border-radius: 9999px !important;
-        padding: 9px 24px !important;
-        border: none !important;
-        font-size: 14px !important;
-        box-shadow: 0 1px 3px rgba(0, 0, 0, 0.25) !important;
-        transition: all 0.15s ease !important;
-    }
-    .st-key-g_dlg_btn_next button p,
-    .st-key-g_dlg_btn_next button span {
-        color: #062E6F !important;
-        font-weight: 600 !important;
-    }
-    .st-key-g_dlg_btn_next button:hover {
-        background-color: #D3E3FD !important;
-        transform: translateY(-1px) !important;
-    }
-
-    /* Google 'Try another way' Button */
-    .st-key-g_dlg_btn_switch button {
-        background: transparent !important;
-        color: #A8C7FA !important;
-        border: none !important;
-        font-size: 14px !important;
-        font-weight: 500 !important;
-        box-shadow: none !important;
-        padding: 8px 12px !important;
-    }
-    .st-key-g_dlg_btn_switch button p,
-    .st-key-g_dlg_btn_switch button span {
-        color: #A8C7FA !important;
-        font-weight: 500 !important;
-    }
-    .st-key-g_dlg_btn_switch button:hover {
-        background: rgba(168, 199, 250, 0.08) !important;
-        color: #D3E3FD !important;
-    }
-
-    /* Apple Continue Button */
-    .st-key-apple_dlg_btn_continue button {
-        background-color: #0071E3 !important;
-        color: #FFFFFF !important;
-        font-weight: 600 !important;
-        border-radius: 9999px !important;
-        padding: 9px 24px !important;
-        border: none !important;
-        font-size: 14px !important;
-        box-shadow: 0 2px 8px rgba(0, 113, 227, 0.4) !important;
-        transition: all 0.15s ease !important;
-    }
-    .st-key-apple_dlg_btn_continue button p,
-    .st-key-apple_dlg_btn_continue button span {
-        color: #FFFFFF !important;
-        font-weight: 600 !important;
-    }
-    .st-key-apple_dlg_btn_continue button:hover {
-        background-color: #0077ED !important;
-        transform: translateY(-1px) !important;
-    }
-
-    /* Apple Cancel Button */
-    .st-key-apple_dlg_btn_cancel button {
-        background-color: #3A3A3C !important;
-        color: #E5E5EA !important;
-        font-weight: 500 !important;
-        border-radius: 9999px !important;
-        padding: 9px 20px !important;
-        border: none !important;
-        font-size: 14px !important;
-        box-shadow: none !important;
-    }
-    .st-key-apple_dlg_btn_cancel button p,
-    .st-key-apple_dlg_btn_cancel button span {
-        color: #E5E5EA !important;
-    }
-    .st-key-apple_dlg_btn_cancel button:hover {
-        background-color: #48484A !important;
     }
 </style>
 """, unsafe_allow_html=True)
@@ -700,361 +443,23 @@ def sync_user_workbook_sheets(username: str):
 
 
 
-# =============================================================================
-# AUTHENTICATION DIALOG MODALS (Google OAuth popup & Apple Biometrics)
-# =============================================================================
-@st.dialog("Sign in with Google", width="medium")
-def render_google_oauth_dialog():
-    """
-    Launches the original Google Accounts authentication window (accounts.google.com).
-    Uses official Google Identity Services to pop up the genuine Google sign-in window,
-    authenticates credentials, and permanently persists the user to SQLite database.
-    """
-    if "g_auth_email" not in st.session_state:
-        st.session_state["g_auth_email"] = "ggarg4_be23@thapar.edu"
 
-    active_email = st.session_state["g_auth_email"]
-
-    # Google Identity Services / Original accounts.google.com popup launcher
-    google_launcher_html = """
-    <div style="text-align: center; font-family: -apple-system, BlinkMacSystemFont, 'Google Sans', Roboto, sans-serif; padding: 6px 0;">
-        <div style="margin-bottom: 12px;">
-            <svg width="44" height="44" viewBox="0 0 24 24">
-                <path fill="#4285F4" d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z"/>
-                <path fill="#34A853" d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z"/>
-                <path fill="#FBBC05" d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.06H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.94l2.85-2.22.81-.63z"/>
-                <path fill="#EA4335" d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.06l3.66 2.84c.87-2.6 3.3-4.52 6.16-4.52z"/>
-            </svg>
-        </div>
-        <div style="display:inline-flex; align-items:center; gap:6px; font-size:0.8rem; color:#10B981; background:rgba(16,185,129,0.1); padding:4px 14px; border-radius:14px; margin-bottom: 10px; font-weight:600;">
-            <svg width="12" height="12" viewBox="0 0 24 24" fill="#10B981"><path d="M18 8h-1V6c0-2.76-2.24-5-5-5S7 3.24 7 6v2H6c-1.1 0-2 .9-2 2v10c0 1.1.9 2 2 2h12c1.1 0 2-.9 2-2V10c0-1.1-.9-2-2-2zm-6 9c-1.1 0-2-.9-2-2s.9-2 2-2 2 .9 2 2-.9 2-2 2zm3.1-9H8.9V6c0-1.71 1.39-3.1 3.1-3.1 1.71 0 3.1 1.39 3.1 3.1v2z"/></svg>
-            <span>accounts.google.com &bull; Official Identity Provider</span>
-        </div>
-        <h3 style="color: #FFFFFF; margin: 4px 0 6px 0; font-size: 1.25rem; font-weight: 600;">Sign in with Google</h3>
-        <p style="font-size:0.88rem; color:#9AA0A6; margin: 0 0 14px 0; line-height: 1.4;">
-            Launch the official Google Account sign-in window on <b>accounts.google.com</b>.
-        </p>
-        <button id="btn_open_google" onclick="openOriginalGoogleWindow()" style="background-color: #A8C7FA; color: #062E6F; font-weight: 700; border-radius: 9999px; padding: 11px 26px; border: none; font-size: 14px; cursor: pointer; display: inline-flex; align-items: center; gap: 8px; box-shadow: 0 2px 8px rgba(0,0,0,0.3); transition: all 0.2s ease;">
-            <svg width="18" height="18" viewBox="0 0 24 24">
-                <path fill="#4285F4" d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z"/>
-                <path fill="#34A853" d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z"/>
-                <path fill="#FBBC05" d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.06H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.94l2.85-2.22.81-.63z"/>
-                <path fill="#EA4335" d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.06l3.66 2.84c.87-2.6 3.3-4.52 6.16-4.52z"/>
-            </svg>
-            <span>Launch Official accounts.google.com</span>
-        </button>
-        <div id="g_status_msg" style="margin-top: 10px; font-size: 0.8rem; color: #A8C7FA;">
-            Window opening in popup... If blocked, click the button above.
-        </div>
-    </div>
-    <script>
-    function openOriginalGoogleWindow() {
-        const width = 520;
-        const height = 630;
-        const left = Math.max(0, (window.screen.width - width) / 2);
-        const top = Math.max(0, (window.screen.height - height) / 2);
-        const url = 'https://accounts.google.com/ServiceLogin?service=accountsettings&hl=en';
-        const popup = window.open(url, 'GoogleSignIn', `width=${width},height=${height},left=${left},top=${top},toolbar=no,menubar=no,location=yes,status=no`);
-        if (popup) {
-            popup.focus();
-            document.getElementById('g_status_msg').innerHTML = '<span style="color:#34D399; font-weight:600;">✓ accounts.google.com window opened! Complete your Google sign-in in the popup.</span>';
-        } else {
-            document.getElementById('g_status_msg').innerHTML = '<span style="color:#F87171;">Popup was blocked by your browser. Click the button above to open Google.</span>';
-        }
-    }
-    try {
-        setTimeout(openOriginalGoogleWindow, 300);
-    } catch(e) {}
-    </script>
-    """
-    components.html(google_launcher_html, height=210)
-
-    # Google Identity Linking & Database Persistence
-    st.markdown("""
-    <div style="border-top: 1px solid rgba(255,255,255,0.1); margin: 12px 0 16px 0; padding-top: 12px;">
-        <span style="font-size: 0.8rem; font-weight: 700; color: #9AA0A6; text-transform: uppercase; letter-spacing: 0.5px;">
-            Link Authenticated Google Account to CreditLens
-        </span>
-    </div>
-    """, unsafe_allow_html=True)
-
-    g_col1, g_col2 = st.columns(2)
-    with g_col1:
-        g_email = st.text_input("Google Email Address:", value=active_email, key="dlg_g_real_email")
-    with g_col2:
-        g_name = st.text_input("Your Display Name:", value="Gitansh Garg", key="dlg_g_real_name")
-
-    g_col3, g_col4 = st.columns(2)
-    with g_col3:
-        g_role = st.selectbox("Designated Institutional Level:", [
-            "CRO Level (Executive)",
-            "Senior Analyst Level",
-            "Credit Underwriting Manager",
-            "Portfolio Risk Specialist",
-            "Reviewer Level"
-        ], index=1, key="dlg_g_real_role")
-    with g_col4:
-        g_pw = st.text_input("Account PIN / Password (to preserve account):", type="password", placeholder="Enter PIN/password", key="dlg_g_real_pw")
-
-    act_g1, act_g2 = st.columns([1, 1.4])
-    with act_g1:
-        if st.button("Cancel", key="dlg_g_btn_cancel", use_container_width=True):
-            st.session_state["social_mode"] = None
-            st.rerun()
-
-    with act_g2:
-        if st.button("✓ Confirm & Save Google Profile", type="primary", key="dlg_g_btn_confirm", use_container_width=True):
-            clean_email = g_email.strip().lower()
-            clean_name = g_name.strip()
-            clean_pw = g_pw.strip() or "GoogleVerified_Token"
-
-            if not clean_email or "@" not in clean_email or "." not in clean_email:
-                st.error("Please enter a valid Google email address.")
-            elif not clean_name:
-                st.error("Please enter your display name.")
-            else:
-                with st.spinner("Connecting Google Account..."):
-                    time.sleep(0.35)
-                u_rec = authenticate_or_register_social(
-                    provider="Google",
-                    email_or_id=clean_email,
-                    display_name=clean_name,
-                    role=g_role,
-                    password=clean_pw
-                )
-                if u_rec:
-                    st.session_state["current_user"] = u_rec
-                    set_last_active_user(u_rec["username"])
-                    sync_user_workbook_sheets(u_rec["username"])
-                    st.session_state["social_mode"] = None
-                    st.success(f"✓ Authenticated: {u_rec['full_name']} ({u_rec['email']}). Account securely saved to database.")
-                    st.rerun()
-                else:
-                    st.error("Incorrect password for this registered Google account. Please enter the correct password.")
-
-
-@st.dialog("Sign in with Apple", width="small")
-def render_apple_biometric_dialog():
-    """
-    Triggers the original Apple biometric prompt (Face ID / Touch ID via W3C WebAuthn platform authenticator)
-    and the official appleid.apple.com authorization window.
-    Authenticates real credentials and permanently persists the user to SQLite database.
-    """
-    if "apple_auth_email" not in st.session_state:
-        st.session_state["apple_auth_email"] = "ggarg4_be23@icloud.com"
-
-    apple_email = st.session_state["apple_auth_email"]
-
-    # Apple WebAuthn & appleid.apple.com launcher
-    apple_launcher_html = """
-    <div style="text-align: center; font-family: -apple-system, BlinkMacSystemFont, 'SF Pro Display', 'Helvetica Neue', sans-serif; padding: 6px 0;">
-        <div style="margin-bottom: 12px;">
-            <svg width="42" height="42" viewBox="0 0 24 24" fill="#FFFFFF">
-                <path d="M18.71 19.5c-.83 1.24-1.71 2.45-3.05 2.47-1.34.03-1.77-.79-3.29-.79-1.53 0-2 .77-3.27.82-1.31.05-2.3-1.32-3.14-2.53C4.25 17 2.94 12.45 4.7 9.39c.87-1.52 2.43-2.48 4.12-2.51 1.28-.02 2.5.87 3.29.87.78 0 2.26-1.07 3.81-.91.65.03 2.47.26 3.64 1.98-.09.06-2.17 1.28-2.15 3.81.03 3.02 2.65 4.03 2.68 4.04-.03.07-.42 1.44-1.38 2.83M15.97 4.54c.66-.8 1.11-1.92.99-3.04-.96.04-2.12.64-2.8 1.44-.61.71-1.14 1.85-.99 2.95 1.07.08 2.15-.55 2.8-1.35"/>
-            </svg>
-        </div>
-        <div style="display:inline-flex; align-items:center; gap:6px; font-size:0.8rem; color:#0071E3; background:rgba(0,113,227,0.12); padding:4px 14px; border-radius:14px; margin-bottom: 10px; font-weight:600;">
-            <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="#0071E3" stroke-width="2.5"><path d="M20 6L9 17l-5-5"/></svg>
-            <span>Apple Secure Enclave &bull; Native Hardware Biometrics</span>
-        </div>
-        <h3 style="color: #FFFFFF; margin: 4px 0 6px 0; font-size: 1.25rem; font-weight: 600;">Sign in with Apple</h3>
-        <p style="font-size:0.88rem; color:#8E8E93; margin: 0 0 14px 0; line-height: 1.4;">
-            Activates <b>Apple Touch ID / Face ID</b> or official <b>appleid.apple.com</b>.
-        </p>
-        <div style="display: flex; gap: 10px; justify-content: center; flex-wrap: wrap;">
-            <button id="btn_bio" onclick="triggerNativeAppleBio()" style="background-color: #0071E3; color: #FFFFFF; font-weight: 700; border-radius: 9999px; padding: 11px 22px; border: none; font-size: 14px; cursor: pointer; display: inline-flex; align-items: center; gap: 8px; box-shadow: 0 2px 8px rgba(0,113,227,0.4); transition: all 0.2s ease;">
-                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#FFFFFF" stroke-width="2"><path d="M12 10a2 2 0 0 0-2 2c0 1.02-.1 2.51-.26 4"/><path d="M14 13.12c0 2.38 0 6.38-1 8.88"/><path d="M17.29 21.02c.12-.6.43-2.3.5-3.02"/><path d="M2 12a10 10 0 0 1 18-6"/><path d="M2 16h.01"/><path d="M21.8 16c.2-2 .131-5.354 0-6"/><path d="M5 19.5C5.5 18 6 15 6 12a6 6 0 0 1 .34-2"/><path d="M8.65 22c.21-.66.45-1.32.57-2"/><path d="M9 6.8a6 6 0 0 1 9 5.2c0 .47 0 1.17-.02 2"/></svg>
-                <span>Summon Touch ID / Face ID</span>
-            </button>
-            <button onclick="openOriginalAppleWindow()" style="background-color: #2C2C2E; color: #FFFFFF; font-weight: 600; border-radius: 9999px; padding: 11px 18px; border: 1px solid rgba(255,255,255,0.15); font-size: 14px; cursor: pointer;">
-                <span>appleid.apple.com</span>
-            </button>
-        </div>
-        <div id="apple_status_msg" style="margin-top: 10px; font-size: 0.8rem; color: #0071E3;">
-            Activating Apple Secure Enclave... If prompt does not appear, click the blue button above.
-        </div>
-    </div>
-    <script>
-    function triggerNativeAppleBio() {
-        const credNav = (window.navigator && window.navigator.credentials) ? window.navigator.credentials : (window.parent && window.parent.navigator && window.parent.navigator.credentials ? window.parent.navigator.credentials : null);
-        if (credNav) {
-            const challenge = new Uint8Array(32);
-            if (window.crypto && window.crypto.getRandomValues) window.crypto.getRandomValues(challenge);
-            credNav.create({
-                publicKey: {
-                    challenge: challenge,
-                    rp: { name: "CreditLens", id: window.location.hostname },
-                    user: { id: new Uint8Array([1,2,3,4,5,6,7,8]), name: "ggarg4_be23@icloud.com", displayName: "Gitansh Garg" },
-                    pubKeyCredParams: [{ alg: -7, type: "public-key" }, { alg: -257, type: "public-key" }],
-                    authenticatorSelection: { authenticatorAttachment: "platform", userVerification: "required" },
-                    timeout: 60000
-                }
-            }).then(res => {
-                document.getElementById('apple_status_msg').innerHTML = '<span style="color:#10B981; font-weight:700;">✓ Apple Hardware Touch ID / Face ID Verified!</span>';
-            }).catch(err => {
-                console.log("Apple WebAuthn result:", err);
-                document.getElementById('apple_status_msg').innerHTML = '<span style="color:#A8C7FA;">Apple sensor ready. Rest finger on Touch ID sensor or complete below.</span>';
-            });
-        } else {
-            openOriginalAppleWindow();
-        }
-    }
-    function openOriginalAppleWindow() {
-        const width = 600;
-        const height = 650;
-        const left = Math.max(0, (window.screen.width - width) / 2);
-        const top = Math.max(0, (window.screen.height - height) / 2);
-        const url = 'https://appleid.apple.com/auth/authorize?client_id=com.creditlens.auth&response_type=code%20id_token&response_mode=form_post&scope=name%20email';
-        window.open(url, 'AppleSignIn', `width=${width},height=${height},left=${left},top=${top}`);
-    }
-    try {
-        setTimeout(triggerNativeAppleBio, 300);
-    } catch(e) {}
-    </script>
-    """
-    components.html(apple_launcher_html, height=215)
-
-    # Apple ID Linking & Database Persistence
-    st.markdown("""
-    <div style="border-top: 1px solid rgba(255,255,255,0.1); margin: 12px 0 16px 0; padding-top: 12px;">
-        <span style="font-size: 0.8rem; font-weight: 700; color: #8E8E93; text-transform: uppercase; letter-spacing: 0.5px;">
-            Link Verified Apple Account to CreditLens
-        </span>
-    </div>
-    """, unsafe_allow_html=True)
-
-    a_col1, a_col2 = st.columns(2)
-    with a_col1:
-        a_email = st.text_input("Apple ID Email Address:", value=apple_email, key="dlg_a_real_email")
-    with a_col2:
-        a_name = st.text_input("Your Display Name:", value="Gitansh Garg", key="dlg_a_real_name")
-
-    privacy_mode = st.radio(
-        "Apple ID Email Relay:",
-        ["Share My Email (Use genuine Apple ID)", "Hide My Email (Forward via Apple Private Relay)"],
-        index=0,
-        key="dlg_a_privacy"
-    )
-
-    a_pw = st.text_input("Apple Passcode / Password (to preserve account):", type="password", placeholder="Enter passcode", key="dlg_a_real_pw")
-
-    act_a1, act_a2 = st.columns([1, 1.4])
-    with act_a1:
-        if st.button("Cancel", key="dlg_a_btn_cancel", use_container_width=True):
-            st.session_state["social_mode"] = None
-            st.rerun()
-
-    with act_a2:
-        if st.button("✓ Confirm & Save Apple Profile", type="primary", key="dlg_a_btn_confirm", use_container_width=True):
-            clean_email = a_email.strip().lower() if "Share" in privacy_mode else "ggarg4_relay@privaterelay.appleid.com"
-            clean_name = a_name.strip()
-            clean_pw = a_pw.strip() or "AppleTouchID_VerifiedKey"
-
-            if not clean_email or "@" not in clean_email or "." not in clean_email:
-                st.error("Please enter a valid Apple ID email address.")
-            elif not clean_name:
-                st.error("Please enter your display name.")
-            else:
-                with st.spinner("Connecting Apple ID..."):
-                    time.sleep(0.35)
-                u_rec = authenticate_or_register_social(
-                    provider="Apple",
-                    email_or_id=clean_email,
-                    display_name=clean_name,
-                    role="CRO Level (Executive)",
-                    password=clean_pw
-                )
-                if u_rec:
-                    st.session_state["current_user"] = u_rec
-                    set_last_active_user(u_rec["username"])
-                    sync_user_workbook_sheets(u_rec["username"])
-                    st.session_state["social_mode"] = None
-                    st.success(f"✓ Apple ID Verified: {u_rec['full_name']} ({u_rec['email']}). Account securely saved to database.")
-                    st.rerun()
-                else:
-                    st.error("Incorrect passcode for this Apple ID. Please enter the correct passcode.")
-
-
-
-@st.dialog("Sign in with Phone", width="small")
-def render_phone_dialog():
-    """
-    Renders SMS / Phone verification modal dialog.
-    """
-    st.markdown("""
-    <div style="text-align: center; margin-bottom: 12px;">
-        <div style="display: flex; justify-content: center; margin-bottom: 8px;">
-            <div style="width: 44px; height: 44px; border-radius: 50%; background: rgba(37, 99, 235, 0.08); display: flex; align-items: center; justify-content: center;">
-                <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="#2563EB" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
-                    <path d="M22 16.92v3a2 2 0 0 1-2.18 2 19.79 19.79 0 0 1-8.63-3.07 19.5 19.5 0 0 1-6-6 19.79 19.79 0 0 1-3.07-8.67A2 2 0 0 1 4.11 2h3a2 2 0 0 1 2 1.72 12.84 12.84 0 0 0 .7 2.81 2 2 0 0 1-.45 2.11L8.09 9.91a16 16 0 0 0 6 6l1.27-1.27a2 2 0 0 1 2.11-.45 12.84 12.84 0 0 0 2.81.7A2 2 0 0 1 22 16.92z"/>
-                </svg>
-            </div>
-        </div>
-        <p style="font-size:0.86rem; color:#64748B; margin: 0 0 10px 0;">
-            Sign in via Verified Contact Number
-        </p>
-    </div>
-    """, unsafe_allow_html=True)
-
-    p_num = st.text_input("Mobile Phone Number:", placeholder="+1 (555) 000-0000 or 9876543210", key="dlg_p_num")
-    if "phone_otp" not in st.session_state:
-        st.session_state["phone_otp"] = None
-
-    if st.button("Send Security Code", use_container_width=True, key="dlg_btn_req_otp"):
-        if p_num.strip():
-            import random
-            st.session_state["phone_otp"] = str(random.randint(100000, 999999))
-            st.session_state["phone_target"] = p_num.strip()
-            st.info(f"Access Code: **`{st.session_state['phone_otp']}`**")
-        else:
-            st.error("Please enter a valid phone number.")
-
-    if st.session_state.get("phone_otp"):
-        p_code = st.text_input("Enter 6-digit code:", key="dlg_p_code")
-        p_name = st.text_input("Display Name:", value="Gitansh Garg", key="dlg_p_name")
-        if st.button("Verify & Log In", type="primary", use_container_width=True, key="dlg_btn_p_verify"):
-            if p_code.strip() == st.session_state["phone_otp"]:
-                u_rec = authenticate_or_register_contact(st.session_state["phone_target"], full_name=p_name.strip() or "Gitansh Garg", role="CRO Level (Executive)")
-                if u_rec:
-                    st.session_state["current_user"] = u_rec
-                    set_last_active_user(u_rec["username"])
-                    sync_user_workbook_sheets(u_rec["username"])
-                    st.session_state["phone_otp"] = None
-                    st.session_state["social_mode"] = None
-                    st.success(f"✓ Phone Verified: {u_rec['full_name']}. Saved to database.")
-                    st.rerun()
-            else:
-                st.error("Incorrect verification code.")
 
 
 # =============================================================================
-# AUTHENTICATION & SOCIAL-STYLE USER ACCOUNT SYSTEM
+# AUTHENTICATION & INSTITUTIONAL USER ACCOUNT SYSTEM
 # =============================================================================
 def render_auth_modal():
     """
-    Renders an Instagram / Snapchat level social login and sign-up experience:
+    Renders a clean, user-friendly institutional authentication experience:
     - Sleek centered cards with gradient brand identity
-    - Instagram-style "One-Click Saved Account Login" (instant access with circular avatars)
-    - Clean credentials login (username, email, or contact)
-    - Social SSO integration (Google, Apple, Phone)
-    - Instagram-style separate bottom cards to switch between Log In and Sign Up
+    - 1-Click Saved Profile login with circular avatars
+    - Clean credentials login via Work Email and Password
+    - Strict 1:1 Email registration (one email address can create only one account)
     - Trouble logging in (Forgot Password) self-service view
     """
     if "auth_view" not in st.session_state:
         st.session_state["auth_view"] = "login"
-    if "social_mode" not in st.session_state:
-        st.session_state["social_mode"] = None
-
-    # Handle triggers from persistent or queued session states
-    if st.session_state.get("social_mode") == "Google":
-        st.session_state["social_mode"] = None
-        render_google_oauth_dialog()
-    elif st.session_state.get("social_mode") == "Apple":
-        st.session_state["social_mode"] = None
-        render_apple_biometric_dialog()
-    elif st.session_state.get("social_mode") == "Phone":
-        st.session_state["social_mode"] = None
-        render_phone_dialog()
 
     auth_view = st.session_state["auth_view"]
 
@@ -1063,7 +468,7 @@ def render_auth_modal():
 
     with auth_box:
         # =====================================================================
-        # STANDARD VIEW 1: CLEAN MINIMALIST LOG IN
+        # STANDARD VIEW 1: CLEAN WORK EMAIL LOG IN
         # =====================================================================
         if auth_view == "login":
             st.markdown("""
@@ -1091,11 +496,12 @@ def render_auth_modal():
 
             if primary_u:
                 prim_av_html = render_avatar_circle(primary_u, size=52, font_size=1.4)
+                email_display = primary_u.get("email") or f"{primary_u['username']}@creditlens.internal"
                 st.markdown(f"""
                 <div style="text-align: center; padding: 14px 16px; background: rgba(37, 99, 235, 0.04); border: 1px solid rgba(37, 99, 235, 0.14); border-radius: 14px; margin-bottom: 12px;">
                     <div style="margin-bottom: 8px;">{prim_av_html}</div>
                     <div style="font-weight: 750; font-size: 0.98rem; color: var(--text-headline);">{primary_u['full_name']}</div>
-                    <div style="font-size: 0.8rem; color: #64748B;"><code>@{primary_u['username']}</code> &nbsp;•&nbsp; <span style="color:#2563EB; font-weight:600;">{primary_u['role']}</span></div>
+                    <div style="font-size: 0.8rem; color: #64748B;"><code>{email_display}</code> &nbsp;•&nbsp; <span style="color:#2563EB; font-weight:600;">{primary_u['role']}</span></div>
                 </div>
                 """, unsafe_allow_html=True)
 
@@ -1113,12 +519,13 @@ def render_auth_modal():
                         col_o1, col_o2 = st.columns([3, 1.2])
                         with col_o1:
                             o_av = render_avatar_circle(o_u, size=28, font_size=0.75)
+                            o_email = o_u.get("email") or f"{o_u['username']}@creditlens.internal"
                             st.markdown(f"""
                             <div style="display: flex; align-items: center; gap: 8px; padding-top: 4px;">
                                 {o_av}
                                 <div>
                                     <span style="font-weight: 700; font-size: 0.86rem; color: var(--text-headline);">{o_u['full_name']}</span>
-                                    <span style="font-size: 0.78rem; color: #64748B;">(@{o_u['username']})</span>
+                                    <span style="font-size: 0.78rem; color: #64748B;">({o_email})</span>
                                 </div>
                             </div>
                             """, unsafe_allow_html=True)
@@ -1135,17 +542,17 @@ def render_auth_modal():
             st.markdown("""
             <div style="display:flex; align-items:center; margin:16px 0 12px 0; color:#8E8E8E; font-size:0.72rem; font-weight:700;">
                 <div style="flex:1; height:1px; background:var(--card-border, #E2E8F0);"></div>
-                <span style="padding:0 12px; color:#94A3B8;">OR LOG IN WITH CREDENTIALS</span>
+                <span style="padding:0 12px; color:#94A3B8;">OR SIGN IN WITH WORK EMAIL</span>
                 <div style="flex:1; height:1px; background:var(--card-border, #E2E8F0);"></div>
             </div>
             """, unsafe_allow_html=True)
 
-            l_ident = st.text_input("Username or email:", placeholder="Username, email, or phone", key="ig_field_ident")
-            l_pass = st.text_input("Password:", placeholder="Password", type="password", key="ig_field_pass")
+            l_ident = st.text_input("Work Email Address:", placeholder="e.g. analyst@creditlens.internal", key="ig_field_ident")
+            l_pass = st.text_input("Password:", placeholder="Enter your password", type="password", key="ig_field_pass")
 
             if st.button("Log In", type="primary", use_container_width=True, key="ig_btn_submit_login"):
                 if not l_ident or not l_pass:
-                    st.error("Please enter both username/email and password.")
+                    st.error("Please enter both work email address and password.")
                 else:
                     u_rec = authenticate_user(l_ident, l_pass)
                     if u_rec:
@@ -1155,29 +562,7 @@ def render_auth_modal():
                         st.success(f"Welcome back, {u_rec['full_name']}!")
                         st.rerun()
                     else:
-                        st.error("Incorrect username or password.")
-
-            # --- Clean Social Buttons (Pure SVG Logos, Zero Emojis) ---
-            st.markdown("""
-            <div style="display:flex; align-items:center; margin:16px 0 12px 0; color:#8E8E8E; font-size:0.72rem; font-weight:700;">
-                <div style="flex:1; height:1px; background:var(--card-border, #E2E8F0);"></div>
-                <span style="padding:0 12px; color:#94A3B8;">OR CONTINUE WITH</span>
-                <div style="flex:1; height:1px; background:var(--card-border, #E2E8F0);"></div>
-            </div>
-            """, unsafe_allow_html=True)
-
-            sc1, sc2, sc3 = st.columns(3)
-            with sc1:
-                if st.button(" ", use_container_width=True, key="btn_sso_g", help="Google"):
-                    render_google_oauth_dialog()
-
-            with sc2:
-                if st.button(" ", use_container_width=True, key="btn_sso_a", help="Apple"):
-                    render_apple_biometric_dialog()
-
-            with sc3:
-                if st.button(" ", use_container_width=True, key="btn_sso_p", help="Phone"):
-                    render_phone_dialog()
+                        st.error("Incorrect email address or password. Please verify your credentials.")
 
             st.markdown("<div style='margin-top: 14px;'></div>", unsafe_allow_html=True)
             if st.button("Forgot password?", use_container_width=True, key="ig_link_forgot"):
@@ -1195,7 +580,7 @@ def render_auth_modal():
                 st.rerun()
 
         # =====================================================================
-        # VIEW 2: SIGN UP
+        # VIEW 2: SIGN UP (Strict 1:1 Email ID Registration)
         # =====================================================================
         elif auth_view == "signup":
             st.markdown("""
@@ -1210,28 +595,9 @@ def render_auth_modal():
             </div>
             """, unsafe_allow_html=True)
 
-            su_col1, su_col2 = st.columns(2)
-            with su_col1:
-                if st.button(" ", use_container_width=True, key="ig_su_g", help="Google"):
-                    render_google_oauth_dialog()
-
-            with su_col2:
-                if st.button(" ", use_container_width=True, key="ig_su_a", help="Apple"):
-                    render_apple_biometric_dialog()
-
-            st.markdown("""
-            <div style="display:flex; align-items:center; margin:16px 0 14px 0; color:#8E8E8E; font-size:0.72rem; font-weight:700;">
-                <div style="flex:1; height:1px; background:var(--card-border, #E2E8F0);"></div>
-                <span style="padding:0 12px; color:#94A3B8;">OR SIGN UP WITH DETAILS</span>
-                <div style="flex:1; height:1px; background:var(--card-border, #E2E8F0);"></div>
-            </div>
-            """, unsafe_allow_html=True)
-
             su_name = st.text_input("Full Display Name:", placeholder="e.g. Sarah Jenkins", key="ig_su_name")
-            su_user = st.text_input("Choose Username / ID:", placeholder="e.g. sjenkins", key="ig_su_user")
             su_email = st.text_input("Work Email Address:", placeholder="e.g. sjenkins@bank.internal", key="ig_su_email")
-            su_phone = st.text_input("Mobile Phone (Optional):", placeholder="e.g. +1-555-0199", key="ig_su_phone")
-            su_pw = st.text_input("Choose Password:", type="password", placeholder="At least 4 characters", key="ig_su_pw")
+            su_pw = st.text_input("Create Password:", type="password", placeholder="At least 4 characters", key="ig_su_pw")
             su_role = st.selectbox("Designated Institutional Level:", [
                 "CRO Level (Executive)",
                 "Senior Analyst Level",
@@ -1240,19 +606,25 @@ def render_auth_modal():
                 "Reviewer Level"
             ], index=1, key="ig_su_role")
 
-            if st.button("Sign Up", type="primary", use_container_width=True, key="ig_btn_submit_signup"):
-                if not su_name or not su_user or not su_pw:
-                    st.error("Please fill in your name, desired username, and password.")
+            if st.button("Create Account", type="primary", use_container_width=True, key="ig_btn_submit_signup"):
+                clean_name = su_name.strip()
+                clean_email = su_email.strip().lower()
+                clean_pw = su_pw.strip()
+
+                if not clean_name or not clean_email or not clean_pw:
+                    st.error("Please fill in your name, work email address, and password.")
+                elif "@" not in clean_email or "." not in clean_email:
+                    st.error("Please enter a valid institutional work email address.")
                 else:
-                    ok, msg = register_user(su_user, su_pw, su_name, su_role, su_email, su_phone)
+                    ok, msg = register_user(full_name=clean_name, email=clean_email, password=clean_pw, role=su_role)
                     if ok:
-                        new_u = get_user_by_username(su_user)
+                        new_u = get_user_by_email(clean_email)
                         if new_u:
                             st.session_state["current_user"] = new_u
                             set_last_active_user(new_u["username"])
                             sync_user_workbook_sheets(new_u["username"])
                         st.session_state["auth_view"] = "login"
-                        st.success(f"🎉 Account @{su_user} created and permanently saved in database! Welcome, {su_name}.")
+                        st.success(f"🎉 Account created successfully for {clean_name}! Welcome to CreditLens.")
                         st.rerun()
                     else:
                         st.error(f"{msg}")
@@ -1260,7 +632,7 @@ def render_auth_modal():
             st.markdown("<br>", unsafe_allow_html=True)
             st.markdown("""
             <div class="ig-bottom-card">
-                Have an account?
+                Already have an account?
             </div>
             """, unsafe_allow_html=True)
             if st.button("Log In", use_container_width=True, key="ig_btn_back_login"):
@@ -1280,11 +652,11 @@ def render_auth_modal():
                     </svg>
                 </div>
                 <h3 style="margin: 0; font-weight: 800; font-size: 1.25rem;">Trouble Logging In?</h3>
-                <p style="color: #64748B; font-size: 0.85rem; margin-top: 4px; margin-bottom: 16px;">Enter your username, email, or contact number to reset your password.</p>
+                <p style="color: #64748B; font-size: 0.85rem; margin-top: 4px; margin-bottom: 16px;">Enter your registered work email address to reset your password.</p>
             </div>
             """, unsafe_allow_html=True)
 
-            fg_ident = st.text_input("Username, Email, or Contact Number:", placeholder="e.g. admin or analyst@creditlens.internal", key="ig_fg_ident")
+            fg_ident = st.text_input("Registered Work Email:", placeholder="e.g. analyst@creditlens.internal", key="ig_fg_ident")
             fg_new = st.text_input("New Password:", type="password", placeholder="At least 4 characters", key="ig_fg_new")
             fg_conf = st.text_input("Confirm New Password:", type="password", placeholder="Re-type new password", key="ig_fg_conf")
 

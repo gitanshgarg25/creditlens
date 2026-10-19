@@ -38,7 +38,7 @@ def init_user_db():
     """)
     conn.commit()
 
-    # Safely migrate new columns (email, phone, auth_provider, avatar_data) if they don't exist
+    # Safely migrate columns (email, phone, auth_provider, avatar_data) if they don't exist
     for col_name, col_type in [
         ("email", "TEXT"),
         ("phone", "TEXT"),
@@ -50,6 +50,10 @@ def init_user_db():
             conn.commit()
         except sqlite3.OperationalError:
             pass  # column already exists
+
+    # Strictly enforce that one email address can only belong to exactly one user account
+    cursor.execute("CREATE UNIQUE INDEX IF NOT EXISTS idx_app_users_email_unique ON app_users(LOWER(email));")
+    conn.commit()
 
     # Ensure tables for persistent user sheets, session state, and notes exist
     cursor.execute("""
@@ -96,6 +100,13 @@ def init_user_db():
         VALUES (?, ?, ?, ?, ?, ?, ?);
         """, default_users)
         conn.commit()
+    else:
+        # Ensure default demo accounts have standard email addresses populated
+        cursor.execute("UPDATE app_users SET email = 'admin@creditlens.internal' WHERE username = 'admin' AND (email IS NULL OR email = '');")
+        cursor.execute("UPDATE app_users SET email = 'analyst@creditlens.internal' WHERE username = 'analyst' AND (email IS NULL OR email = '');")
+        cursor.execute("UPDATE app_users SET email = 'guest@creditlens.internal' WHERE username = 'guest' AND (email IS NULL OR email = '');")
+        conn.commit()
+
     conn.close()
 
 
@@ -107,8 +118,38 @@ def get_user_by_username(username: str):
     cursor.execute("""
     SELECT user_id, username, full_name, role, created_at, email, phone, auth_provider, avatar_data
     FROM app_users
-    WHERE username = ?;
+    WHERE LOWER(username) = ?;
     """, (username.strip().lower(),))
+    row = cursor.fetchone()
+    conn.close()
+    if row:
+        return {
+            "user_id": row[0],
+            "username": row[1],
+            "full_name": row[2],
+            "role": row[3],
+            "created_at": row[4],
+            "email": row[5] or "",
+            "phone": row[6] or "",
+            "auth_provider": row[7] or "local",
+            "avatar_data": row[8] or ""
+        }
+    return None
+
+
+def get_user_by_email(email: str):
+    """Fetches user record dict by email address (case-insensitive)."""
+    init_user_db()
+    ident = email.strip().lower()
+    if not ident:
+        return None
+    conn = sqlite3.connect(DB_PATH)
+    cursor = conn.cursor()
+    cursor.execute("""
+    SELECT user_id, username, full_name, role, created_at, email, phone, auth_provider, avatar_data
+    FROM app_users
+    WHERE LOWER(email) = ?;
+    """, (ident,))
     row = cursor.fetchone()
     conn.close()
     if row:
@@ -135,7 +176,7 @@ def update_profile_avatar(username: str, avatar_data: str):
     conn = sqlite3.connect(DB_PATH)
     cursor = conn.cursor()
     try:
-        cursor.execute("UPDATE app_users SET avatar_data = ? WHERE username = ?;", (avatar_data, username.strip().lower()))
+        cursor.execute("UPDATE app_users SET avatar_data = ? WHERE LOWER(username) = ?;", (avatar_data, username.strip().lower()))
         conn.commit()
         return True, "Profile picture updated successfully!"
     except Exception as e:
@@ -144,42 +185,101 @@ def update_profile_avatar(username: str, avatar_data: str):
         conn.close()
 
 
-def register_user(username: str, password: str, full_name: str, role: str = "Risk Analyst", email: str = "", phone: str = "", auth_provider: str = "local"):
+def register_user(
+    full_name: str = "",
+    email: str = "",
+    password: str = "",
+    role: str = "Senior Analyst Level",
+    username: str = "",
+    *args,
+    **kwargs
+) -> tuple[bool, str]:
     """
-    Registers a new user ID with optional email and phone.
-    Returns (success: bool, message: str)
+    Registers a new institutional analyst account with an email address and password.
+    Enforces that one email address can only be used for exactly one account.
+    Returns (success: bool, message: str).
     """
     init_user_db()
-    username = username.strip().lower()
-    if not username:
-        return False, "Username cannot be empty."
-    if len(password) < 4:
+
+    # Support legacy positional call: register_user(username, password, full_name, role, email, phone)
+    if "@" not in email and args and len(args) >= 1 and "@" in str(args[0]):
+        # Legacy positional mapping
+        actual_user = full_name
+        actual_pw = email
+        actual_name = password
+        actual_role = role
+        actual_email = str(args[0])
+        full_name = actual_name
+        email = actual_email
+        password = actual_pw
+        role = actual_role
+        username = actual_user
+    elif kwargs.get("email"):
+        email = kwargs.get("email")
+
+    clean_name = full_name.strip()
+    clean_email = email.strip().lower()
+    clean_pw = password.strip()
+
+    if not clean_name:
+        return False, "Please enter your full display name."
+    if not clean_email or "@" not in clean_email or "." not in clean_email:
+        return False, "Please enter a valid institutional work email address."
+    if len(clean_pw) < 4:
         return False, "Password must be at least 4 characters long."
 
     conn = sqlite3.connect(DB_PATH)
     cursor = conn.cursor()
+
+    # 1. Enforce strict uniqueness: one email address can only create exactly 1 login ID
+    cursor.execute("SELECT user_id, username, full_name FROM app_users WHERE LOWER(email) = ?;", (clean_email,))
+    existing_user = cursor.fetchone()
+    if existing_user:
+        conn.close()
+        return False, f"An account with email '{clean_email}' already exists. One email ID can only be registered once. Please log in with your password."
+
+    # 2. Derive clean username if not provided
+    if not username or not username.strip():
+        prefix = clean_email.split("@")[0].replace(".", "").replace("-", "").replace("_", "")
+        base_user = "".join(c for c in prefix.lower() if c.isalnum())[:16]
+        if not base_user:
+            base_user = "".join(c for c in clean_name.lower() if c.isalnum())[:16] or "analyst"
+    else:
+        base_user = "".join(c for c in username.strip().lower() if c.isalnum() or c == "_")[:18] or "analyst"
+
+    final_user = base_user
+    suffix = 2
+    while True:
+        cursor.execute("SELECT user_id FROM app_users WHERE LOWER(username) = ?;", (final_user,))
+        if not cursor.fetchone():
+            break
+        final_user = f"{base_user}{suffix}"
+        suffix += 1
+
     try:
         cursor.execute("""
-        INSERT INTO app_users (username, password_hash, full_name, role, email, phone, auth_provider)
-        VALUES (?, ?, ?, ?, ?, ?, ?);
-        """, (username, hash_password(password), full_name.strip() or username.title(), role, email.strip().lower(), phone.strip(), auth_provider))
+        INSERT INTO app_users (username, password_hash, full_name, role, email, auth_provider)
+        VALUES (?, ?, ?, ?, ?, 'local');
+        """, (final_user, hash_password(clean_pw), clean_name, role, clean_email))
         conn.commit()
         return True, "Account created successfully!"
     except sqlite3.IntegrityError:
-        return False, f"Username '@{username}' is already taken. Please choose another."
+        return False, f"An account with email '{clean_email}' already exists. Please log in."
     except Exception as e:
         return False, f"Registration error: {e}"
     finally:
         conn.close()
 
 
-def authenticate_user(username_or_email: str, password: str):
+def authenticate_user(email_or_username: str, password: str):
     """
-    Authenticates username, email, or contact phone against SQLite.
+    Authenticates by work email address or username and password.
     Returns user dict if valid, else None.
     """
     init_user_db()
-    ident = username_or_email.strip().lower()
+    ident = email_or_username.strip().lower()
+    if not ident or not password:
+        return None
     pw_hash = hash_password(password)
 
     conn = sqlite3.connect(DB_PATH)
@@ -187,8 +287,8 @@ def authenticate_user(username_or_email: str, password: str):
     cursor.execute("""
     SELECT user_id, username, full_name, role, created_at, email, phone, auth_provider, avatar_data
     FROM app_users
-    WHERE (username = ? OR email = ? OR phone = ?) AND password_hash = ?;
-    """, (ident, ident, ident, pw_hash))
+    WHERE (LOWER(email) = ? OR LOWER(username) = ?) AND password_hash = ?;
+    """, (ident, ident, pw_hash))
     row = cursor.fetchone()
     conn.close()
 
@@ -201,7 +301,7 @@ def authenticate_user(username_or_email: str, password: str):
             "created_at": row[4],
             "email": row[5] or "",
             "phone": row[6] or "",
-            "auth_provider": row[7] or "local",
+            "auth_provider": "local",
             "avatar_data": row[8] or ""
         }
     return None
@@ -414,7 +514,7 @@ def reset_password_forgot(identifier: str, new_password: str):
     cursor.execute("""
     SELECT user_id, username, full_name
     FROM app_users
-    WHERE username = ? OR email = ? OR phone = ?;
+    WHERE LOWER(username) = ? OR LOWER(email) = ? OR phone = ?;
     """, (ident, ident, ident))
     row = cursor.fetchone()
 
