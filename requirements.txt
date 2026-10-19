@@ -9,3 +9,4 @@ requests
 SQLAlchemy
 joblib
 Pillow
+python-docx
