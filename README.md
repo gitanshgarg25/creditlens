@@ -86,14 +86,43 @@ $$\text{Credit Risk Score} = \text{clip}\left(\text{round}\left(850 - PD \times 
 | **Subprime** | 580 – 659 | $25\% - 45\%$ | Freeze Line Expansion; High Utilization Surveillance |
 | **High Risk** | 300 – 579 | $\ge 45\%$ | Immediate Pre-Delinquency Outreach; Suspension of Privileges |
 
-### Model Benchmark Summary:
-| Metric | Random Forest (Champion) | Logistic Regression (Benchmark) | Industry Target |
+### Model Benchmark Summary (Evaluated on 6,000 Unseen Holdout Accounts):
+| Metric | Random Forest (Champion) | Logistic Regression (Benchmark) | Absolute Lift | Commercial Banking Interpretation |
+| :--- | :---: | :---: | :---: | :--- |
+| **ROC-AUC (Discrimination)** | **0.7781** | 0.7521 | **+0.0260 (+3.5%)** | 78% probability of correctly ranking a true defaulter higher risk than a good borrower. |
+| **KS Statistic (Max Separation)** | **42.57%** | 39.28% | **+3.29% (+8.3%)** | Peak separation between good vs. bad cumulative distributions. KS > 40% is top-tier in retail lending. |
+| **PR-AUC (Precision-Recall)** | **0.5573** | 0.5079 | **+0.0494 (+9.7%)** | Evaluates default capture on minority class under 22.12% base default prevalence. |
+| **Classification Accuracy** | **78.37% (78.4%)** | 74.57% (74.6%) | **+3.80%** | Overall correct decisions (~4 out of every 5 accounts correctly categorized). |
+| **Precision (Approval Quality)** | **50.96%** | 44.43% | **+6.53% (+14.7%)** | When flagged as high risk, 51% are true defaults (vs. 44% linear), minimizing false alarms. |
+| **Recall (Defaulters Caught)** | **58.10%** | 59.76% | -1.66% | Intercepts ~58% of all future defaults at billing cycle 1 before balance drawdowns. |
+| **F1-Score (Balanced Power)** | **0.5430** | 0.5096 | **+0.0334 (+6.6%)** | Harmonic balance between catching bad debt and avoiding false rejections. |
+| **Brier Score (Calibration)** | **0.1685** | 0.1914 | **-0.0229 (-12.0%)** | Lower is better. Tighter calibration ensures predicted PD matches actual default frequency for Basel capital reserves. |
+
+> [!NOTE]
+> **Methodology & Data Split Integrity:**
+> All benchmark metrics above are evaluated strictly out-of-sample on the **6,000 unseen holdout test accounts** (20% stratified test split, $N=6,000$). The model never saw these accounts during training.
+
+---
+
+### ⚖️ Underwriting Policy Simulator: Unseen Holdout vs. Full Portfolio Evaluation
+
+To provide total analytical honesty and prevent confusion between test data and portfolio-level simulations, CreditLens explicitly distinguishes between **out-of-sample holdout validation** and **full population portfolio tape simulation**:
+
+| Simulation Dimension | 🎯 Unseen Holdout Test Cohort ($N=6,000$) | 📊 Full Portfolio Population Tape ($N=30,000$) | Commercial Interpretation |
 | :--- | :---: | :---: | :--- |
-| **ROC-AUC** | **0.7712** | 0.7248 | $\ge 0.70$ Acceptable, $\ge 0.75$ Strong |
-| **PR-AUC (Avg Precision)** | **0.5401** | 0.4589 | Higher is superior on imbalanced data |
-| **KS Statistic** | **0.4215** | 0.3541 | $\ge 30\%$ Acceptable, $\ge 40\%$ Strong |
-| **Accuracy** | **81.4%** | 69.2% | Baseline reference |
-| **Brier Score** | **0.1340** | 0.1985 | Lower indicates superior probability calibration |
+| **Data Scope** | **Strict Out-of-Sample Validation** (Never seen by model during training) | **Whole-Book Simulation** (24k training + 6k test combined tape) | Differentiates honest out-of-sample ground truth from portfolio population modeling. |
+| **Approval Cutoff Threshold** | **FICO 620** | **FICO 620** | Optimal institutional approval threshold. |
+| **Application Approval Rate** | **65.6%** (3,939 of 6,000 approved) | **65.4%** (19,614 of 30,000 approved) | Consistent customer acquisition volume (~65%). |
+| **Portfolio Baseline Default Rate**| 22.12% (1,327 defaults) | 22.12% (6,636 defaults) | Original unmitigated portfolio default rate. |
+| **Approved Default Rate** | **11.35%** (down from 22.12%) | **7.73%** (down from 22.12%) | Cuts default rate nearly in half on unseen data; 7.7% on whole-book tape. |
+| **Defaulters Intercepted** | **880 accounts** (66.3% of test defaults) | **5,119 accounts** (77.1% of all defaults) | Proactively blocked before balance ballooning. |
+| **Avoided Bad Debt Losses** | **NT$ 42.5M** | **NT$ 232.9M** | Cumulative write-off dollars prevented. |
+| **Lost APR Interest (15%)** | **NT$ 6.5M** | **NT$ 26.2M** | Conservative false-positive opportunity cost. |
+| **Net Financial Benefit** | **+NT$ 36.0M** (Scales to **+NT$ 180.1M** on 30k) | **+NT$ 206.6M** | **Net Capital Preserved** (Avoided Bad Debt minus Lost APR). |
+
+> [!TIP]
+> **Interview Talking Point on Unseen Data vs. Full Portfolio:**
+> *"Our model evaluation metrics (ROC-AUC 0.778, KS 42.6%, Accuracy 78.4%) come strictly from the 6,000 unseen holdout test accounts. In the policy simulator, on completely unseen accounts at FICO 620, the model cuts default rates from 22.1% to 11.4% and avoids NT$ 42.5M in bad debt on the 6k sample (scaling to NT$ 180M+ portfolio-wide). When simulated across the bank's entire 30,000 customer tape, the approved default rate drops to 7.7% and avoids NT$ 232.9M in bad debt. We provide both views to maintain 100% scientific integrity."*
 
 ---
 

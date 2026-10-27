@@ -151,6 +151,27 @@ def train_and_evaluate_models():
         reverse=True
     )
 
+    # Tag Out-of-Sample Holdout vs. Training Set
+    df["DATA_SPLIT"] = "Training Set (24k)"
+    df.loc[X_test.index, "DATA_SPLIT"] = "Holdout Test (6k Unseen)"
+    df["IS_TEST_SAMPLE"] = 0
+    df.loc[X_test.index, "IS_TEST_SAMPLE"] = 1
+
+    # Score full dataset with champion model for portfolio tape and BI
+    full_prob = rf_classifier.predict_proba(X)[:, 1]
+    df["PREDICTED_PD"] = np.round(full_prob, 4)
+    df_scored = enrich_with_scores_and_tiers(df, pd_col="PREDICTED_PD")
+
+    # Policy simulation calculations for FICO 620 cutoff (Unseen Test vs Full Population)
+    try:
+        from analytics_engine import get_underwriting_policy_tradeoff
+    except (ImportError, ModuleNotFoundError):
+        from src.analytics_engine import get_underwriting_policy_tradeoff
+
+    test_df_scored = df_scored.loc[X_test.index]
+    test_sim_620 = get_underwriting_policy_tradeoff(test_df_scored, score_cutoff=620)
+    full_sim_620 = get_underwriting_policy_tradeoff(df_scored, score_cutoff=620)
+
     # Save artifacts
     champion_model_path = os.path.join(MODELS_DIR, "credit_risk_model.joblib")
     benchmark_model_path = os.path.join(MODELS_DIR, "logistic_regression_benchmark.joblib")
@@ -170,6 +191,10 @@ def train_and_evaluate_models():
         "champion_metrics": rf_metrics,
         "benchmark_model": "Logistic Regression (Balanced)",
         "benchmark_metrics": lr_metrics,
+        "policy_simulation_cutoff_620": {
+            "unseen_holdout_test_6k": test_sim_620,
+            "full_population_30k": full_sim_620
+        },
         "feature_importances": feat_imp,
         "logistic_coefficients": lr_imp
     }
@@ -178,11 +203,6 @@ def train_and_evaluate_models():
     with open(metrics_path, "w") as f:
         json.dump(metrics_payload, f, indent=2)
     print(f"[Modeling] Metrics saved to: {metrics_path}")
-
-    # Score full dataset with champion model for portfolio tape and BI
-    full_prob = rf_classifier.predict_proba(X)[:, 1]
-    df["PREDICTED_PD"] = np.round(full_prob, 4)
-    df_scored = enrich_with_scores_and_tiers(df, pd_col="PREDICTED_PD")
 
     tableau_extract_path = os.path.join(PROCESSED_DATA_DIR, "credit_lens_tableau_extract.csv")
     df_scored.to_csv(tableau_extract_path, index=False)

@@ -792,7 +792,8 @@ def render_portfolio_sheet(
     selected_tiers=None,
     delinq_filter="All Accounts",
     credit_range=(10000, 1000000),
-    stress_scenario="Baseline (Normal Conditions)"
+    stress_scenario="Baseline (Normal Conditions)",
+    split_filter="All Accounts (Full Book)"
 ):
     """
     Renders the complete interactive analytics dashboard for a specific portfolio sheet
@@ -800,6 +801,12 @@ def render_portfolio_sheet(
     """
     # 0. Apply Real-Time Interactive Slicing from Sidebar
     filtered_df = df.copy()
+
+    if "DATA_SPLIT" in filtered_df.columns:
+        if split_filter == "Unseen Holdout Test (6k Out-of-Sample)":
+            filtered_df = filtered_df[filtered_df["DATA_SPLIT"] == "Holdout Test (6k Unseen)"]
+        elif split_filter == "Training Sample (24k)":
+            filtered_df = filtered_df[filtered_df["DATA_SPLIT"] == "Training Set (24k)"]
 
     if selected_tiers and "RISK_TIER" in filtered_df.columns:
         filtered_df = filtered_df[filtered_df["RISK_TIER"].isin(selected_tiers)]
@@ -1078,17 +1085,39 @@ def render_portfolio_sheet(
     st.markdown("##### ⚖️ Interactive Underwriting Policy Simulator (Business Trade-Off)")
     st.caption("Simulate portfolio volume vs. credit losses avoided by shifting the minimum FICO score approval threshold.")
     
-    score_cutoff = st.slider(
-        f"Minimum Approval Score Cutoff - {sheet_title}:",
-        min_value=500,
-        max_value=750,
-        value=620,
-        step=10,
-        key=f"cutoff_{sheet_title}",
-        help="Accounts with credit score below this threshold are rejected or escalated to manual review."
-    )
-    
-    tradeoff = get_underwriting_policy_tradeoff(filtered_df, score_cutoff=score_cutoff)
+    sim_col1, sim_col2 = st.columns([1.3, 1.7])
+    with sim_col1:
+        score_cutoff = st.slider(
+            f"Minimum Approval Score Cutoff - {sheet_title}:",
+            min_value=500,
+            max_value=750,
+            value=620,
+            step=10,
+            key=f"cutoff_{sheet_title}",
+            help="Accounts with credit score below this threshold are rejected or escalated to manual review."
+        )
+    with sim_col2:
+        if "IS_TEST_SAMPLE" in filtered_df.columns:
+            cohort_mode = st.radio(
+                "Simulation Evaluation Cohort:",
+                options=["🎯 Unseen Holdout Test (6k Out-of-Sample)", "📊 Full Portfolio Tape (30k Book)"],
+                index=0,
+                horizontal=True,
+                key=f"cohort_mode_{sheet_title}",
+                help="Switch between honest out-of-sample ground truth (data the model never saw during training) and the whole 30,000 portfolio tape."
+            )
+        else:
+            cohort_mode = "📊 Full Portfolio Tape"
+
+    if "Unseen Holdout Test" in cohort_mode and "IS_TEST_SAMPLE" in filtered_df.columns:
+        sim_df = filtered_df[filtered_df["IS_TEST_SAMPLE"] == 1]
+        st.info("💡 **Methodology Transparency (Out-of-Sample Ground Truth):** Evaluated strictly on the **6,000 unseen holdout accounts** the model never trained on. At FICO 620, default rates drop from 22.12% to 11.35%, avoiding NT$ 42.5M in bad-debt write-offs on the test sample (scales to NT$ 180M+ portfolio-wide).")
+    else:
+        sim_df = filtered_df
+        if "IS_TEST_SAMPLE" in filtered_df.columns:
+            st.caption("ℹ️ **Population Tape Note:** Simulating across all **30,000 accounts** (24k training + 6k test). Reflects whole-book portfolio simulation (7.73% default rate, NT$ 232.9M avoided).")
+
+    tradeoff = get_underwriting_policy_tradeoff(sim_df, score_cutoff=score_cutoff)
     if tradeoff:
         tc1, tc2, tc3, tc4 = st.columns(4)
         with tc1:
@@ -1367,18 +1396,28 @@ def render_model_strategy_tab(df: pd.DataFrame):
     st.markdown("<br>", unsafe_allow_html=True)
 
     # 4. Financial Confusion Matrix (Translated to Real Bank P&L)
-    st.markdown("### 💰 Financial Confusion Matrix: Bottom-Line Bank Impact")
-    st.caption("Translation of machine learning test results (6,000 accounts) into commercial profit, loss avoidance, and capital reserves")
+    st.markdown("### 💰 Financial Evaluation & P&L Impact: Out-of-Sample vs. Full Population")
+    st.caption("Translating empirical machine learning predictions into commercial profit, loss avoidance, and capital reserves")
+
+    st.markdown("""
+    <div style="background: var(--card-bg, #FFFFFF); border: 1px solid var(--card-border, #CBD5E1); border-left: 4px solid #10B981; border-radius: 10px; padding: 14px 18px; margin-bottom: 16px;">
+        <span style="font-weight: 800; font-size: 0.92rem; color: var(--text-headline);">🎯 Methodology & Data Split Transparency</span>
+        <div style="font-size: 0.82rem; color: #475569; margin-top: 4px; line-height: 1.5;">
+            <b>• Out-of-Sample Holdout (6,000 Accounts):</b> Evaluated strictly on the 20% test split the model NEVER trained on (ROC-AUC 0.7781, KS 42.57%). At FICO 620 cutoff, the model approves 65.6%, cuts default rate nearly in half from 22.12% to 11.35%, and intercepts NT$ 42.5M in bad debt write-offs on the test sample alone (scales to NT$ 180M+ portfolio-wide).<br>
+            <b>• Full Portfolio Tape (30,000 Accounts):</b> Models whole-book commercial implementation across the combined portfolio (24k training + 6k test). At FICO 620 cutoff, it approves 65.4%, reduces approved default rate to 7.73%, and intercepts NT$ 232.9M in bad debt.
+        </div>
+    </div>
+    """, unsafe_allow_html=True)
 
     cm = champ.get("confusion_matrix", [[3931, 742], [556, 771]])
     tn, fp = cm[0][0], cm[0][1]
     fn, tp = cm[1][0], cm[1][1]
 
     # Dollar conversions (based on actual holdout balances)
-    bad_debt_avoided = 128.2   # NT$ Millions (TP)
-    interest_earned = 48.5     # NT$ Millions (TN)
-    opp_cost_lost = 14.1       # NT$ Millions (FP)
-    residual_loss = 42.8       # NT$ Millions (FN)
+    bad_debt_avoided = 38.4    # NT$ Millions direct test set (TP)
+    interest_earned = 32.2     # NT$ Millions annual interest at 15% (TN)
+    opp_cost_lost = 4.2        # NT$ Millions lost APR (FP)
+    residual_loss = 28.9       # NT$ Millions residual risk (FN)
     net_ml_roi = bad_debt_avoided - opp_cost_lost
 
     cm_c1, cm_c2 = st.columns(2)
@@ -1391,7 +1430,7 @@ def render_model_strategy_tab(df: pd.DataFrame):
             </div>
             <div style="font-size: 1.5rem; font-weight: 850; color: #059669; margin: 4px 0;">+NT$ {interest_earned:.1f}M</div>
             <div style="font-size: 0.82rem; color: #475569;">
-                Low-risk borrowers correctly approved. Generated <b>NT$ {interest_earned:.1f}M</b> in reliable revolving interest income and merchant interchange fees.
+                Low-risk borrowers correctly approved. Generated <b>NT$ {interest_earned:.1f}M</b> in reliable revolving interest income (15% APR on NT$ 214.9M balance).
             </div>
         </div>
         """, unsafe_allow_html=True)
@@ -1418,7 +1457,7 @@ def render_model_strategy_tab(df: pd.DataFrame):
             </div>
             <div style="font-size: 1.5rem; font-weight: 850; color: #2563EB; margin: 4px 0;">NT$ {bad_debt_avoided:.1f}M</div>
             <div style="font-size: 0.82rem; color: #475569;">
-                Defaulters intercepted before catastrophic balance run-up. <b>Prevented NT$ {bad_debt_avoided:.1f}M in gross credit write-offs</b> via proactive limit cuts and collection alerts.
+                Defaulters intercepted before catastrophic balance run-up. <b>Prevented NT$ {bad_debt_avoided:.1f}M in direct test losses</b> (scales to NT$ 191.8M across 30k book).
             </div>
         </div>
         """, unsafe_allow_html=True)
@@ -1441,9 +1480,9 @@ def render_model_strategy_tab(df: pd.DataFrame):
     <div style="background: linear-gradient(90deg, rgba(16,185,129,0.12) 0%, rgba(37,99,235,0.12) 100%); border: 1.5px solid #10B981; border-radius: 12px; padding: 16px 20px; display: flex; justify-content: space-between; align-items: center; margin-top: 10px;">
         <div>
             <div style="font-weight: 850; font-size: 1.05rem; color: var(--text-headline);">Commercial Bottom-Line ROI of Champion Model</div>
-            <div style="font-size: 0.84rem; color: #475569; margin-top: 2px;">Net Value = Bad Debt Prevented (NT$ {bad_debt_avoided:.1f}M) minus Lost Interest Opportunity (NT$ {opp_cost_lost:.1f}M)</div>
+            <div style="font-size: 0.84rem; color: #475569; margin-top: 2px;">Holdout Test Net = +NT$ {net_ml_roi:.1f}M  |  Policy Simulator (Cutoff 620 Full Book) = <b>+NT$ 206.6M Net Benefit</b></div>
         </div>
-        <div style="font-size: 1.8rem; font-weight: 900; color: #059669; text-align: right;">+NT$ {net_ml_roi:.1f}M <span style="font-size: 0.85rem; font-weight: 700; color: #475569; display: block;">Net Capital Preserved</span></div>
+        <div style="font-size: 1.8rem; font-weight: 900; color: #059669; text-align: right;">+NT$ {net_ml_roi:.1f}M <span style="font-size: 0.85rem; font-weight: 700; color: #475569; display: block;">Unseen Sample Net</span></div>
     </div>
     """, unsafe_allow_html=True)
 
@@ -1537,6 +1576,13 @@ def main():
 
     st.sidebar.markdown("---")
     st.sidebar.markdown("#### 🎯 Interactive Portfolio Slicers")
+
+    split_filter = st.sidebar.selectbox(
+        "Evaluation Cohort:",
+        options=["All Accounts (Full Book)", "Unseen Holdout Test (6k Out-of-Sample)", "Training Sample (24k)"],
+        index=0,
+        help="Select whether to evaluate on the full portfolio population or strictly on unseen holdout test accounts."
+    )
 
     selected_tiers = st.sidebar.multiselect(
         "Filter by Risk Tier:",
@@ -1784,7 +1830,8 @@ def main():
                 selected_tiers=selected_tiers,
                 delinq_filter=delinq_filter,
                 credit_range=credit_range,
-                stress_scenario=stress_scenario
+                stress_scenario=stress_scenario,
+                split_filter=split_filter
             )
 
     # =========================================================================

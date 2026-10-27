@@ -80,6 +80,36 @@
       ]
     ]
   },
+  "policy_simulation_cutoff_620": {
+    "unseen_holdout_test_6k": {
+      "score_cutoff": 620,
+      "total_accounts": 6000,
+      "approved_count": 3939,
+      "approved_pct": 65.6,
+      "rejected_count": 2061,
+      "portfolio_default_rate": 22.12,
+      "approved_default_rate": 11.35,
+      "avoided_defaults": 880,
+      "avoided_defaults_pct": 66.3,
+      "avoided_losses_ntd": 42509483.0,
+      "lost_interest_income": 6479265.3,
+      "net_financial_benefit": 36030217.7
+    },
+    "full_population_30k": {
+      "score_cutoff": 620,
+      "total_accounts": 30000,
+      "approved_count": 19614,
+      "approved_pct": 65.4,
+      "rejected_count": 10386,
+      "portfolio_default_rate": 22.12,
+      "approved_default_rate": 7.73,
+      "avoided_defaults": 5119,
+      "avoided_defaults_pct": 77.1,
+      "avoided_losses_ntd": 232854529.0,
+      "lost_interest_income": 26205502.2,
+      "net_financial_benefit": 206649026.8
+    }
+  },
   "feature_importances": [
     {
       "feature": "MAX_DELINQUENCY_MONTHS",
