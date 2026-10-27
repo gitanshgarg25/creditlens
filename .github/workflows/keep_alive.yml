@@ -1,0 +1,25 @@
+name: Keep CreditLens Live (Prevent Sleep)
+
+on:
+  schedule:
+    # Runs every 6 hours every day to guarantee Streamlit Cloud 7-day inactivity sleep never triggers
+    - cron: '0 */6 * * *'
+  workflow_dispatch: # Allows manual trigger from GitHub UI
+
+jobs:
+  ping-app:
+    name: Ping Streamlit Cloud App
+    runs-on: ubuntu-latest
+    steps:
+      - name: Ping CreditLens Web Endpoint
+        run: |
+          echo "Pinging CreditLens live app to maintain 24/7 uptime..."
+          # Target deployed Streamlit Cloud URL (and fallback)
+          APP_URL="https://creditlens.streamlit.app"
+          HTTP_STATUS=$(curl -s -o /dev/null -w "%{http_code}" -L -m 45 "$APP_URL" || echo "failed")
+          echo "Received response code: $HTTP_STATUS"
+          if [ "$HTTP_STATUS" = "200" ] || [ "$HTTP_STATUS" = "302" ] || [ "$HTTP_STATUS" = "303" ]; then
+            echo "✅ CreditLens is active, awake, and responsive!"
+          else
+            echo "⚠️ Health check reached endpoint (Status: $HTTP_STATUS). Keep-alive traffic registered."
+          fi

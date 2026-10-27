@@ -470,6 +470,32 @@ st.markdown("""
         box-shadow: 0 1px 4px rgba(0,0,0,0.03);
     }
 </style>
+
+<!-- Auto-Reconnect & Keepalive Helper for Seamless Tab Resilience -->
+<img src="data:image/gif;base64,R0lGODlhAQABAIAAAAAAAP///yH5BAEAAAAALAAAAAABAAEAAAIBRAA7" 
+     style="display:none;" 
+     onload="if(!window._cl_reconnect_init){
+         window._cl_reconnect_init = true;
+         document.addEventListener('visibilitychange', function(){
+             if (document.visibilityState === 'visible') {
+                 setTimeout(function(){
+                     if (document.body && (document.body.innerText.includes('Connection lost') || document.body.innerText.includes('disconnected'))) {
+                         window.location.reload();
+                     }
+                 }, 1200);
+             }
+         });
+         setInterval(function(){
+             if (document.body && document.body.innerText.includes('Connection lost')) {
+                 setTimeout(function(){
+                     if (document.body && document.body.innerText.includes('Connection lost')) {
+                         window.location.reload();
+                     }
+                 }, 2500);
+             }
+         }, 7000);
+     }" />
+
 """, unsafe_allow_html=True)
 
 
@@ -602,7 +628,8 @@ def render_auth_modal():
                 </div>
                 """, unsafe_allow_html=True)
 
-                if st.button(f"Continue as {primary_u['full_name']}", type="primary", use_container_width=True, key="btn_quick_primary"):
+                if st.button(f"⚡ Continue as {primary_u['full_name']} (1-Click Instant Access)", type="primary", use_container_width=True, key="btn_quick_primary"):
+                    st.session_state["auth_forced"] = False
                     st.session_state["current_user"] = primary_u
                     set_last_active_user(primary_u["username"])
                     sync_user_workbook_sheets(primary_u["username"])
@@ -630,6 +657,7 @@ def render_auth_modal():
                             if st.button("Log In", key=f"btn_switch_acc_{o_u['username']}", use_container_width=True):
                                 u_full = get_user_by_username(o_u["username"])
                                 if u_full:
+                                    st.session_state["auth_forced"] = False
                                     st.session_state["current_user"] = u_full
                                     set_last_active_user(u_full["username"])
                                     sync_user_workbook_sheets(u_full["username"])
@@ -653,6 +681,7 @@ def render_auth_modal():
                 else:
                     u_rec = authenticate_user(l_ident, l_pass)
                     if u_rec:
+                        st.session_state["auth_forced"] = False
                         st.session_state["current_user"] = u_rec
                         set_last_active_user(u_rec["username"])
                         sync_user_workbook_sheets(u_rec["username"])
@@ -1544,19 +1573,21 @@ def render_model_strategy_tab(df: pd.DataFrame):
 # MAIN MULTI-USER & MULTI-DATASET APP CONTROLLER
 # =============================================================================
 def main():
-    # Session state for user authentication
-    if "current_user" not in st.session_state:
+    # Session state for user authentication:
+    # Auto-initialize active user session so the dashboard is immediately accessible to everyone 24/7 without a login roadblock
+    if st.session_state.get("current_user") is None and not st.session_state.get("auth_forced", False):
         last_u = get_last_active_user()
         if last_u:
             st.session_state["current_user"] = last_u
         else:
-            # Default to admin so user immediately sees the working dashboard on initial start!
-            st.session_state["current_user"] = get_user_by_username("admin") or authenticate_user("admin", "password123")
-            if st.session_state["current_user"]:
-                set_last_active_user(st.session_state["current_user"]["username"])
+            # Default to executive account so anyone opening the link instantly sees the active portfolio intelligence
+            default_u = get_user_by_username("admin") or authenticate_user("admin", "password123")
+            if default_u:
+                st.session_state["current_user"] = default_u
+                set_last_active_user(default_u["username"])
 
-    # 1. If not logged in, show login/signup screen
-    if st.session_state["current_user"] is None:
+    # 1. If user explicitly signed out or requested auth view, show login/signup screen
+    if st.session_state.get("current_user") is None:
         render_auth_modal()
         return
 
@@ -1791,10 +1822,11 @@ def main():
                             st.error(f"{msg}")
 
             st.markdown('<div style="height: 10px;"></div>', unsafe_allow_html=True)
-            if st.button("Sign Out", use_container_width=True, key="top_btn_signout"):
+            if st.button("Sign Out / Switch Account", use_container_width=True, key="top_btn_signout"):
                 clear_last_active_user()
                 st.session_state["current_user"] = None
                 st.session_state["_sheets_user"] = None
+                st.session_state["auth_forced"] = True
                 st.rerun()
 
     # =========================================================================
