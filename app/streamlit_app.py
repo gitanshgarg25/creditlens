@@ -934,9 +934,9 @@ def render_portfolio_sheet(
                 <div class="insight-header">
                     <span class="insight-tag insight-tag-red">DELINQUENCY IMPACT</span>
                 </div>
-                <div class="insight-metric-val">{insights.get('delinq_multiplier', 4.2)}x Surge</div>
+                <div class="insight-metric-val">{insights.get('delinq_multiplier', 0.0):.1f}x Surge</div>
                 <div class="insight-title">1+ Month Payment Delay</div>
-                <div class="insight-desc">Borrowers with ≥1 month payment delay default at <b>{insights.get('delinq_dr', 54.3)}%</b> vs <b>{insights.get('nondelinq_dr', 12.9)}%</b> for timely payers ({insights.get('delinq_count', 0):,} flagged).</div>
+                <div class="insight-desc">Borrowers with ≥1 month payment delay default at <b>{insights.get('delinq_dr', 0.0):.1f}%</b> vs <b>{insights.get('nondelinq_dr', 0.0):.1f}%</b> for timely payers ({insights.get('delinq_count', 0):,} flagged).</div>
             </div>
             """, unsafe_allow_html=True)
         with ic2:
@@ -945,9 +945,9 @@ def render_portfolio_sheet(
                 <div class="insight-header">
                     <span class="insight-tag insight-tag-blue">CREDIT LINE SENSITIVITY</span>
                 </div>
-                <div class="insight-metric-val">{insights.get('limit_multiplier', 2.3)}x Risk Delta</div>
+                <div class="insight-metric-val">{insights.get('limit_multiplier', 0.0):.1f}x Risk Delta</div>
                 <div class="insight-title">Low Limits (≤ NT$ 50k)</div>
-                <div class="insight-desc">Accounts with limits ≤ NT$ 50k default at <b>{insights.get('low_limit_dr', 33.8)}%</b> vs <b>{insights.get('high_limit_dr', 14.6)}%</b> for affluent lines (≥ NT$ 200k).</div>
+                <div class="insight-desc">Accounts with limits ≤ NT$ 50k default at <b>{insights.get('low_limit_dr', 0.0):.1f}%</b> vs <b>{insights.get('high_limit_dr', 0.0):.1f}%</b> for affluent lines (≥ NT$ 200k).</div>
             </div>
             """, unsafe_allow_html=True)
         with ic3:
@@ -956,9 +956,9 @@ def render_portfolio_sheet(
                 <div class="insight-header">
                     <span class="insight-tag insight-tag-amber">UTILIZATION STRAIN</span>
                 </div>
-                <div class="insight-metric-val">{insights.get('util_multiplier', 2.1)}x Multiplier</div>
+                <div class="insight-metric-val">{insights.get('util_multiplier', 0.0):.1f}x Multiplier</div>
                 <div class="insight-title">Danger Zone (>80% Util)</div>
-                <div class="insight-desc">Maxed-out accounts default at <b>{insights.get('high_util_dr', 34.2)}%</b> vs <b>{insights.get('low_util_dr', 16.5)}%</b> for low-utilization borrowers (≤30%).</div>
+                <div class="insight-desc">Maxed-out accounts default at <b>{insights.get('high_util_dr', 0.0):.1f}%</b> vs <b>{insights.get('low_util_dr', 0.0):.1f}%</b> for low-utilization borrowers (≤30%).</div>
             </div>
             """, unsafe_allow_html=True)
         with ic4:
@@ -967,7 +967,7 @@ def render_portfolio_sheet(
                 <div class="insight-header">
                     <span class="insight-tag insight-tag-green">CAPITAL PRESERVATION</span>
                 </div>
-                <div class="insight-metric-val">NT$ {insights.get('expected_loss_safeguarded', 0)/1e6:.1f}M</div>
+                <div class="insight-metric-val">NT$ {insights.get('expected_loss_safeguarded', 0.0)/1e6:.1f}M</div>
                 <div class="insight-title">Distressed Capital at Risk</div>
                 <div class="insight-desc">Surveillance across <b>{insights.get('distressed_accounts', 0):,}</b> Subprime & High Risk accounts actively safeguards write-off capital.</div>
             </div>
@@ -1263,8 +1263,28 @@ def render_model_strategy_tab(df: pd.DataFrame):
     st.markdown("## 🧠 Champion Credit Risk Model & Underwriting Strategy")
     st.markdown("##### Executive Model Governance, Non-Tech Explainability & P&L Decisioning")
     
+    metrics_data = load_model_metrics()
+    champ = metrics_data.get("champion_metrics", {})
+    bench = metrics_data.get("benchmark_metrics", {})
+    conf_dollars = metrics_data.get("holdout_confusion_dollars", {})
+    risk_drivers_data = metrics_data.get("risk_drivers", {})
+
+    # Read n_estimators from model if available
+    n_trees = 120
+    model_obj_path = os.path.join(BASE_DIR, "models", "credit_risk_model.joblib")
+    if os.path.exists(model_obj_path):
+        try:
+            m_obj = joblib.load(model_obj_path)
+            if hasattr(m_obj, "n_estimators"):
+                n_trees = int(m_obj.n_estimators)
+        except Exception:
+            pass
+
+    holdout_avoided_loss_m = conf_dollars.get("avoided_bad_debt_millions", 38.4)
+    ks_lift_val = risk_drivers_data.get("ks_relative_lift_pct", 8.4)
+
     # 1. Executive Methodology Overview
-    st.markdown("""
+    st.markdown(f"""
     <div style="background: var(--card-bg, #FFFFFF); border: 1px solid var(--card-border, #CBD5E1); border-left: 4px solid #2563EB; border-radius: 12px; padding: 20px; margin-bottom: 20px; box-shadow: 0 2px 8px rgba(0,0,0,0.03);">
         <div style="display: flex; align-items: center; gap: 10px; margin-bottom: 8px;">
             <span style="background: #2563EB; color: #FFFFFF; font-size: 0.75rem; font-weight: 800; padding: 3px 10px; border-radius: 20px; text-transform: uppercase;">Executive Methodology</span>
@@ -1272,14 +1292,10 @@ def render_model_strategy_tab(df: pd.DataFrame):
         </div>
         <p style="color: #475569; font-size: 0.9rem; line-height: 1.6; margin: 0;">
             In traditional retail banking, underwriting models rely on linear logistic regressions or rigid cutoff scorecards. While simple, linear models fail when credit risk is compounding. For instance: a high credit limit is safe when the client pays on time, but becomes <b>4.2x deadlier</b> when compounded with a sudden 2-month repayment delay. 
-            Our <b>Random Forest Champion Model</b> evaluates an ensemble of 100 decision trees to capture these multi-variable risk interactions automatically. It achieved an <b>ROC-AUC of 0.7781</b> and <b>KS separation of 42.6%</b> (+8.3% lift over linear benchmark), safeguarding <b>NT$ 128.2M</b> in bad debt write-offs on our holdout validation portfolio.
+            Our <b>Random Forest Champion Model</b> evaluates an ensemble of {n_trees} decision trees to capture these multi-variable risk interactions automatically. It achieved an <b>ROC-AUC of {champ.get('roc_auc', 0.7781):.4f}</b> and <b>KS separation of {champ.get('ks_statistic', 0.4257)*100:.1f}%</b> (+{ks_lift_val:.1f}% lift over linear benchmark), safeguarding <b>NT$ {holdout_avoided_loss_m:.1f}M</b> in bad debt write-offs on our holdout validation portfolio.
         </p>
     </div>
     """, unsafe_allow_html=True)
-
-    metrics_data = load_model_metrics()
-    champ = metrics_data.get("champion_metrics", {})
-    bench = metrics_data.get("benchmark_metrics", {})
 
     # 2. Side-by-Side Model Scorecard (Champion vs Benchmark)
     st.markdown("### 🏆 Champion vs. Benchmark Model Scorecard")
@@ -1442,12 +1458,14 @@ def render_model_strategy_tab(df: pd.DataFrame):
     tn, fp = cm[0][0], cm[0][1]
     fn, tp = cm[1][0], cm[1][1]
 
-    # Dollar conversions (based on actual holdout balances)
-    bad_debt_avoided = 38.4    # NT$ Millions direct test set (TP)
-    interest_earned = 32.2     # NT$ Millions annual interest at 15% (TN)
-    opp_cost_lost = 4.2        # NT$ Millions lost APR (FP)
-    residual_loss = 28.9       # NT$ Millions residual risk (FN)
-    net_ml_roi = bad_debt_avoided - opp_cost_lost
+    # Dollar conversions dynamically loaded from model metrics (computed on 6,000 holdout accounts)
+    conf_dollars = metrics_data.get("holdout_confusion_dollars", {})
+    bad_debt_avoided = conf_dollars.get("avoided_bad_debt_millions", 38.4)
+    interest_earned = conf_dollars.get("tn_interest_income_millions", 32.2)
+    opp_cost_lost = conf_dollars.get("fp_lost_interest_millions", 4.2)
+    residual_loss = conf_dollars.get("fn_residual_loss_millions", 28.9)
+    net_ml_roi = conf_dollars.get("net_financial_benefit_millions", round(bad_debt_avoided - opp_cost_lost, 1))
+    tn_exposure_m = conf_dollars.get("tn_exposure_ntd", 214860010.0) / 1e6
 
     cm_c1, cm_c2 = st.columns(2)
     with cm_c1:
@@ -1459,7 +1477,7 @@ def render_model_strategy_tab(df: pd.DataFrame):
             </div>
             <div style="font-size: 1.5rem; font-weight: 850; color: #059669; margin: 4px 0;">+NT$ {interest_earned:.1f}M</div>
             <div style="font-size: 0.82rem; color: #475569;">
-                Low-risk borrowers correctly approved. Generated <b>NT$ {interest_earned:.1f}M</b> in reliable revolving interest income (15% APR on NT$ 214.9M balance).
+                Low-risk borrowers correctly approved. Generated <b>NT$ {interest_earned:.1f}M</b> in reliable revolving interest income (15% APR on NT$ {tn_exposure_m:.1f}M balance).
             </div>
         </div>
         """, unsafe_allow_html=True)
@@ -1486,7 +1504,7 @@ def render_model_strategy_tab(df: pd.DataFrame):
             </div>
             <div style="font-size: 1.5rem; font-weight: 850; color: #2563EB; margin: 4px 0;">NT$ {bad_debt_avoided:.1f}M</div>
             <div style="font-size: 0.82rem; color: #475569;">
-                Defaulters intercepted before catastrophic balance run-up. <b>Prevented NT$ {bad_debt_avoided:.1f}M in direct test losses</b> (scales to NT$ 191.8M across 30k book).
+                Defaulters intercepted before catastrophic balance run-up. <b>Prevented NT$ {bad_debt_avoided:.1f}M in direct test losses</b> (extrapolated holdout x5: NT$ {bad_debt_avoided * 5:.1f}M).
             </div>
         </div>
         """, unsafe_allow_html=True)
@@ -1652,7 +1670,22 @@ def main():
     with st.sidebar.expander("🏛️ Basel III Capital Reserve Tool"):
         st.caption("Standardized Regulatory Capital Requirement Calculator (CAR 12.5% Target).")
         target_car = st.slider("Target CAR (%):", 8.0, 18.0, 12.5, 0.5)
-        st.info(f"Target Reserve Adequacy: **{target_car:.1f}%** applied to risk-weighted assets (RWA).")
+        try:
+            from src.analytics_engine import compute_ecl
+            live_ecl = compute_ecl(filtered_df)
+        except Exception:
+            live_ecl = {}
+
+        if live_ecl:
+            ead_m = live_ecl.get("total_ead", 0.0) / 1e6
+            ecl_m = live_ecl.get("total_ecl", 0.0) / 1e6
+            cov_p = live_ecl.get("portfolio_ecl_coverage_pct", 0.0)
+            rwa_req_m = (live_ecl.get("total_ead", 0.0) * 0.75) * (target_car / 100.0) / 1e6
+            st.metric("Basel III EAD", f"NT$ {ead_m:.1f}M", help="EAD = Billed Drawn + 20% Undrawn Limit")
+            st.metric("Expected Credit Loss (ECL)", f"NT$ {ecl_m:.1f}M", help=f"ECL = EAD × PD × 45% LGD ({cov_p:.1f}% coverage)")
+            st.metric(f"CAR Buffer ({target_car:.1f}%)", f"NT$ {rwa_req_m:.1f}M", help="Target CAR applied to 75% standard retail RWA")
+        else:
+            st.info(f"Target Reserve Adequacy: **{target_car:.1f}%** applied to risk-weighted assets (RWA).")
 
     with st.sidebar.expander("📥 Executive Export Center"):
         st.caption("Download reports and financial models for C-suite presentation.")
@@ -1666,7 +1699,7 @@ def main():
                     mime="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
                     use_container_width=True
                 )
-        st.caption("Includes ECL schedule, transition matrix, and sensitivity sheets.")
+        st.caption("Includes Executive Summary, Loan Tape Sample, Model Diagnostics, and Basel III ECL Schedule sheets.")
 
     st.sidebar.markdown("---")
     st.sidebar.markdown(

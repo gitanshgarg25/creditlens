@@ -86,14 +86,19 @@ def init_user_db():
     """)
     conn.commit()
 
-    # Seed default accounts if empty
+    # Seed default sandbox accounts if database is empty
+    # NOTE: These are strictly local demonstration/sandbox accounts for evaluation.
+    # Passwords can be configured via environment variables in production.
     cursor.execute("SELECT COUNT(*) FROM app_users;")
     count = cursor.fetchone()[0]
     if count == 0:
+        admin_pw = os.environ.get("CREDITLENS_DEMO_ADMIN_PASSWORD", "password123")
+        analyst_pw = os.environ.get("CREDITLENS_DEMO_ANALYST_PASSWORD", "password123")
+        guest_pw = os.environ.get("CREDITLENS_DEMO_GUEST_PASSWORD", "guest123")
         default_users = [
-            ("admin", hash_password("password123"), "Chief Risk Officer", "CRO Level (Executive)", "admin@creditlens.internal", "+1-800-555-0100", "local"),
-            ("analyst", hash_password("password123"), "Lead Credit Analyst", "Senior Analyst Level", "analyst@creditlens.internal", "+1-800-555-0101", "local"),
-            ("guest", hash_password("guest123"), "Portfolio Auditor", "Reviewer Level", "guest@creditlens.internal", "+1-800-555-0102", "local")
+            ("admin", hash_password(admin_pw), "Chief Risk Officer", "CRO Level (Executive)", "admin@creditlens.internal", "+1-800-555-0100", "local"),
+            ("analyst", hash_password(analyst_pw), "Lead Credit Analyst", "Senior Analyst Level", "analyst@creditlens.internal", "+1-800-555-0101", "local"),
+            ("guest", hash_password(guest_pw), "Portfolio Auditor", "Reviewer Level", "guest@creditlens.internal", "+1-800-555-0102", "local")
         ]
         cursor.executemany("""
         INSERT INTO app_users (username, password_hash, full_name, role, email, phone, auth_provider)

@@ -109,6 +109,104 @@ class TestCreditLensPipeline(unittest.TestCase):
         self.assertIn("champion_metrics", metrics)
         self.assertIn("roc_auc", metrics["champion_metrics"])
 
+    def test_readme_benchmark_metrics_match_json(self):
+        """
+        Parses the README benchmark table and asserts every metric equals
+        models/model_metrics.json champion (RF) and benchmark (LR) to printed precision.
+        """
+        import re
+        metrics = load_model_metrics()
+        rf_m = metrics["champion_metrics"]
+        lr_m = metrics["benchmark_metrics"]
+
+        readme_path = os.path.join(BASE_DIR, "README.md")
+        self.assertTrue(os.path.exists(readme_path), "README.md not found")
+
+        with open(readme_path, "r", encoding="utf-8") as f:
+            content = f.read()
+
+        table_lines = [
+            line.strip() for line in content.splitlines()
+            if line.strip().startswith("|") and "**" in line
+        ]
+
+        metric_key_map = {
+            "ROC-AUC": "roc_auc",
+            "KS Statistic": "ks_statistic",
+            "PR-AUC": "pr_auc",
+            "Classification Accuracy": "accuracy",
+            "Precision": "precision",
+            "Recall": "recall",
+            "F1-Score": "f1_score",
+            "Brier Score": "brier_score"
+        }
+
+        def parse_metric_cell(cell_str):
+            clean = cell_str.replace("*", "").strip()
+            m_pct = re.search(r"([0-9]+\.[0-9]+)%", clean)
+            if m_pct:
+                return float(m_pct.group(1)) / 100.0
+            m_dec = re.search(r"([0-9]+\.[0-9]+)", clean)
+            if m_dec:
+                return float(m_dec.group(1))
+            return None
+
+        matched_count = 0
+        for line in table_lines:
+            parts = [p.strip() for p in line.split("|")[1:-1]]
+            if len(parts) < 3:
+                continue
+            metric_label = parts[0].replace("*", "").strip()
+            found_key = None
+            for prefix, key in metric_key_map.items():
+                if metric_label.startswith(prefix):
+                    found_key = key
+                    break
+            if not found_key:
+                continue
+
+            rf_readme_val = parse_metric_cell(parts[1])
+            lr_readme_val = parse_metric_cell(parts[2])
+
+            self.assertIsNotNone(rf_readme_val, f"Failed to parse RF value from '{parts[1]}' for {metric_label}")
+            self.assertIsNotNone(lr_readme_val, f"Failed to parse LR value from '{parts[2]}' for {metric_label}")
+
+            self.assertAlmostEqual(
+                rf_readme_val, rf_m[found_key], places=4,
+                msg=f"RF metric {found_key} mismatch between README ({rf_readme_val}) and JSON ({rf_m[found_key]})"
+            )
+            self.assertAlmostEqual(
+                lr_readme_val, lr_m[found_key], places=4,
+                msg=f"LR metric {found_key} mismatch between README ({lr_readme_val}) and JSON ({lr_m[found_key]})"
+            )
+            matched_count += 1
+
+        self.assertEqual(matched_count, 8, f"Expected 8 benchmark metric rows in README, found {matched_count}")
+
+    def test_no_stale_metric_strings(self):
+        """
+        Fails if any obsolete/unverified metric strings appear in README.md,
+        app/streamlit_app.py, or scripts/generate_model_report_docx.py:
+        '128.2', '114.1', '54.3%', '34.2%', '2.1x', '29.2%', '5.03'.
+        """
+        stale_strings = ["128.2", "114.1", "54.3%", "34.2%", "2.1x", "29.2%", "5.03"]
+        files_to_check = [
+            os.path.join(BASE_DIR, "README.md"),
+            os.path.join(BASE_DIR, "app", "streamlit_app.py"),
+            os.path.join(BASE_DIR, "scripts", "generate_model_report_docx.py")
+        ]
+
+        violations = []
+        for file_path in files_to_check:
+            self.assertTrue(os.path.exists(file_path), f"File {file_path} not found")
+            with open(file_path, "r", encoding="utf-8") as f:
+                for line_idx, line in enumerate(f, start=1):
+                    for stale in stale_strings:
+                        if stale in line:
+                            violations.append(f"{os.path.basename(file_path)}:L{line_idx} contains '{stale}': {line.strip()}")
+
+        self.assertEqual(violations, [], f"Found stale metric strings:\n" + "\n".join(violations))
+
 
 if __name__ == "__main__":
     unittest.main()

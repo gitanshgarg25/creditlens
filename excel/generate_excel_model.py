@@ -6,13 +6,16 @@ model diagnostics, and formatted loan tape samples using openpyxl.
 """
 
 import os
+import sys
 import json
 import pandas as pd
 import openpyxl
 from openpyxl.styles import Font, PatternFill, Alignment, Border, Side
 from openpyxl.utils import get_column_letter
 
-BASE_DIR = os.path.dirname(os.path.dirname(__file__))
+BASE_DIR = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
+if BASE_DIR not in sys.path:
+    sys.path.insert(0, BASE_DIR)
 PROCESSED_DATA = os.path.join(BASE_DIR, "data", "processed", "credit_lens_tableau_extract.csv")
 METRICS_PATH = os.path.join(BASE_DIR, "models", "model_metrics.json")
 EXCEL_OUTPUT = os.path.join(BASE_DIR, "excel", "CreditLens_Portfolio_Model.xlsx")
@@ -254,6 +257,136 @@ def generate_workbook():
         ws_diag.cell(row=idx, column=2).border = thin_border
 
     auto_fit_columns(ws_diag)
+
+    # =========================================================================
+    # SHEET 4: Basel III ECL Schedule
+    # =========================================================================
+    ws_ecl = wb.create_sheet(title="ECL_Schedule")
+    ws_ecl.views.sheetView[0].showGridLines = True
+
+    ws_ecl.merge_cells("B2:K2")
+    ecl_title = ws_ecl["B2"]
+    ecl_title.value = "BASEL III / IFRS 9 EXPECTED CREDIT LOSS (ECL) RESERVE SCHEDULE"
+    ecl_title.font = Font(name="Calibri", size=14, bold=True, color="1E3A8A")
+    ecl_title.alignment = Alignment(horizontal="left", vertical="center")
+
+    ws_ecl["B3"].value = "Standardized Framework: ECL = EAD × PD × LGD | Standard LGD = 45.0% | CCF = 20.0% (Undrawn Commitments)"
+    ws_ecl["B3"].font = Font(name="Calibri", size=10, italic=True, color="4B5563")
+
+    # Table 1: Full Portfolio ECL (30,000 Accounts)
+    ws_ecl.cell(row=5, column=2).value = "1. FULL PORTFOLIO CAPITAL RESERVES (30,000 ACCOUNTS)"
+    ws_ecl.cell(row=5, column=2).font = Font(name="Calibri", size=12, bold=True, color="1F2937")
+
+    headers_ecl = [
+        "Risk Tier", "Borrowers", "Portfolio Share %", "Total Credit Line (NTD)",
+        "Drawn Balance (NTD)", "Exposure at Default (EAD)", "Average PD %",
+        "LGD %", "ECL Reserve (NTD)", "ECL Coverage %"
+    ]
+    for c_idx, h in enumerate(headers_ecl, start=2):
+        style_header_cell(ws_ecl.cell(row=6, column=c_idx), h)
+
+    basel_metrics = metrics.get("basel_iii_ecl", {})
+    full_ecl = basel_metrics.get("full_population_30k", {})
+    if not full_ecl:
+        from src.analytics_engine import compute_ecl
+        full_ecl = compute_ecl(df)
+
+    total_border = Border(
+        left=Side(style="thin", color="D1D5DB"),
+        right=Side(style="thin", color="D1D5DB"),
+        top=Side(style="thin", color="1E3A8A"),
+        bottom=Side(style="double", color="1E3A8A")
+    )
+
+    curr_row = 7
+    for tier_info in full_ecl.get("tier_schedule", []):
+        ws_ecl.cell(row=curr_row, column=2, value=tier_info["risk_tier"]).alignment = Alignment(horizontal="left")
+        ws_ecl.cell(row=curr_row, column=3, value=tier_info["accounts"]).number_format = "#,##0"
+        ws_ecl.cell(row=curr_row, column=4, value=tier_info["portfolio_share_pct"] / 100.0).number_format = "0.0%"
+        ws_ecl.cell(row=curr_row, column=5, value=float(tier_info["total_limit_exposure"])).number_format = "$#,##0"
+        ws_ecl.cell(row=curr_row, column=6, value=float(tier_info["total_drawn_balance"])).number_format = "$#,##0"
+        ws_ecl.cell(row=curr_row, column=7, value=float(tier_info["total_ead"])).number_format = "$#,##0"
+        ws_ecl.cell(row=curr_row, column=8, value=tier_info["avg_pd_pct"] / 100.0).number_format = "0.0%"
+        ws_ecl.cell(row=curr_row, column=9, value=0.45).number_format = "0.0%"
+        ws_ecl.cell(row=curr_row, column=10, value=float(tier_info["total_ecl"])).number_format = "$#,##0"
+        ws_ecl.cell(row=curr_row, column=11, value=tier_info["ecl_coverage_pct"] / 100.0).number_format = "0.0%"
+
+        for col_idx in range(2, 12):
+            cell = ws_ecl.cell(row=curr_row, column=col_idx)
+            cell.border = thin_border
+            if curr_row % 2 == 1:
+                cell.fill = PatternFill(start_color="F9FAFB", end_color="F9FAFB", fill_type="solid")
+        curr_row += 1
+
+    # Total Summary Row for Full Portfolio
+    tot_row = curr_row
+    ws_ecl.cell(row=tot_row, column=2, value="Total Portfolio").font = Font(bold=True)
+    ws_ecl.cell(row=tot_row, column=3, value=full_ecl.get("total_accounts", len(df))).number_format = "#,##0"
+    ws_ecl.cell(row=tot_row, column=4, value=1.0).number_format = "0.0%"
+    ws_ecl.cell(row=tot_row, column=5, value=float(full_ecl.get("total_limit_exposure", 0.0))).number_format = "$#,##0"
+    ws_ecl.cell(row=tot_row, column=6, value=float(full_ecl.get("total_drawn_balance", 0.0))).number_format = "$#,##0"
+    ws_ecl.cell(row=tot_row, column=7, value=float(full_ecl.get("total_ead", 0.0))).number_format = "$#,##0"
+    ws_ecl.cell(row=tot_row, column=8, value=full_ecl.get("portfolio_weighted_pd_pct", 0.0) / 100.0).number_format = "0.0%"
+    ws_ecl.cell(row=tot_row, column=9, value=0.45).number_format = "0.0%"
+    ws_ecl.cell(row=tot_row, column=10, value=float(full_ecl.get("total_ecl", 0.0))).number_format = "$#,##0"
+    ws_ecl.cell(row=tot_row, column=11, value=full_ecl.get("portfolio_ecl_coverage_pct", 0.0) / 100.0).number_format = "0.0%"
+
+    for col_idx in range(2, 12):
+        c = ws_ecl.cell(row=tot_row, column=col_idx)
+        c.font = Font(name="Calibri", size=11, bold=True)
+        c.border = total_border
+        c.fill = PatternFill(start_color="EFF6FF", end_color="EFF6FF", fill_type="solid")
+
+    # Table 2: Holdout Validation Portfolio ECL (6,000 Unseen Accounts)
+    curr_row += 3
+    ws_ecl.cell(row=curr_row, column=2).value = "2. HOLDOUT VALIDATION SET CAPITAL RESERVES (6,000 UNSEEN ACCOUNTS)"
+    ws_ecl.cell(row=curr_row, column=2).font = Font(name="Calibri", size=12, bold=True, color="1F2937")
+    curr_row += 1
+
+    for c_idx, h in enumerate(headers_ecl, start=2):
+        style_header_cell(ws_ecl.cell(row=curr_row, column=c_idx), h)
+    curr_row += 1
+
+    holdout_ecl = basel_metrics.get("unseen_holdout_test_6k", {})
+    for tier_info in holdout_ecl.get("tier_schedule", []):
+        ws_ecl.cell(row=curr_row, column=2, value=tier_info["risk_tier"]).alignment = Alignment(horizontal="left")
+        ws_ecl.cell(row=curr_row, column=3, value=tier_info["accounts"]).number_format = "#,##0"
+        ws_ecl.cell(row=curr_row, column=4, value=tier_info["portfolio_share_pct"] / 100.0).number_format = "0.0%"
+        ws_ecl.cell(row=curr_row, column=5, value=float(tier_info["total_limit_exposure"])).number_format = "$#,##0"
+        ws_ecl.cell(row=curr_row, column=6, value=float(tier_info["total_drawn_balance"])).number_format = "$#,##0"
+        ws_ecl.cell(row=curr_row, column=7, value=float(tier_info["total_ead"])).number_format = "$#,##0"
+        ws_ecl.cell(row=curr_row, column=8, value=tier_info["avg_pd_pct"] / 100.0).number_format = "0.0%"
+        ws_ecl.cell(row=curr_row, column=9, value=0.45).number_format = "0.0%"
+        ws_ecl.cell(row=curr_row, column=10, value=float(tier_info["total_ecl"])).number_format = "$#,##0"
+        ws_ecl.cell(row=curr_row, column=11, value=tier_info["ecl_coverage_pct"] / 100.0).number_format = "0.0%"
+
+        for col_idx in range(2, 12):
+            cell = ws_ecl.cell(row=curr_row, column=col_idx)
+            cell.border = thin_border
+            if curr_row % 2 == 1:
+                cell.fill = PatternFill(start_color="F9FAFB", end_color="F9FAFB", fill_type="solid")
+        curr_row += 1
+
+    # Total Summary Row for Holdout
+    tot_holdout_row = curr_row
+    ws_ecl.cell(row=tot_holdout_row, column=2, value="Total Holdout (Unseen)").font = Font(bold=True)
+    ws_ecl.cell(row=tot_holdout_row, column=3, value=holdout_ecl.get("total_accounts", 6000)).number_format = "#,##0"
+    ws_ecl.cell(row=tot_holdout_row, column=4, value=1.0).number_format = "0.0%"
+    ws_ecl.cell(row=tot_holdout_row, column=5, value=float(holdout_ecl.get("total_limit_exposure", 0.0))).number_format = "$#,##0"
+    ws_ecl.cell(row=tot_holdout_row, column=6, value=float(holdout_ecl.get("total_drawn_balance", 0.0))).number_format = "$#,##0"
+    ws_ecl.cell(row=tot_holdout_row, column=7, value=float(holdout_ecl.get("total_ead", 0.0))).number_format = "$#,##0"
+    ws_ecl.cell(row=tot_holdout_row, column=8, value=holdout_ecl.get("portfolio_weighted_pd_pct", 0.0) / 100.0).number_format = "0.0%"
+    ws_ecl.cell(row=tot_holdout_row, column=9, value=0.45).number_format = "0.0%"
+    ws_ecl.cell(row=tot_holdout_row, column=10, value=float(holdout_ecl.get("total_ecl", 0.0))).number_format = "$#,##0"
+    ws_ecl.cell(row=tot_holdout_row, column=11, value=holdout_ecl.get("portfolio_ecl_coverage_pct", 0.0) / 100.0).number_format = "0.0%"
+
+    for col_idx in range(2, 12):
+        c = ws_ecl.cell(row=tot_holdout_row, column=col_idx)
+        c.font = Font(name="Calibri", size=11, bold=True)
+        c.border = total_border
+        c.fill = PatternFill(start_color="EFF6FF", end_color="EFF6FF", fill_type="solid")
+
+    auto_fit_columns(ws_ecl)
 
     wb.save(EXCEL_OUTPUT)
     print(f"[Excel] Financial Model successfully generated: {EXCEL_OUTPUT}")

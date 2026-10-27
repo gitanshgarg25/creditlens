@@ -155,6 +155,13 @@ def generate_word_document():
 
     champ = metrics.get("champion_metrics", {})
     bench = metrics.get("benchmark_metrics", {})
+    h620 = metrics.get("policy_simulation_cutoff_620", {}).get("unseen_holdout_test_6k", {})
+    f620 = metrics.get("policy_simulation_cutoff_620", {}).get("full_population_30k", {})
+    cm_dollars = metrics.get("holdout_confusion_dollars", {})
+    risk_drivers = metrics.get("risk_drivers", {})
+    ecl_data = metrics.get("basel_iii_ecl", {})
+    holdout_sched = metrics.get("holdout_cutoff_schedule", [])
+    full_sched = metrics.get("full_cutoff_schedule", [])
 
     doc = docx.Document()
 
@@ -245,12 +252,18 @@ def generate_word_document():
     )
     p2.runs[0].font.color.rgb = SLATE_TEXT
 
+    h620_avoided_m = h620.get("avoided_losses_ntd", 42509483.0) / 1e6
+    h620_net_m = h620.get("net_financial_benefit", 36030217.7) / 1e6
+    h620_appr_pct = h620.get("approved_pct", 65.6)
+    ks_lift_pct = risk_drivers.get("ks_relative_lift_pct", 8.4)
+
     add_callout_box(
         doc,
-        "The Champion Random Forest model delivered an ROC-AUC of 0.7781 and a Kolmogorov-Smirnov (KS) statistic of 42.57%, "
-        "generating an +8.3% relative lift in risk separation power over traditional linear scorecards. Translated into "
-        "commercial bank economics on 6,000 unseen test borrowers, this predictive edge intercepted NT$ 128.2M in severe "
-        "default write-offs while maintaining loan approval volumes at 65.4%, creating a net commercial value of NT$ 114.1M.",
+        f"The Champion Random Forest model delivered an ROC-AUC of {champ.get('roc_auc', 0.7781):.4f} and a Kolmogorov-Smirnov (KS) statistic of {champ.get('ks_statistic', 0.4257)*100:.2f}%, "
+        f"generating a +{ks_lift_pct:.1f}% relative lift in risk separation power over traditional linear scorecards. Translated into "
+        f"commercial bank economics on 6,000 unseen test borrowers, applying a FICO 620 cutoff intercepted NT$ {h620_avoided_m:.1f}M in severe "
+        f"default write-offs while maintaining loan approval volumes at {h620_appr_pct:.1f}%, creating a net commercial value of NT$ {h620_net_m:.1f}M "
+        f"(extrapolated holdout x5: +NT$ {h620_net_m * 5:.1f}M).",
         title="Key Commercial Bottom-Line Impact",
         border_hex=HEX_GREEN,
         bg_hex="F0FDF4"
@@ -275,7 +288,7 @@ def generate_word_document():
 
     table_data = [
         ("ROC-AUC (Discrimination)", f"{champ.get('roc_auc', 0.7781):.4f}", f"{bench.get('roc_auc', 0.7521):.4f}", "+0.0260 (+3.5%)", "78% probability of ranking a true defaulter higher risk than a good payer."),
-        ("KS Statistic (Risk Spread)", f"{champ.get('ks_statistic', 0.4257)*100:.2f}%", f"{bench.get('ks_statistic', 0.3928)*100:.2f}%", "+3.29% (+8.3%)", "Peak separation between cumulative good vs bad distributions. KS > 40% is elite."),
+        ("KS Statistic (Risk Spread)", f"{champ.get('ks_statistic', 0.4257)*100:.2f}%", f"{bench.get('ks_statistic', 0.3928)*100:.2f}%", f"+3.29 points (+{ks_lift_pct:.1f}%)", "Peak separation between cumulative good vs bad distributions. KS > 40% is elite."),
         ("PR-AUC (Precision-Recall)", f"{champ.get('pr_auc', 0.5573):.4f}", f"{bench.get('pr_auc', 0.5079):.4f}", "+0.0494 (+9.7%)", "Evaluates performance on imbalanced default class (22.1% base rate)."),
         ("Classification Accuracy", f"{champ.get('accuracy', 0.7837)*100:.2f}%", f"{bench.get('accuracy', 0.7457)*100:.2f}%", "+3.80% (+5.1%)", "Overall correct decisions; ~4 out of every 5 accounts correctly categorized."),
         ("Precision (Approval Quality)", f"{champ.get('precision', 0.5096)*100:.2f}%", f"{bench.get('precision', 0.4443)*100:.2f}%", "+6.53% (+14.7%)", "When model flags high risk, 51% are true defaults (vs 44% linear), minimizing false alarms."),
@@ -352,11 +365,23 @@ def generate_word_document():
     for i, h in enumerate(cm_headers):
         cm_tbl.rows[0].cells[i].text = h
 
+    bad_debt_avoided = cm_dollars.get("avoided_bad_debt_millions", 38.4)
+    fp_lost_interest = cm_dollars.get("fp_lost_interest_millions", 4.2)
+    tn_interest = cm_dollars.get("tn_interest_income_millions", 32.2)
+    fn_loss = cm_dollars.get("fn_residual_loss_millions", 28.9)
+    net_val = cm_dollars.get("net_financial_benefit_millions", 34.1)
+    tn_cnt = cm_dollars.get("tn_count", 3931)
+    fp_cnt = cm_dollars.get("fp_count", 742)
+    fn_cnt = cm_dollars.get("fn_count", 556)
+    tp_cnt = cm_dollars.get("tp_count", 771)
+    tn_exp_m = cm_dollars.get("tn_exposure_ntd", 214860010.0) / 1e6
+    ratio_val = cm_dollars.get("benefit_cost_ratio", 9.1)
+
     cm_data = [
-        ("True Negatives (TN)", "3,931 Accounts", "65.5% of Portfolio", "+NT$ 48.5M Interest Revenue", "Safe borrowers approved for revolving credit; yield 15% APR and merchant interchange."),
-        ("True Positives (TP)", "771 Accounts", "12.9% of Portfolio", "NT$ 128.2M Bad Debt Avoided", "High-risk defaulters correctly intercepted. Early line freeze prevents write-off losses."),
-        ("False Positives (FP)", "742 Accounts", "12.4% of Portfolio", "-NT$ 14.1M Lost APR Income", "Conservative false rejections. Acceptable risk buffer (avoided losses exceed cost by 9.1x)."),
-        ("False Negatives (FN)", "556 Accounts", "9.3% of Portfolio", "NT$ 42.8M Absorbed in Reserves", "Unexpected defaults. Covered under Basel III CAR 12.5% standardized capital provisions.")
+        ("True Negatives (TN)", f"{tn_cnt:,} Accounts", "65.5% of Portfolio", f"+NT$ {tn_interest:.1f}M Interest Revenue", f"Safe borrowers approved for revolving credit; yield 15% APR on NT$ {tn_exp_m:.1f}M safe balances."),
+        ("True Positives (TP)", f"{tp_cnt:,} Accounts", "12.9% of Portfolio", f"NT$ {bad_debt_avoided:.1f}M Bad Debt Avoided", "High-risk defaulters correctly intercepted. Early line freeze prevents write-off losses."),
+        ("False Positives (FP)", f"{fp_cnt:,} Accounts", "12.4% of Portfolio", f"-NT$ {fp_lost_interest:.1f}M Lost APR Income", f"Conservative false rejections. Acceptable risk buffer (avoided losses exceed cost by {ratio_val:.1f}x)."),
+        ("False Negatives (FN)", f"{fn_cnt:,} Accounts", "9.3% of Portfolio", f"NT$ {fn_loss:.1f}M Absorbed in Reserves", "Unexpected defaults. Covered under Basel III CAR 12.5% standardized capital provisions.")
     ]
     for r, row_data in enumerate(cm_data):
         for c, text in enumerate(row_data):
@@ -369,10 +394,10 @@ def generate_word_document():
 
     add_callout_box(
         doc,
-        "Commercial Bottom-Line Value Equation:\n"
-        "Net Value Created = (Bad Debt Avoided) - (Lost Interest Opportunity)\n"
-        "Net Value = NT$ 128.2M - NT$ 14.1M = +NT$ 114.1M in Net Preserved Capital.\n"
-        "For every NT$ 1 lost to conservative false-positive underwriting, the model saves NT$ 9.10 in bad-debt write-offs.",
+        f"Commercial Bottom-Line Value Equation:\n"
+        f"Net Value Created = (Bad Debt Avoided) - (Lost Interest Opportunity)\n"
+        f"Net Value = NT$ {bad_debt_avoided:.1f}M - NT$ {fp_lost_interest:.1f}M = +NT$ {net_val:.1f}M in Net Preserved Capital.\n"
+        f"For every NT$ 1 lost to conservative false-positive underwriting, the model saves NT$ {ratio_val:.2f} in bad-debt write-offs.",
         title="Champion Model Return on Investment (ROI)",
         border_hex=HEX_GREEN,
         bg_hex="F0FDF4"
@@ -530,9 +555,10 @@ def generate_word_document():
 
     doc.add_paragraph(
         "1. Delinquency Inception Trigger (PAY_0 ≥ 1): Any 30-day past-due event triggers an immediate alert. Historical "
-        "data demonstrates that a 1-month delay increases default probability by 4.2x (jumping from 12.9% to 54.3%).\n"
-        "2. Credit Strain Danger Zone (Utilization > 80%): Borrowers utilizing >80% of their line default at 34.2% "
-        "(2.1x higher than the 16.5% rate of borrowers maintaining ≤30% utilization).\n"
+        "data demonstrates that a 1-month payment delay gives a default rate of 50.3% vs 13.8% for timely accounts (3.6x surge), "
+        "while a 2+ month delay jumps to 69.6% vs 16.6% (4.2x multiplier).\n"
+        "2. Credit Strain Danger Zone (Utilization > 80%): Borrowers utilizing >80% of their line default at 31.9% "
+        "(1.8x higher than the 17.9% rate of borrowers maintaining ≤30% utilization).\n"
         "3. Delinquency Velocity Acceleration (Trend > 0): Accounts with worsening delinquency roll-rates are flagged "
         "for preemptive line capping before the borrower reaches 60-day DPD."
     )
@@ -562,6 +588,17 @@ def generate_word_document():
     p_ecl.runs[0].font.name = "Consolas"
     p_ecl.runs[0].font.size = Pt(9.5)
     p_ecl.runs[0].font.color.rgb = BLUE_SECONDARY
+
+    h_ecl = ecl_data.get("unseen_holdout_test_6k", {})
+    f_ecl = ecl_data.get("full_population_30k", {})
+
+    doc.add_paragraph(
+        "Empirical Basel III Portfolio ECL Reserves:\n"
+        f"• Out-of-Sample Holdout (6,000 Unseen Accounts): Total Exposure at Default (EAD) is NT$ {h_ecl.get('total_ead', 450895229.0)/1e6:.1f}M, "
+        f"generating an Expected Credit Loss reserve of NT$ {h_ecl.get('total_ecl', 71434703.5)/1e6:.1f}M ({h_ecl.get('portfolio_ecl_coverage_pct', 15.8):.1f}% coverage).\n"
+        f"• Full Population Tape (30,000 Accounts): Total EAD is NT$ {f_ecl.get('total_ead', 2239409244.8)/1e6:.1f}M, "
+        f"generating an Expected Credit Loss reserve of NT$ {f_ecl.get('total_ecl', 352152476.4)/1e6:.1f}M ({f_ecl.get('portfolio_ecl_coverage_pct', 15.7):.1f}% coverage)."
+    )
 
     # =========================================================================
     # SECTION 9: ROOT CAUSE ANALYSIS & FEATURE IMPORTANCE
@@ -626,24 +663,32 @@ def generate_word_document():
 
     doc.add_heading("10.1 Ground-Truth Out-of-Sample Validation Schedule (6,000 Unseen Accounts)", level=2)
     doc.add_paragraph(
-        "Evaluated strictly on the 20% holdout test partition (N=6,000 accounts, 1,327 actual defaulters) that the model never saw during training:"
+        "Evaluated strictly on the 20% holdout test partition (N=6,000 accounts, 1,327 actual defaulters) that the model never saw during training (labeled holdout unseen):"
     )
 
-    sim_tbl_test = doc.add_table(rows=7, cols=7)
+    target_cutoffs = [500, 550, 600, 620, 660, 720]
+    h_items = [item for item in holdout_sched if item.get("score_cutoff") in target_cutoffs]
+    if not h_items:
+        h_items = holdout_sched[:6]
+
+    sim_tbl_test = doc.add_table(rows=len(h_items) + 1, cols=7)
     sim_headers = ["Cutoff Score", "Approval %", "Approved Accts", "Approved Default %", "Bad Debt Avoided", "Lost APR Interest", "Net Financial Benefit"]
     for i, h in enumerate(sim_headers):
         sim_tbl_test.rows[0].cells[i].text = h
 
-    sim_data_test = [
-        ("FICO 500", "98.1%", "5,886", "21.7%", "NT$ 4.2M", "NT$ 0.5M", "+NT$ 3.7M"),
-        ("FICO 550", "91.6%", "5,496", "20.1%", "NT$ 14.8M", "NT$ 2.1M", "+NT$ 12.7M"),
-        ("FICO 600", "78.5%", "4,710", "16.8%", "NT$ 30.2M", "NT$ 4.8M", "+NT$ 25.4M"),
-        ("FICO 620 (Optimal)", "65.6%", "3,939", "11.4%", "NT$ 42.5M", "NT$ 6.5M", "+NT$ 36.0M"),
-        ("FICO 660 (Near-Prime)", "48.3%", "2,898", "8.9%", "NT$ 61.2M", "NT$ 14.1M", "+NT$ 47.1M"),
-        ("FICO 720 (Prime Only)", "23.8%", "1,428", "4.2%", "NT$ 82.4M", "NT$ 29.5M", "+NT$ 52.9M")
-    ]
-    for r, row_data in enumerate(sim_data_test):
-        for c, text in enumerate(row_data):
+    for r, item in enumerate(h_items):
+        c_val = item["score_cutoff"]
+        lbl = f"FICO {c_val}" + (" (Optimal)" if c_val == 620 else " (Near-Prime)" if c_val == 660 else " (Prime Only)" if c_val == 720 else "")
+        row_vals = (
+            lbl,
+            f"{item['approved_pct']:.1f}%",
+            f"{item['approved_count']:,}",
+            f"{item['approved_default_rate']:.1f}%",
+            f"NT$ {item['avoided_losses_ntd']/1e6:.1f}M",
+            f"NT$ {item['lost_interest_income']/1e6:.1f}M",
+            f"+NT$ {item['net_financial_benefit']/1e6:.1f}M"
+        )
+        for c, text in enumerate(row_vals):
             sim_tbl_test.rows[r + 1].cells[c].text = text
             if c == 0:
                 sim_tbl_test.rows[r + 1].cells[c].paragraphs[0].runs[0].bold = True
@@ -657,20 +702,27 @@ def generate_word_document():
         "Commercial simulation across the bank's entire portfolio tape (24k training + 6k test accounts combined, N=30,000):"
     )
 
-    sim_tbl = doc.add_table(rows=7, cols=7)
+    f_items = [item for item in full_sched if item.get("score_cutoff") in target_cutoffs]
+    if not f_items:
+        f_items = full_sched[:6]
+
+    sim_tbl = doc.add_table(rows=len(f_items) + 1, cols=7)
     for i, h in enumerate(sim_headers):
         sim_tbl.rows[0].cells[i].text = h
 
-    sim_data = [
-        ("FICO 500", "98.2%", "29,460", "21.6%", "NT$ 22.4M", "NT$ 2.1M", "+NT$ 20.3M"),
-        ("FICO 550", "91.5%", "27,450", "19.8%", "NT$ 78.1M", "NT$ 8.4M", "+NT$ 69.7M"),
-        ("FICO 600", "78.4%", "23,520", "16.7%", "NT$ 164.5M", "NT$ 24.1M", "+NT$ 140.4M"),
-        ("FICO 620 (Optimal)", "65.4%", "19,614", "7.7%", "NT$ 232.9M", "NT$ 26.2M", "+NT$ 206.6M"),
-        ("FICO 660 (Near-Prime)", "48.2%", "14,460", "5.1%", "NT$ 312.5M", "NT$ 58.4M", "+NT$ 254.1M"),
-        ("FICO 720 (Prime Only)", "23.6%", "7,080", "2.6%", "NT$ 418.2M", "NT$ 124.5M", "+NT$ 293.7M")
-    ]
-    for r, row_data in enumerate(sim_data):
-        for c, text in enumerate(row_data):
+    for r, item in enumerate(f_items):
+        c_val = item["score_cutoff"]
+        lbl = f"FICO {c_val}" + (" (Optimal)" if c_val == 620 else " (Near-Prime)" if c_val == 660 else " (Prime Only)" if c_val == 720 else "")
+        row_vals = (
+            lbl,
+            f"{item['approved_pct']:.1f}%",
+            f"{item['approved_count']:,}",
+            f"{item['approved_default_rate']:.1f}%",
+            f"NT$ {item['avoided_losses_ntd']/1e6:.1f}M",
+            f"NT$ {item['lost_interest_income']/1e6:.1f}M",
+            f"+NT$ {item['net_financial_benefit']/1e6:.1f}M"
+        )
+        for c, text in enumerate(row_vals):
             sim_tbl.rows[r + 1].cells[c].text = text
             if c == 0:
                 sim_tbl.rows[r + 1].cells[c].paragraphs[0].runs[0].bold = True
@@ -683,8 +735,8 @@ def generate_word_document():
         doc,
         "Optimal Policy Recommendation & Methodology Integrity:\n"
         "• On completely unseen accounts at FICO 620, the model achieves a 65.6% approval rate, cuts approved default rates "
-        "nearly in half from 22.12% down to 11.35%, and intercepts NT$ 42.5M in bad debt on the 6k sample alone (scaling to NT$ 180M+ portfolio-wide).\n"
-        "• When simulated across the bank's whole 30,000-account population tape, the approved default rate drops to 7.73%, avoiding NT$ 232.9M in bad debt.\n"
+        "nearly in half from 22.12% down to 11.35%, and intercepts NT$ 42.5M in bad debt on the 6k sample alone (extrapolated holdout x5: +NT$ 180.1M).\n"
+        "• When simulated across the bank's whole 30,000-account population tape, the approved default rate drops to 7.73%, avoiding NT$ 232.9M in bad debt and delivering NT$ 206.6M in net commercial benefit.\n"
         "This dual-schedule presentation ensures 100% honesty when discussing out-of-sample rigor with technical interviewers.",
         title="Underwriting Committee Policy Consensus",
         border_hex=HEX_GREEN,
@@ -709,9 +761,9 @@ def generate_word_document():
             "Q1: Why did you pick Random Forest over Logistic Regression?",
             "“In banking, traditional scorecards use Logistic Regression because regulators require interpretable coefficients. "
             "However, credit risk in the real world is non-linear and compounding: a high credit limit is safe when the borrower "
-            "pays on time, but becomes 4x deadlier when paired with a sudden 2-month repayment delay. Linear models struggle "
+            "pays on time, but becomes deadlier when paired with a sudden repayment delay. Linear models struggle "
             "with that interaction without complex manual engineering. Random Forest captured these interactions naturally, "
-            "achieving a KS statistic of 42.6%—an 8.3% lift over our logistic benchmark—which prevented NT$ 128M in write-offs.”"
+            "achieving a KS statistic of 42.6%—an 8.4% relative lift over our logistic benchmark—which prevented NT$ 38.4M in direct write-offs on our holdout validation set (NT$ 42.5M at FICO 620 cutoff).”"
         ),
         (
             "Q2: How do you measure model performance in banking? Isn't accuracy enough?",
@@ -726,7 +778,7 @@ def generate_word_document():
             "“Risk management isn't about eliminating all defaults—that would mean zero loan volume and zero profit! We built an "
             "Underwriting Policy Simulator that models the net financial benefit: (Bad Debt Prevented) minus (Lost Interest on "
             "Good Borrowers). Setting our cutoff at FICO 620 on unseen test data achieves a 65.6% approval rate, cuts the default "
-            "rate nearly in half from 22.1% to 11.4%, and avoids NT$ 42.5M in bad debt on the test set alone (scaling to NT$ 180M+ portfolio-wide). "
+            "rate nearly in half from 22.1% to 11.4%, and avoids NT$ 42.5M in bad debt on the test set alone (extrapolated holdout x5: +NT$ 180.1M). "
             "When simulated across the bank's entire 30,000 population tape, the approved default rate drops to 7.7%, avoiding NT$ 232.9M in bad debt "
             "and delivering NT$ 206.6M in net commercial benefit.”"
         ),
@@ -734,15 +786,15 @@ def generate_word_document():
             "Q4: What are the primary warning signs that a borrower is about to default?",
             "“Our feature importance showed that past delinquency severity (MAX_DELINQUENCY_MONTHS) and chronic frequency "
             "(NUM_MONTHS_DELINQUENT) account for over 23% of total predictive power. Specifically, an account with a 1-month "
-            "payment delay sees default rates jump by 4.2x (from 12.9% to 54.3%). Second is credit line strain: borrowers operating "
-            "above 80% utilization default at 34.2%, showing severe dependence on revolving credit for basic living expenses.”"
+            "payment delay sees default rates jump by 3.6x (from 13.8% to 50.3%), while a 2+ month delay jumps by 4.2x (from 16.6% to 69.6%). Second is credit line strain: borrowers operating "
+            "above 80% utilization default at 31.9% (1.8x higher than the 17.9% rate for borrowers maintaining ≤30% utilization), showing severe dependence on revolving credit for basic living expenses.”"
         ),
         (
             "Q5: How does your model align with Basel III and regulatory standards?",
             "“We integrated the Basel III Expected Credit Loss formula (ECL = EAD × PD × LGD) with a 12.5% Capital Adequacy Ratio "
             "target. The model's low Brier score (0.1685) ensures that predicted probabilities match real-world default frequencies, "
-            "preventing under-provisioning. Furthermore, demographic variables like gender, marital status, and education contributed "
-            "less than 0.6% combined, demonstrating fair lending compliance under ECOA rules.”"
+            "preventing under-provisioning. Furthermore, demographic variables (AGE, EDUCATION, SEX, MARRIAGE) contributed "
+            "only 3.05% combined (with non-age protected classes under 1.25%), demonstrating fair lending compliance under ECOA rules.”"
         )
     ]
 

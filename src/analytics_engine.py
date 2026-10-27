@@ -285,6 +285,75 @@ def get_underwriting_policy_tradeoff(df: pd.DataFrame, score_cutoff: int = 620) 
     }
 
 
+def compute_ecl(df: pd.DataFrame, lgd: float = 0.45, ccf: float = 0.20) -> dict:
+    """
+    Computes Basel III Expected Credit Loss (ECL):
+    ECL = EAD * PD * LGD
+    EAD = BILL_AMT1 + CCF * max(LIMIT_BAL - BILL_AMT1, 0)
+    PD = PREDICTED_PD
+    LGD = 0.45 (Standardized Basel III Retail Foundation LGD)
+    CCF = 0.20 (Credit Conversion Factor for undrawn revolving commitments)
+    """
+    if len(df) == 0:
+        return {}
+
+    bill = df["BILL_AMT1"].copy() if "BILL_AMT1" in df.columns else pd.Series(0.0, index=df.index)
+    limit = df["LIMIT_BAL"].copy() if "LIMIT_BAL" in df.columns else pd.Series(0.0, index=df.index)
+    pd_series = df["PREDICTED_PD"].copy() if "PREDICTED_PD" in df.columns else pd.Series(0.2212, index=df.index)
+
+    undrawn = np.maximum(limit - bill, 0)
+    ead = bill + (ccf * undrawn)
+    ecl = ead * pd_series * lgd
+
+    total_exposure = float(limit.sum())
+    total_drawn = float(bill.sum())
+    total_ead = float(ead.sum())
+    total_ecl = float(ecl.sum())
+    weighted_pd = float((ead * pd_series).sum() / max(total_ead, 1.0))
+    ecl_coverage_pct = round((total_ecl / max(total_ead, 1.0)) * 100, 2)
+
+    tier_schedule = []
+    if "RISK_TIER" in df.columns:
+        tier_df = pd.DataFrame({
+            "RISK_TIER": df["RISK_TIER"],
+            "LIMIT_BAL": limit,
+            "BILL_AMT1": bill,
+            "EAD": ead,
+            "ECL": ecl,
+            "PD": pd_series
+        })
+        for tier in ["Prime", "Near-Prime", "Subprime", "High Risk"]:
+            sub = tier_df[tier_df["RISK_TIER"] == tier]
+            if len(sub) > 0:
+                t_ead = float(sub["EAD"].sum())
+                t_ecl = float(sub["ECL"].sum())
+                t_pd = float(sub["PD"].mean())
+                tier_schedule.append({
+                    "risk_tier": tier,
+                    "accounts": int(len(sub)),
+                    "portfolio_share_pct": round((len(sub) / len(df)) * 100, 2),
+                    "total_limit_exposure": round(float(sub["LIMIT_BAL"].sum()), 1),
+                    "total_drawn_balance": round(float(sub["BILL_AMT1"].sum()), 1),
+                    "total_ead": round(t_ead, 1),
+                    "total_ecl": round(t_ecl, 1),
+                    "avg_pd_pct": round(t_pd * 100, 2),
+                    "ecl_coverage_pct": round((t_ecl / max(t_ead, 1.0)) * 100, 2)
+                })
+
+    return {
+        "total_accounts": int(len(df)),
+        "total_limit_exposure": round(total_exposure, 1),
+        "total_drawn_balance": round(total_drawn, 1),
+        "total_ead": round(total_ead, 1),
+        "total_ecl": round(total_ecl, 1),
+        "portfolio_weighted_pd_pct": round(weighted_pd * 100, 2),
+        "portfolio_ecl_coverage_pct": ecl_coverage_pct,
+        "lgd": lgd,
+        "ccf": ccf,
+        "tier_schedule": tier_schedule
+    }
+
+
 def load_model_metrics() -> dict:
     """
     Loads saved model evaluation metrics, benchmark comparison, and feature importances.

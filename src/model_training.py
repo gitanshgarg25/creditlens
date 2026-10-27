@@ -164,13 +164,88 @@ def train_and_evaluate_models():
 
     # Policy simulation calculations for FICO 620 cutoff (Unseen Test vs Full Population)
     try:
-        from analytics_engine import get_underwriting_policy_tradeoff
+        from analytics_engine import get_underwriting_policy_tradeoff, compute_ecl
     except (ImportError, ModuleNotFoundError):
-        from src.analytics_engine import get_underwriting_policy_tradeoff
+        from src.analytics_engine import get_underwriting_policy_tradeoff, compute_ecl
 
     test_df_scored = df_scored.loc[X_test.index]
     test_sim_620 = get_underwriting_policy_tradeoff(test_df_scored, score_cutoff=620)
     full_sim_620 = get_underwriting_policy_tradeoff(df_scored, score_cutoff=620)
+
+    # 1. Holdout confusion matrix dollars at classification threshold 0.5
+    y_test_pred = rf_pred
+    tp_mask = (y_test == 1) & (y_test_pred == 1)
+    fp_mask = (y_test == 0) & (y_test_pred == 1)
+    tn_mask = (y_test == 0) & (y_test_pred == 0)
+    fn_mask = (y_test == 1) & (y_test_pred == 0)
+
+    tp_dollars = float(test_df_scored.loc[tp_mask, "BILL_AMT1"].sum())
+    fp_dollars = float(test_df_scored.loc[fp_mask, "BILL_AMT1"].sum())
+    tn_dollars = float(test_df_scored.loc[tn_mask, "BILL_AMT1"].sum())
+    fn_dollars = float(test_df_scored.loc[fn_mask, "BILL_AMT1"].sum())
+    fp_lost_interest = fp_dollars * 0.15
+    tn_interest_income = tn_dollars * 0.15
+    net_confusion_benefit = tp_dollars - fp_lost_interest
+    ratio = round(tp_dollars / max(fp_lost_interest, 1.0), 2)
+
+    holdout_confusion_dollars = {
+        "tn_count": int(tn_mask.sum()),
+        "fp_count": int(fp_mask.sum()),
+        "fn_count": int(fn_mask.sum()),
+        "tp_count": int(tp_mask.sum()),
+        "avoided_bad_debt_ntd": tp_dollars,
+        "avoided_bad_debt_millions": round(tp_dollars / 1e6, 1),
+        "fp_exposure_ntd": fp_dollars,
+        "fp_lost_interest_ntd": fp_lost_interest,
+        "fp_lost_interest_millions": round(fp_lost_interest / 1e6, 1),
+        "tn_exposure_ntd": tn_dollars,
+        "tn_interest_income_ntd": tn_interest_income,
+        "tn_interest_income_millions": round(tn_interest_income / 1e6, 1),
+        "fn_residual_loss_ntd": fn_dollars,
+        "fn_residual_loss_millions": round(fn_dollars / 1e6, 1),
+        "net_financial_benefit_ntd": net_confusion_benefit,
+        "net_financial_benefit_millions": round(net_confusion_benefit / 1e6, 1),
+        "benefit_cost_ratio": ratio
+    }
+
+    # 2. Multi-cutoff underwriting policy schedules (Holdout 6k vs Full Tape 30k)
+    cutoff_list = [500, 550, 600, 620, 640, 660, 680, 700]
+    holdout_cutoff_schedule = [get_underwriting_policy_tradeoff(test_df_scored, score_cutoff=c) for c in cutoff_list]
+    full_cutoff_schedule = [get_underwriting_policy_tradeoff(df_scored, score_cutoff=c) for c in cutoff_list]
+
+    # 3. Basel III Expected Credit Loss (ECL = EAD x PD x LGD)
+    holdout_ecl = compute_ecl(test_df_scored)
+    full_ecl = compute_ecl(df_scored)
+
+    # 4. Key Risk Drivers computed empirically from data
+    d1 = float(df_scored[df_scored["PAY_0"] >= 1]["DEFAULT_NEXT_MONTH"].mean())
+    d0 = float(df_scored[df_scored["PAY_0"] <= 0]["DEFAULT_NEXT_MONTH"].mean())
+    d2 = float(df_scored[df_scored["PAY_0"] >= 2]["DEFAULT_NEXT_MONTH"].mean())
+    d_lt2 = float(df_scored[df_scored["PAY_0"] < 2]["DEFAULT_NEXT_MONTH"].mean())
+    u_high = float(df_scored[df_scored["AVG_UTILIZATION_RATE"] > 0.80]["DEFAULT_NEXT_MONTH"].mean())
+    u_low = float(df_scored[df_scored["AVG_UTILIZATION_RATE"] <= 0.30]["DEFAULT_NEXT_MONTH"].mean())
+    ews_rate = float(df_scored["EARLY_WARNING_FLAG"].mean())
+
+    risk_drivers = {
+        "delinquency_1mo": {
+            "default_rate_pct": round(d1 * 100, 1),
+            "baseline_rate_pct": round(d0 * 100, 1),
+            "multiplier": round(d1 / max(d0, 0.001), 1)
+        },
+        "delinquency_2mo": {
+            "default_rate_pct": round(d2 * 100, 1),
+            "baseline_rate_pct": round(d_lt2 * 100, 1),
+            "multiplier": round(d2 / max(d_lt2, 0.001), 1)
+        },
+        "utilization_80pct": {
+            "default_rate_pct": round(u_high * 100, 1),
+            "baseline_rate_pct": round(u_low * 100, 1),
+            "multiplier": round(u_high / max(u_low, 0.001), 1)
+        },
+        "early_warning_rate_pct": round(ews_rate * 100, 1),
+        "total_credit_exposure_ntd": float(df_scored["LIMIT_BAL"].sum()),
+        "ks_relative_lift_pct": round(((rf_metrics["ks_statistic"] - lr_metrics["ks_statistic"]) / lr_metrics["ks_statistic"]) * 100, 1)
+    }
 
     # Save artifacts
     champion_model_path = os.path.join(MODELS_DIR, "credit_risk_model.joblib")
@@ -195,6 +270,14 @@ def train_and_evaluate_models():
             "unseen_holdout_test_6k": test_sim_620,
             "full_population_30k": full_sim_620
         },
+        "holdout_confusion_dollars": holdout_confusion_dollars,
+        "holdout_cutoff_schedule": holdout_cutoff_schedule,
+        "full_cutoff_schedule": full_cutoff_schedule,
+        "basel_iii_ecl": {
+            "unseen_holdout_test_6k": holdout_ecl,
+            "full_population_30k": full_ecl
+        },
+        "risk_drivers": risk_drivers,
         "feature_importances": feat_imp,
         "logistic_coefficients": lr_imp
     }

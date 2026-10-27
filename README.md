@@ -45,7 +45,7 @@ This project delivers a complete portfolio prototype for **Data Analyst**, **Bus
                                                   │
                         ┌─────────────────────────┼─────────────────────────┐
                         ▼                         ▼                         ▼
-             [database/init_db.py]      [excel/generate_model.py]     [app/streamlit_app.py]
+             [database/init_db.py]   [excel/generate_excel_model.py] [app/streamlit_app.py]
              (SQLite / PostgreSQL DDL)   (Executive .xlsx Model)      (Interactive Platform)
                         │                         │                         │
                         ▼                         ▼                         ▼
@@ -60,10 +60,10 @@ The platform utilizes the public **[UCI Default of Credit Card Clients](https://
 
 ### Key Portfolio Metrics:
 * **Total Portfolio Borrowers**: 30,000 accounts
-* **Total Credit Exposure**: NT$ 5.03 Billion
+* **Total Credit Exposure**: NT$ 5.02 Billion
 * **Average Credit Line**: NT$ 167,484
 * **Historical Default Rate**: 22.12% (6,636 accounts)
-* **Early-Warning Trigger Rate**: 29.2% (Accounts exhibiting utilization $\ge 80\%$ or recent payment delays)
+* **Early-Warning Trigger Rate**: 42.3% (Flagged where 6-month average utilization $\ge 80\%$ OR maximum payment delay $\ge 1$ month, per `src/feature_engineering.py`)
 
 ### Feature Engineering Highlights:
 * **Average Credit Utilization (`AVG_UTILIZATION_RATE`)**: Rolling 6-month billed balance divided by credit limit.
@@ -90,7 +90,7 @@ $$\text{Credit Risk Score} = \text{clip}\left(\text{round}\left(850 - PD \times 
 | Metric | Random Forest (Champion) | Logistic Regression (Benchmark) | Absolute Lift | Commercial Banking Interpretation |
 | :--- | :---: | :---: | :---: | :--- |
 | **ROC-AUC (Discrimination)** | **0.7781** | 0.7521 | **+0.0260 (+3.5%)** | 78% probability of correctly ranking a true defaulter higher risk than a good borrower. |
-| **KS Statistic (Max Separation)** | **42.57%** | 39.28% | **+3.29% (+8.3%)** | Peak separation between good vs. bad cumulative distributions. KS > 40% is top-tier in retail lending. |
+| **KS Statistic (Max Separation)** | **42.57%** | 39.28% | **+3.29 points (+8.4%)** | Peak separation between good vs. bad cumulative distributions. KS > 40% is top-tier in retail lending. |
 | **PR-AUC (Precision-Recall)** | **0.5573** | 0.5079 | **+0.0494 (+9.7%)** | Evaluates default capture on minority class under 22.12% base default prevalence. |
 | **Classification Accuracy** | **78.37% (78.4%)** | 74.57% (74.6%) | **+3.80%** | Overall correct decisions (~4 out of every 5 accounts correctly categorized). |
 | **Precision (Approval Quality)** | **50.96%** | 44.43% | **+6.53% (+14.7%)** | When flagged as high risk, 51% are true defaults (vs. 44% linear), minimizing false alarms. |
@@ -118,11 +118,7 @@ To provide total analytical honesty and prevent confusion between test data and 
 | **Defaulters Intercepted** | **880 accounts** (66.3% of test defaults) | **5,119 accounts** (77.1% of all defaults) | Proactively blocked before balance ballooning. |
 | **Avoided Bad Debt Losses** | **NT$ 42.5M** | **NT$ 232.9M** | Cumulative write-off dollars prevented. |
 | **Lost APR Interest (15%)** | **NT$ 6.5M** | **NT$ 26.2M** | Conservative false-positive opportunity cost. |
-| **Net Financial Benefit** | **+NT$ 36.0M** (Scales to **+NT$ 180.1M** on 30k) | **+NT$ 206.6M** | **Net Capital Preserved** (Avoided Bad Debt minus Lost APR). |
-
-> [!TIP]
-> **Interview Talking Point on Unseen Data vs. Full Portfolio:**
-> *"Our model evaluation metrics (ROC-AUC 0.778, KS 42.6%, Accuracy 78.4%) come strictly from the 6,000 unseen holdout test accounts. In the policy simulator, on completely unseen accounts at FICO 620, the model cuts default rates from 22.1% to 11.4% and avoids NT$ 42.5M in bad debt on the 6k sample (scaling to NT$ 180M+ portfolio-wide). When simulated across the bank's entire 30,000 customer tape, the approved default rate drops to 7.7% and avoids NT$ 232.9M in bad debt. We provide both views to maintain 100% scientific integrity."*
+| **Net Financial Benefit** | **+NT$ 36.0M** (extrapolated (holdout x5): **+NT$ 180.1M**) | **+NT$ 206.6M** | **Net Capital Preserved** (Avoided Bad Debt minus Lost APR). |
 
 ---
 
@@ -140,7 +136,7 @@ To provide total analytical honesty and prevent confusion between test data and 
 
 ### 1. Clone the Repository
 ```bash
-git clone https://github.com/<your-username>/creditlens.git
+git clone https://github.com/gitanshgarg25/creditlens.git
 cd creditlens
 ```
 
@@ -162,6 +158,10 @@ python3 run_all.py
 streamlit run app/streamlit_app.py
 ```
 Open your browser to `http://localhost:8501`.
+
+> [!NOTE]
+> **Demo Seed Accounts (Local Sandbox Only):**
+> For initial local exploration and testing, the SQLite database seeds pre-configured demo analyst accounts (`admin@creditlens.internal`, `analyst@creditlens.internal`, `guest@creditlens.internal`). These are offline sandbox profiles with standard local passwords (`password123`). In production or multi-user setups, passwords can be customized or configured via environment variables (`CREDITLENS_DEMO_ADMIN_PASSWORD`). No real customer data, personal information, or proprietary credentials exist in this repository.
 
 ---
 
