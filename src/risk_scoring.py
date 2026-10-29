@@ -4,7 +4,7 @@ Standardizes credit default probabilities into Custom Credit Risk Scores (300–
 segments borrowers into strategic risk tiers, and generates policy-driven risk actions.
 
 DISCLAIMER: The credit risk score generated herein is a custom illustrative scoring
-scale (300 to 850) calibrated for internal demonstration and underwriting simulation.
+scale (300 to 850) scaled for internal demonstration and underwriting simulation.
 It is NOT an official Fair Isaac Corporation (FICO) score, bureau-issued credit score,
 or an industry-validated credit bureau rating.
 """

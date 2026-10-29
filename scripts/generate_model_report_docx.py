@@ -260,7 +260,7 @@ def generate_word_document():
         doc,
         f"The Champion Random Forest model delivered an ROC-AUC of {champ.get('roc_auc', 0.7781):.4f} and a Kolmogorov-Smirnov (KS) statistic of {champ.get('ks_statistic', 0.4257)*100:.2f}%, "
         f"generating a +{ks_lift_pct:.1f}% relative lift in risk separation power over traditional linear scorecards. Translated into "
-        f"commercial bank economics on 6,000 unseen test borrowers, applying a FICO 620 cutoff intercepted NT$ {h620_avoided_m:.1f}M in severe "
+        f"commercial bank economics on 6,000 unseen test borrowers, applying a score cutoff of 620 intercepted NT$ {h620_avoided_m:.1f}M in severe "
         f"default write-offs while maintaining loan approval volumes at {h620_appr_pct:.1f}%, creating a net commercial value of NT$ {h620_net_m:.1f}M "
         f"(extrapolated holdout x5: +NT$ {h620_net_m * 5:.1f}M).",
         title="Key Commercial Bottom-Line Impact",
@@ -519,7 +519,7 @@ def generate_word_document():
     p_fico.runs[0].font.color.rgb = NAVY_PRIMARY
 
     doc.add_paragraph(
-        "NOTE: This custom transformation is an internal illustrative risk score calibrated for demonstration and scenario "
+        "NOTE: This custom transformation is an internal illustrative risk score scaled for demonstration and scenario "
         "simulation. It is NOT an official Fair Isaac Corporation (FICO) score or credit bureau rating."
     )
 
@@ -679,7 +679,7 @@ def generate_word_document():
 
     for r, item in enumerate(h_items):
         c_val = item["score_cutoff"]
-        lbl = f"FICO {c_val}" + (" (Optimal)" if c_val == 620 else " (Near-Prime)" if c_val == 660 else " (Prime Only)" if c_val == 720 else "")
+        lbl = f"Score {c_val}" + (" (Optimal)" if c_val == 620 else " (Near-Prime)" if c_val == 660 else " (Prime Only)" if c_val == 720 else "")
         row_vals = (
             lbl,
             f"{item['approved_pct']:.1f}%",
@@ -713,7 +713,7 @@ def generate_word_document():
 
     for r, item in enumerate(f_items):
         c_val = item["score_cutoff"]
-        lbl = f"FICO {c_val}" + (" (Optimal)" if c_val == 620 else " (Near-Prime)" if c_val == 660 else " (Prime Only)" if c_val == 720 else "")
+        lbl = f"Score {c_val}" + (" (Optimal)" if c_val == 620 else " (Near-Prime)" if c_val == 660 else " (Prime Only)" if c_val == 720 else "")
         row_vals = (
             lbl,
             f"{item['approved_pct']:.1f}%",
@@ -735,7 +735,7 @@ def generate_word_document():
     add_callout_box(
         doc,
         "Optimal Policy Recommendation & Methodology Integrity:\n"
-        "• On completely unseen accounts at FICO 620, the model achieves a 65.6% approval rate, cuts approved default rates "
+        "• On completely unseen accounts at score cutoff 620, the model achieves a 65.6% approval rate, cuts approved default rates "
         "nearly in half from 22.12% down to 11.35%, and intercepts NT$ 42.5M in bad debt on the 6k sample alone (extrapolated holdout x5: +NT$ 180.1M).\n"
         "• When simulated across the bank's whole 30,000-account population tape, the approved default rate drops to 7.73%, avoiding NT$ 232.9M in bad debt and delivering NT$ 206.6M in net commercial benefit.\n"
         "This dual-schedule presentation ensures 100% honesty when discussing out-of-sample rigor with technical interviewers.",

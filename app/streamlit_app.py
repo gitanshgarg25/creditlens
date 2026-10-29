@@ -62,6 +62,14 @@ _auth = _safe_load_src_module("auth")
 _analytics = _safe_load_src_module("analytics_engine")
 _risk = _safe_load_src_module("risk_scoring")
 _model_train = _safe_load_src_module("model_training")
+_feat = _safe_load_src_module("feature_engineering")
+
+compute_early_warning_flags = getattr(_feat, "compute_early_warning_flags", None)
+if compute_early_warning_flags is None:
+    def compute_early_warning_flags(df):
+        util = pd.to_numeric(df.get("AVG_UTILIZATION_RATE", 0), errors="coerce").fillna(1.0)
+        delinq = pd.to_numeric(df.get("MAX_DELINQUENCY_MONTHS", df.get("PAY_0", 0)), errors="coerce").fillna(1)
+        return ((util >= 0.80) | (delinq >= 1)).astype(int)
 
 # Bind symbols directly into global namespace with self-healing getattr fallbacks
 init_user_db = getattr(_auth, "init_user_db", lambda: None)
@@ -1354,11 +1362,11 @@ def render_model_strategy_tab(df: pd.DataFrame):
         st.markdown(f"""
         <div class="insight-card">
             <div class="insight-header">
-                <span class="insight-tag insight-tag-green">CALIBRATION</span>
+                <span class="insight-tag insight-tag-green">PROBABILITY ERROR</span>
             </div>
             <div class="insight-metric-val">{champ.get('brier_score', 0.1685):.4f}</div>
             <div class="insight-title">Brier Score (Lower = Best)</div>
-            <div class="insight-desc">Benchmark: <b>{bench.get('brier_score', 0.1914):.4f}</b><br><span style="color:#059669; font-weight:700;">12.0% Better Calibrated</span>. Ensures predicted PD matches real default frequency.</div>
+            <div class="insight-desc">Benchmark: <b>{bench.get('brier_score', 0.1914):.4f}</b><br><span style="color:#059669; font-weight:700;">12.0% Lower Brier Error</span>. Measures mean squared probability error (formal calibration unestablished).</div>
         </div>
         """, unsafe_allow_html=True)
 
@@ -1979,7 +1987,7 @@ def main():
                         processed_df["PREDICTED_PD"] = np.round(np.clip(pd_arr, 0.02, 0.98), 4)
                         processed_df["CREDIT_RISK_SCORE"] = pd_to_credit_score(processed_df["PREDICTED_PD"])
                         processed_df["RISK_TIER"] = processed_df["CREDIT_RISK_SCORE"].apply(classify_risk_tier)
-                        processed_df["EARLY_WARNING_FLAG"] = ((processed_df["PAY_0"] >= 1) | (processed_df["AVG_UTILIZATION_RATE"] >= 0.80)).astype(int)
+                        processed_df["EARLY_WARNING_FLAG"] = compute_early_warning_flags(processed_df)
                         processed_df["RECOMMENDED_ACTION"] = processed_df.apply(assign_recommended_action, axis=1)
 
                         # Add sheet to workbook dictionary

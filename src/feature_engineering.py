@@ -60,14 +60,42 @@ def engineer_features(df: pd.DataFrame) -> pd.DataFrame:
     df["REVOLVING_BURDEN_RATIO"] = (unpaid_balance / (df["LIMIT_BAL"] + 1)).clip(upper=5.0)
 
     # 5. Early-Warning System (EWS) Trigger Flag
-    # Triggers on: High utilization (>80%), past-due delinquency in Sept, or severe historical delinquency
-    df["EARLY_WARNING_FLAG"] = (
-        (df["PAY_0"] >= 1) |
-        (df["AVG_UTILIZATION_RATE"] >= 0.80) |
-        (df["MAX_DELINQUENCY_MONTHS"] >= 2)
-    ).astype(int)
+    df["EARLY_WARNING_FLAG"] = compute_early_warning_flags(df)
 
     return df
+
+
+def compute_early_warning_flags(df: pd.DataFrame) -> pd.Series:
+    """
+    Computes Early-Warning System (EWS) triage indicator for pre-delinquency credit surveillance.
+    
+    Unified Rule (Educational Prototype):
+    An account triggers an early-warning alert (flag = 1) if EITHER condition is met:
+    1. Average Credit Line Utilization >= 80% (AVG_UTILIZATION_RATE >= 0.80):
+       Indicates severe borrowing strain, high revolving balance burden, and near-exhaustion of available limit.
+    2. Payment Delinquency >= 1 Month (MAX_DELINQUENCY_MONTHS >= 1):
+       Indicates observable repayment friction, payment delay, or past-due status during the 6-month window.
+       
+    Safe Missing/Invalid Data Handling:
+    If either utilization or delinquency values are missing (NaN), null, or invalid for an account,
+    it is conservatively treated as flagged (1) for human underwriting review rather than silently
+    assumed to be performing and safe.
+    
+    Returns:
+        pd.Series (int): Binary indicator (1 = Active Warning Alert, 0 = Normal Status).
+    """
+    if "AVG_UTILIZATION_RATE" not in df.columns or "MAX_DELINQUENCY_MONTHS" not in df.columns:
+        return pd.Series(1, index=df.index, dtype=int)
+
+    util = pd.to_numeric(df["AVG_UTILIZATION_RATE"], errors="coerce")
+    delinq = pd.to_numeric(df["MAX_DELINQUENCY_MONTHS"], errors="coerce")
+
+    # Missing or corrupted values are conservatively treated as alerts
+    is_missing = util.isna() | delinq.isna()
+    is_high_util = util >= 0.80
+    is_delinquent = delinq >= 1
+
+    return (is_high_util | is_delinquent | is_missing).astype(int)
 
 
 def run_feature_engineering_pipeline():

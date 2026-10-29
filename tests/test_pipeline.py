@@ -18,7 +18,7 @@ if BASE_DIR not in sys.path:
     sys.path.append(BASE_DIR)
 
 from src.risk_scoring import pd_to_credit_score, classify_risk_tier, assign_recommended_action
-from src.feature_engineering import engineer_features
+from src.feature_engineering import engineer_features, compute_early_warning_flags
 from src.analytics_engine import (
     get_portfolio_kpis,
     get_executive_insights,
@@ -78,6 +78,36 @@ class TestCreditLensPipeline(unittest.TestCase):
         self.assertEqual(pd_to_credit_score([-0.5])[0], 850)
         self.assertEqual(pd_to_credit_score([1.5])[0], 300)
 
+    def test_score_formula_and_probability_inversion(self):
+        """
+        Verifies mathematical relationship between Custom Credit Risk Score (300-850)
+        and Probability of Default (PD):
+        Score = clip(round(850 - 550 * PD), 300, 850)
+        PD_derived = (850 - Score) / 550.0
+        """
+        # Exact mathematical boundaries
+        # Prime (720-850): PD <= (850-720)/550 = 23.64%
+        prime_boundary_pd = (850 - 720) / 550.0
+        self.assertAlmostEqual(prime_boundary_pd, 0.23636, places=4)
+        self.assertEqual(classify_risk_tier(pd_to_credit_score([0.10])[0]), "Prime")
+        self.assertEqual(classify_risk_tier(pd_to_credit_score([0.23])[0]), "Prime")
+
+        # Near-Prime (660-719): PD in (23.6%, 34.55%]
+        near_prime_boundary_pd = (850 - 660) / 550.0
+        self.assertAlmostEqual(near_prime_boundary_pd, 0.34545, places=4)
+        self.assertEqual(classify_risk_tier(pd_to_credit_score([0.28])[0]), "Near-Prime")
+        self.assertEqual(classify_risk_tier(pd_to_credit_score([0.34])[0]), "Near-Prime")
+
+        # Subprime (580-659): PD in (34.55%, 49.09%]
+        subprime_boundary_pd = (850 - 580) / 550.0
+        self.assertAlmostEqual(subprime_boundary_pd, 0.49091, places=4)
+        self.assertEqual(classify_risk_tier(pd_to_credit_score([0.40])[0]), "Subprime")
+        self.assertEqual(classify_risk_tier(pd_to_credit_score([0.48])[0]), "Subprime")
+
+        # High Risk (300-579): PD > 49.09%
+        self.assertEqual(classify_risk_tier(pd_to_credit_score([0.55])[0]), "High Risk")
+        self.assertEqual(classify_risk_tier(pd_to_credit_score([0.90])[0]), "High Risk")
+
     def test_risk_tier_classification(self):
         """Verifies risk tier cutoff thresholds and safe non-numeric fallback."""
         self.assertEqual(classify_risk_tier(750), "Prime")
@@ -121,6 +151,42 @@ class TestCreditLensPipeline(unittest.TestCase):
             high_util_df[f"BILL_AMT{i}"] = 85000.0
         feat_high_util = engineer_features(high_util_df)
         self.assertEqual(feat_high_util["EARLY_WARNING_FLAG"].iloc[0], 1)
+
+    def test_early_warning_flag_conditions_and_edge_cases(self):
+        """
+        Verifies Early-Warning System (EWS) triage indicator:
+        1. Safe account (util < 80% and delinq = 0) -> 0
+        2. High utilization trigger (util >= 80%) -> 1
+        3. Payment delay trigger (delinq >= 1) -> 1
+        4. Conservative edge cases (NaN / missing features) -> 1 (never silently treated as safe)
+        """
+        # Safe account
+        safe_df = pd.DataFrame([{"AVG_UTILIZATION_RATE": 0.35, "MAX_DELINQUENCY_MONTHS": 0}])
+        self.assertEqual(compute_early_warning_flags(safe_df).iloc[0], 0)
+
+        # High utilization trigger (85% utilization)
+        high_util_df = pd.DataFrame([{"AVG_UTILIZATION_RATE": 0.85, "MAX_DELINQUENCY_MONTHS": 0}])
+        self.assertEqual(compute_early_warning_flags(high_util_df).iloc[0], 1)
+
+        # Payment delinquency trigger (1 month delay)
+        delinq_df = pd.DataFrame([{"AVG_UTILIZATION_RATE": 0.20, "MAX_DELINQUENCY_MONTHS": 1}])
+        self.assertEqual(compute_early_warning_flags(delinq_df).iloc[0], 1)
+
+        # Severe delinquency trigger (3 months delay)
+        severe_df = pd.DataFrame([{"AVG_UTILIZATION_RATE": 0.10, "MAX_DELINQUENCY_MONTHS": 3}])
+        self.assertEqual(compute_early_warning_flags(severe_df).iloc[0], 1)
+
+        # Edge Case: Missing / NaN utilization must conservatively trigger review (flag = 1)
+        missing_util_df = pd.DataFrame([{"AVG_UTILIZATION_RATE": np.nan, "MAX_DELINQUENCY_MONTHS": 0}])
+        self.assertEqual(compute_early_warning_flags(missing_util_df).iloc[0], 1)
+
+        # Edge Case: Missing / None delinquency must conservatively trigger review (flag = 1)
+        missing_delinq_df = pd.DataFrame([{"AVG_UTILIZATION_RATE": 0.20, "MAX_DELINQUENCY_MONTHS": None}])
+        self.assertEqual(compute_early_warning_flags(missing_delinq_df).iloc[0], 1)
+
+        # Edge Case: Missing columns completely must conservatively trigger review (flag = 1)
+        empty_cols_df = pd.DataFrame([{"LIMIT_BAL": 100000}])
+        self.assertEqual(compute_early_warning_flags(empty_cols_df).iloc[0], 1)
 
     def test_feature_target_separation(self):
         """Verifies that no target, identifier, or leak variables are present in model feature list."""
