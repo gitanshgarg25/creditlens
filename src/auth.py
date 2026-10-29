@@ -92,9 +92,9 @@ def init_user_db():
     cursor.execute("SELECT COUNT(*) FROM app_users;")
     count = cursor.fetchone()[0]
     if count == 0:
-        admin_pw = os.environ.get("CREDITLENS_DEMO_ADMIN_PASSWORD", "password123")
-        analyst_pw = os.environ.get("CREDITLENS_DEMO_ANALYST_PASSWORD", "password123")
-        guest_pw = os.environ.get("CREDITLENS_DEMO_GUEST_PASSWORD", "guest123")
+        admin_pw = os.environ.get("CREDITLENS_DEMO_ADMIN_PASSWORD", "demo_cro_pass")
+        analyst_pw = os.environ.get("CREDITLENS_DEMO_ANALYST_PASSWORD", "demo_analyst_pass")
+        guest_pw = os.environ.get("CREDITLENS_DEMO_GUEST_PASSWORD", "demo_guest_pass")
         default_users = [
             ("admin", hash_password(admin_pw), "Chief Risk Officer", "CRO Level (Executive)", "admin@creditlens.internal", "+1-800-555-0100", "local"),
             ("analyst", hash_password(analyst_pw), "Lead Credit Analyst", "Senior Analyst Level", "analyst@creditlens.internal", "+1-800-555-0101", "local"),

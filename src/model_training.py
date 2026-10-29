@@ -1,7 +1,7 @@
 """
 CreditLens - Model Training & Evaluation Module
-Trains, compares, calibrates, and evaluates machine learning models for credit default prediction.
-Computes ROC-AUC, PR-AUC, KS Statistic, Confusion Matrix, and feature importances.
+Trains, compares, and evaluates machine learning models for credit default prediction.
+Computes ROC-AUC, PR-AUC, KS Statistic, Confusion Matrix, Brier score, and feature importances.
 """
 
 from __future__ import annotations
@@ -12,7 +12,7 @@ import numpy as np
 import pandas as pd
 from sklearn.model_selection import train_test_split
 from sklearn.linear_model import LogisticRegression
-from sklearn.ensemble import RandomForestClassifier, GradientBoostingClassifier
+from sklearn.ensemble import RandomForestClassifier
 from sklearn.preprocessing import StandardScaler
 from sklearn.pipeline import Pipeline
 from sklearn.metrics import (

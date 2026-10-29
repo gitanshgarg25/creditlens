@@ -901,7 +901,7 @@ def render_portfolio_sheet(
         <div class="kpi-card">
             <div class="kpi-title">Portfolio Mean Score</div>
             <div class="kpi-value">{kpis['portfolio_avg_score']:.0f}</div>
-            <div class="kpi-sub">FICO Scale (300 - 850)</div>
+            <div class="kpi-sub">Custom Scale (300 - 850)</div>
         </div>
         """, unsafe_allow_html=True)
     with c4:
@@ -1031,12 +1031,12 @@ def render_portfolio_sheet(
         )
         st.plotly_chart(fig_exp, use_container_width=True)
 
-    # 2.1 Visual FICO 300-850 Spectrum & Action Guide
+    # 2.1 Visual Score Spectrum & Action Guide (300-850)
     st.markdown("""
     <div style="background: var(--card-bg, #FFFFFF); border: 1px solid var(--card-border, #CBD5E1); border-radius: 12px; padding: 18px; margin: 16px 0; box-shadow: 0 1px 4px rgba(0,0,0,0.02);">
         <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 2px;">
-            <span style="font-weight: 800; font-size: 0.98rem; color: var(--text-headline);">🎯 FICO 300–850 Risk Spectrum & Policy Thresholds</span>
-            <span style="font-size: 0.78rem; color: #64748B;">Institutional Basel-Compliant Risk Bands</span>
+            <span style="font-weight: 800; font-size: 0.98rem; color: var(--text-headline);">🎯 Custom Credit Risk Score (300–850) Spectrum & Policy Thresholds</span>
+            <span style="font-size: 0.78rem; color: #64748B;">Strategic Risk Bands (Illustrative Framework)</span>
         </div>
         <div class="score-scale-container">
             <div class="scale-high-risk" title="High Risk: 300 - 579"></div>
@@ -1112,7 +1112,7 @@ def render_portfolio_sheet(
 
     # 4. Underwriting Policy Cutoff Simulator & Borrower Dossier Sandbox
     st.markdown("##### ⚖️ Interactive Underwriting Policy Simulator (Business Trade-Off)")
-    st.caption("Simulate portfolio volume vs. credit losses avoided by shifting the minimum FICO score approval threshold.")
+    st.caption("Simulate portfolio volume vs. credit losses avoided by shifting the minimum credit risk score approval threshold (300–850 scale).")
     
     sim_col1, sim_col2 = st.columns([1.3, 1.7])
     with sim_col1:
@@ -1140,7 +1140,7 @@ def render_portfolio_sheet(
 
     if "Unseen Holdout Test" in cohort_mode and "IS_TEST_SAMPLE" in filtered_df.columns:
         sim_df = filtered_df[filtered_df["IS_TEST_SAMPLE"] == 1]
-        st.info("💡 **Methodology Transparency (Out-of-Sample Ground Truth):** Evaluated strictly on the **6,000 unseen holdout accounts** the model never trained on. At FICO 620, default rates drop from 22.12% to 11.35%, avoiding NT$ 42.5M in bad-debt write-offs on the test sample (scales to NT$ 180M+ portfolio-wide).")
+        st.info("💡 **Methodology Transparency (Out-of-Sample Ground Truth):** Evaluated strictly on the **6,000 unseen holdout accounts** the model never trained on. At score cutoff 620, default rates drop from 22.12% to 11.35%, avoiding NT$ 42.5M in bad-debt write-offs on the test sample (scales to NT$ 180M+ portfolio-wide).")
     else:
         sim_df = filtered_df
         if "IS_TEST_SAMPLE" in filtered_df.columns:
@@ -1448,8 +1448,8 @@ def render_model_strategy_tab(df: pd.DataFrame):
     <div style="background: var(--card-bg, #FFFFFF); border: 1px solid var(--card-border, #CBD5E1); border-left: 4px solid #10B981; border-radius: 10px; padding: 14px 18px; margin-bottom: 16px;">
         <span style="font-weight: 800; font-size: 0.92rem; color: var(--text-headline);">🎯 Methodology & Data Split Transparency</span>
         <div style="font-size: 0.82rem; color: #475569; margin-top: 4px; line-height: 1.5;">
-            <b>• Out-of-Sample Holdout (6,000 Accounts):</b> Evaluated strictly on the 20% test split the model NEVER trained on (ROC-AUC 0.7781, KS 42.57%). At FICO 620 cutoff, the model approves 65.6%, cuts default rate nearly in half from 22.12% to 11.35%, and intercepts NT$ 42.5M in bad debt write-offs on the test sample alone (scales to NT$ 180M+ portfolio-wide).<br>
-            <b>• Full Portfolio Tape (30,000 Accounts):</b> Models whole-book commercial implementation across the combined portfolio (24k training + 6k test). At FICO 620 cutoff, it approves 65.4%, reduces approved default rate to 7.73%, and intercepts NT$ 232.9M in bad debt.
+            <b>• Out-of-Sample Holdout (6,000 Accounts):</b> Evaluated strictly on the 20% test split the model NEVER trained on (ROC-AUC 0.7781, KS 42.57%). At score cutoff 620, the model approves 65.6%, cuts default rate nearly in half from 22.12% to 11.35%, and intercepts NT$ 42.5M in bad debt write-offs on the test sample alone (scales to NT$ 180M+ portfolio-wide).<br>
+            <b>• Full Portfolio Tape (30,000 Accounts):</b> Models whole-book commercial implementation across the combined portfolio (24k training + 6k test). At score cutoff 620, it approves 65.4%, reduces approved default rate to 7.73%, and intercepts NT$ 232.9M in bad debt.
         </div>
     </div>
     """, unsafe_allow_html=True)
@@ -1517,7 +1517,7 @@ def render_model_strategy_tab(df: pd.DataFrame):
             </div>
             <div style="font-size: 1.5rem; font-weight: 850; color: #DC2626; margin: 4px 0;">NT$ {residual_loss:.1f}M</div>
             <div style="font-size: 0.82rem; color: #475569;">
-                Unforeseen defaults ({fn:,} accounts). Fully provisioned and absorbed under the bank's Basel III Capital Adequacy reserve buffer (CAR 12.5%).
+                Unforeseen defaults ({fn:,} accounts). Provisioned under an illustrative capital buffer framework (CAR 12.5% target).
             </div>
         </div>
         """, unsafe_allow_html=True)
@@ -1535,11 +1535,11 @@ def render_model_strategy_tab(df: pd.DataFrame):
 
     st.markdown("<br>", unsafe_allow_html=True)
 
-    # 5. Interactive FICO Score Decoder Sandbox
-    st.markdown("### 🎛️ Interactive FICO Score Decoder (300–850)")
-    st.caption("Inspect how any credit score translates into default probability, risk tier, and underwriting committee actions")
+    # 5. Interactive Credit Score Decoder Sandbox
+    st.markdown("### 🎛️ Interactive Credit Score Decoder (300–850)")
+    st.caption("Inspect how any custom risk score translates into default probability, risk tier, and underwriting committee actions (illustrative 300–850 scale, not an official bureau FICO score)")
 
-    demo_score = st.slider("Select FICO Score to Inspect:", min_value=300, max_value=850, value=650, step=5, key="demo_fico_slider")
+    demo_score = st.slider("Select Credit Score to Inspect (300–850):", min_value=300, max_value=850, value=650, step=5, key="demo_fico_slider")
     
     demo_tier = classify_risk_tier(demo_score)
     demo_pd = round(float(np.clip((850 - demo_score) / 550.0, 0.02, 0.98)) * 100, 1)
@@ -1564,7 +1564,7 @@ def render_model_strategy_tab(df: pd.DataFrame):
         <div style="background: var(--card-bg, #FFFFFF); border: 1px solid var(--card-border, #CBD5E1); border-radius: 12px; padding: 16px; text-align: center;">
             <div style="font-size: 0.78rem; font-weight: 700; color: #64748B; text-transform: uppercase;">Risk Tier</div>
             <div style="margin: 8px 0;"><span class="tier-badge {tier_badge_class}" style="font-size: 0.95rem; padding: 5px 14px;">{demo_tier}</span></div>
-            <div style="font-size: 0.82rem; color: #475569;">FICO Score: <b>{demo_score}</b></div>
+            <div style="font-size: 0.82rem; color: #475569;">Custom Score: <b>{demo_score}</b></div>
         </div>
         """, unsafe_allow_html=True)
 
@@ -1582,7 +1582,7 @@ def render_model_strategy_tab(df: pd.DataFrame):
         <div style="background: var(--card-bg, #FFFFFF); border: 1px solid var(--card-border, #CBD5E1); border-radius: 12px; padding: 16px;">
             <div style="font-size: 0.78rem; font-weight: 700; color: #64748B; text-transform: uppercase; margin-bottom: 4px;">Recommended Credit Policy Action</div>
             <div style="font-size: 0.9rem; font-weight: 750; color: var(--text-headline); margin-bottom: 6px;">{action_text}</div>
-            <div style="font-size: 0.8rem; color: #64748B;">Basel III Classification: <b>{'Standard Asset' if demo_score >= 660 else 'Special Mention / Substandard' if demo_score >= 580 else 'Doubtful / Loss'}</b></div>
+            <div style="font-size: 0.8rem; color: #64748B;">Illustrative Risk Category: <b>{'Standard Asset' if demo_score >= 660 else 'Special Mention / Substandard' if demo_score >= 580 else 'Doubtful / Loss'}</b></div>
         </div>
         """, unsafe_allow_html=True)
 
@@ -1599,7 +1599,7 @@ def main():
             st.session_state["current_user"] = last_u
         else:
             # Default to executive account so anyone opening the link instantly sees the active portfolio intelligence
-            default_u = get_user_by_username("admin") or authenticate_user("admin", "password123")
+            default_u = get_user_by_username("admin")
             if default_u:
                 st.session_state["current_user"] = default_u
                 set_last_active_user(default_u["username"])
@@ -1667,8 +1667,8 @@ def main():
         ]
     )
 
-    with st.sidebar.expander("🏛️ Basel III Capital Reserve Tool"):
-        st.caption("Standardized Regulatory Capital Requirement Calculator (CAR 12.5% Target).")
+    with st.sidebar.expander("🏛️ Illustrative Capital Reserve & ECL Tool"):
+        st.caption("Standardized Regulatory Capital Buffer Calculator (Illustrative CAR 12.5% Target).")
         target_car = st.slider("Target CAR (%):", 8.0, 18.0, 12.5, 0.5)
         try:
             from src.analytics_engine import compute_ecl
@@ -1681,7 +1681,7 @@ def main():
             ecl_m = live_ecl.get("total_ecl", 0.0) / 1e6
             cov_p = live_ecl.get("portfolio_ecl_coverage_pct", 0.0)
             rwa_req_m = (live_ecl.get("total_ead", 0.0) * 0.75) * (target_car / 100.0) / 1e6
-            st.metric("Basel III EAD", f"NT$ {ead_m:.1f}M", help="EAD = Billed Drawn + 20% Undrawn Limit")
+            st.metric("Total EAD", f"NT$ {ead_m:.1f}M", help="EAD = Billed Drawn + 20% Undrawn Limit")
             st.metric("Expected Credit Loss (ECL)", f"NT$ {ecl_m:.1f}M", help=f"ECL = EAD × PD × 45% LGD ({cov_p:.1f}% coverage)")
             st.metric(f"CAR Buffer ({target_car:.1f}%)", f"NT$ {rwa_req_m:.1f}M", help="Target CAR applied to 75% standard retail RWA")
         else:
@@ -1699,7 +1699,7 @@ def main():
                     mime="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
                     use_container_width=True
                 )
-        st.caption("Includes Executive Summary, Loan Tape Sample, Model Diagnostics, and Basel III ECL Schedule sheets.")
+        st.caption("Includes Executive Summary, Loan Tape Sample, Model Diagnostics, and Illustrative ECL Schedule sheets.")
 
     st.sidebar.markdown("---")
     st.sidebar.markdown(
@@ -1927,7 +1927,7 @@ def main():
             - **Credit Limit / Loan Amount**
             - **Current Billed Balance**
             - **Repayment Delay (Months Past Due)**
-            - Calculates FICO 300–850 scores & Risk Tiers instantly!
+            - Calculates Custom 300–850 scores & Risk Tiers instantly!
             """)
 
         if new_file is not None:

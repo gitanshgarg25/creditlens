@@ -28,6 +28,6 @@
 | `REVOLVING_BURDEN_RATIO`| Float | Cumulative unpaid balance divided by credit limit | Revolving debt strain |
 | `EARLY_WARNING_FLAG` | Integer | 1 if account triggers early warning criteria, else 0 | EWS triage indicator |
 | `PREDICTED_PD` | Float | Probability of Default predicted by Random Forest (0.0 to 1.0) | Model forecast |
-| `CREDIT_RISK_SCORE` | Integer | Scaled 300 to 850 credit risk score | FICO-aligned score |
+| `CREDIT_RISK_SCORE` | Integer | Custom credit risk score scaled to 300–850 | Illustrative custom risk score (not official bureau FICO) |
 | `RISK_TIER` | String | 'Prime', 'Near-Prime', 'Subprime', 'High Risk' | Strategic risk tier |
 | `RECOMMENDED_ACTION` | String | Policy-driven credit mitigation action | Operational recommendation |

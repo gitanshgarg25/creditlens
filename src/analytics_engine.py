@@ -227,12 +227,35 @@ def get_executive_insights(df: pd.DataFrame) -> dict:
 
 def get_underwriting_policy_tradeoff(df: pd.DataFrame, score_cutoff: int = 620) -> dict:
     """
-    Simulates business trade-offs (Volume Approved vs. Losses Prevented)
-    for a chosen minimum FICO risk score cut-off threshold.
+    Simulates business trade-offs (Volume Approved vs. Credit Losses Avoided)
+    for a chosen minimum Custom Credit Risk Score (300–850) cut-off threshold.
+
+    ASSUMPTIONS & METHODOLOGY:
+    - Approvals: Accounts with CREDIT_RISK_SCORE >= score_cutoff.
+    - Avoided Losses: Sum of statement bills (BILL_AMT1) for rejected accounts that defaulted.
+    - Lost Interest: Opportunity cost on rejected non-default accounts (estimated 15% APR on BILL_AMT1).
+    - Net Benefit: Avoided Losses minus Lost Interest Income.
+    
+    DISCLAIMER: This is an offline scenario simulation based on stated assumptions.
+    It demonstrates strategic portfolio trade-offs and does not represent an actual
+    bank lending decision or guaranteed realized savings.
     """
     total = len(df)
     if total == 0 or "CREDIT_RISK_SCORE" not in df.columns:
-        return {}
+        return {
+            "score_cutoff": score_cutoff,
+            "total_accounts": 0,
+            "approved_count": 0,
+            "approved_pct": 0.0,
+            "rejected_count": 0,
+            "portfolio_default_rate": 0.0,
+            "approved_default_rate": 0.0,
+            "avoided_defaults": 0,
+            "avoided_defaults_pct": 0.0,
+            "avoided_losses_ntd": 0.0,
+            "lost_interest_income": 0.0,
+            "net_financial_benefit": 0.0
+        }
 
     approved_mask = df["CREDIT_RISK_SCORE"] >= score_cutoff
     rejected_mask = ~approved_mask
@@ -287,15 +310,29 @@ def get_underwriting_policy_tradeoff(df: pd.DataFrame, score_cutoff: int = 620) 
 
 def compute_ecl(df: pd.DataFrame, lgd: float = 0.45, ccf: float = 0.20) -> dict:
     """
-    Computes Basel III Expected Credit Loss (ECL):
+    Computes simplified Expected Credit Loss (ECL) inspired by Basel III / IFRS 9 concepts:
     ECL = EAD * PD * LGD
     EAD = BILL_AMT1 + CCF * max(LIMIT_BAL - BILL_AMT1, 0)
     PD = PREDICTED_PD
-    LGD = 0.45 (Standardized Basel III Retail Foundation LGD)
+    LGD = 0.45 (Illustrative standardized retail Loss Given Default benchmark)
     CCF = 0.20 (Credit Conversion Factor for undrawn revolving commitments)
+    
+    DISCLAIMER: This is a simplified educational/portfolio estimation framework.
+    It does not constitute regulatory compliance certification under Basel III or IFRS 9.
     """
     if len(df) == 0:
-        return {}
+        return {
+            "total_accounts": 0,
+            "total_limit_exposure": 0.0,
+            "total_drawn_balance": 0.0,
+            "total_ead": 0.0,
+            "total_ecl": 0.0,
+            "portfolio_weighted_pd_pct": 0.0,
+            "portfolio_ecl_coverage_pct": 0.0,
+            "lgd": lgd,
+            "ccf": ccf,
+            "tier_schedule": []
+        }
 
     bill = df["BILL_AMT1"].copy() if "BILL_AMT1" in df.columns else pd.Series(0.0, index=df.index)
     limit = df["LIMIT_BAL"].copy() if "LIMIT_BAL" in df.columns else pd.Series(0.0, index=df.index)

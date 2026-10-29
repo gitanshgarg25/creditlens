@@ -74,3 +74,29 @@ Implement the full CreditLens platform matching all specifications for Data Anal
 9. **Verification**:
    - 100% test pass rate in `tests/test_pipeline.py`.
    - Entire pipeline orchestrated via one-click script `run_all.py`.
+
+---
+
+## [2026-10-29] End-to-End Project Audit, Technical Correction & Interview-Readiness Pass
+
+### Objective
+Perform complete technical audit and remediation across credit scoring formulas, simulation trade-offs, documentation, Word reporting, and test coverage to ensure 100% technical consistency for fresher analyst candidate interviews.
+
+### Remediations & Enhancements Delivered:
+1. **Scoring Engine Hardening (`src/risk_scoring.py`)**:
+   - Replaced "FICO" branding with "Custom Credit Risk Score (300–850)" and added non-bureau disclaimers.
+   - Guarded `pd_to_credit_score` against NaN, None, non-numeric, and empty sequence inputs.
+   - Guaranteed strict [300, 850] score bounds and monotonic inverse direction with PD.
+2. **Analytics Engine Hardening (`src/analytics_engine.py`)**:
+   - Added empty DataFrame guard clauses for `get_underwriting_policy_tradeoff` and `compute_ecl`.
+   - Rebranded "Basel-Compliant" claims to "Simplified ECL Framework" with educational disclaimers.
+3. **Model Governance & Word Report (`scripts/generate_model_report_docx.py`)**:
+   - Replaced fictional GBDT section with an honest Random Forest vs. Logistic Regression comparison.
+   - Refactored hardcoded paths using `os.path.expanduser("~/Documents")`.
+   - Updated demographic review to an exploratory sensitivity analysis with ECOA disclaimers.
+4. **Streamlit UI Alignment (`app/streamlit_app.py`)**:
+   - Updated UI text to reflect Custom Score (300–850) and Strategic Risk Bands.
+5. **Comprehensive Test Suite (`tests/test_pipeline.py`)**:
+   - Expanded to 18 automated unit and pipeline tests (data leakage, split integrity, score monotonicity, ECL math, and SQLite execution). 100% pass rate.
+6. **Documentation Overhaul (`README.md`)**:
+   - Integrated beginner macOS setup, SQL CLI instructions, methodology transparency for holdout vs. full-tape simulations, simplified ECL formulas, and interview talking points.

@@ -17,7 +17,7 @@ from docx.oxml.ns import nsdecls, qn
 
 BASE_DIR = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 METRICS_PATH = os.path.join(BASE_DIR, "models", "model_metrics.json")
-DOCUMENTS_DIR = "/Users/gitanshgarg/Documents"
+DOCUMENTS_DIR = os.path.expanduser("~/Documents")
 REPORT_DEST_1 = os.path.join(DOCUMENTS_DIR, "CreditLens_Comprehensive_Model_Report.docx")
 REPORT_DEST_2 = os.path.join(BASE_DIR, "reports", "CreditLens_Comprehensive_Model_Report.docx")
 
@@ -242,13 +242,12 @@ def generate_word_document():
     p1.runs[0].font.color.rgb = SLATE_TEXT
 
     p2 = doc.add_paragraph(
-        "To establish a defensible, audit-compliant framework, we engineered and rigorously evaluated multiple modeling "
-        "methodologies on a standardized retail credit portfolio of 30,000 customer accounts. These include: (1) an "
-        "econometric Logistic Regression scorecard required for regulatory compliance under Basel II/III internal ratings-based "
-        "(IRB) standards, (2) an advanced Random Forest ensemble serving as our Champion production model, and (3) a "
-        "Challenger Gradient Boosted Decision Tree (GBDT) architecture. Each model was calibrated and translated directly "
-        "into the standard commercial FICO 300–850 scoring scale, Basel capital reserve adequacy schedules, and dynamic "
-        "early warning surveillance triggers."
+        "To establish a defensible, audit-compliant framework, we engineered and rigorously evaluated our modeling "
+        "methodology on a standardized retail credit portfolio of 30,000 customer accounts. These include: (1) an "
+        "econometric Logistic Regression scorecard serving as our regulatory benchmark, and (2) an advanced Random Forest "
+        "ensemble serving as our Champion production model. Each model's predictions are evaluated strictly out-of-sample "
+        "and translated into our Custom Credit Risk Score (300–850), strategic risk tiers, simplified Expected Credit Loss (ECL) "
+        "reserve schedules, and dynamic early warning surveillance indicators."
     )
     p2.runs[0].font.color.rgb = SLATE_TEXT
 
@@ -294,7 +293,7 @@ def generate_word_document():
         ("Precision (Approval Quality)", f"{champ.get('precision', 0.5096)*100:.2f}%", f"{bench.get('precision', 0.4443)*100:.2f}%", "+6.53% (+14.7%)", "When model flags high risk, 51% are true defaults (vs 44% linear), minimizing false alarms."),
         ("Recall (Defaulters Caught)", f"{champ.get('recall', 0.5810)*100:.2f}%", f"{bench.get('recall', 0.5976)*100:.2f}%", "-1.66%", "Identifies ~58% of all future defaults at billing cycle 1 before balances balloon."),
         ("F1-Score (Balanced Power)", f"{champ.get('f1_score', 0.5430):.4f}", f"{bench.get('f1_score', 0.5096):.4f}", "+0.0334 (+6.6%)", "Harmonic balance between default interception and avoiding false declines."),
-        ("Brier Score (Calibration)", f"{champ.get('brier_score', 0.1685):.4f}", f"{bench.get('brier_score', 0.1914):.4f}", "-0.0229 (-12.0%)", "Lower is better. Reflects tighter alignment between predicted PD and actual default frequency.")
+        ("Brier Score (Probability Accuracy)", f"{champ.get('brier_score', 0.1685):.4f}", f"{bench.get('brier_score', 0.1914):.4f}", "-0.0229 (-12.0%)", "Lower is better. Measures mean squared error of predicted default probabilities vs binary outcomes.")
     ]
 
     for r_idx, row_data in enumerate(table_data):
@@ -466,62 +465,66 @@ def generate_word_document():
     )
 
     # =========================================================================
-    # SECTION 5: MODEL 3 - GRADIENT BOOSTED TREES (CHALLENGER ARCHITECTURE)
+    # SECTION 5: MODEL COMPARISON - NON-LINEAR ENSEMBLE VS. LINEAR BENCHMARK
     # =========================================================================
-    h5 = doc.add_heading("5. Model 3: Challenger Gradient Boosting Architecture", level=1)
+    h5 = doc.add_heading("5. Model Comparison: Non-Linear Champion vs. Linear Benchmark", level=1)
     h5.runs[0].font.color.rgb = NAVY_PRIMARY
     h5.runs[0].font.size = Pt(16)
 
     doc.add_paragraph(
-        "To ensure thorough architectural benchmarking, we also evaluated a Gradient Boosted Decision Tree (GBDT / XGBoost "
-        "style) Challenger model. Unlike bagging in Random Forest, Gradient Boosting builds trees sequentially, where each "
-        "successive tree minimizes the residual pseudo-errors of the preceding ensemble via gradient descent:"
+        "To establish rigorous model governance, we benchmarked the non-linear Random Forest Champion directly against the "
+        "econometric Logistic Regression baseline across all key credit risk performance dimensions:"
     )
 
-    p_gbdt = doc.add_paragraph(
-        "    • Sequential Objective:  L^(t) = Σ_{i=1..N} l( y_i, y_hat_i^(t-1) + f_t(x_i) ) + Ω(f_t)\n"
-        "    • Challenger Config:     100 estimators, learning_rate = 0.08, max_depth = 5, subsample = 0.85\n"
-        "    • Empirical Results:     ROC-AUC: 0.7765  |  KS Statistic: 42.12%  |  Brier Score: 0.1710"
+    p_comp = doc.add_paragraph(
+        "    • Champion Model:        RandomForestClassifier (120 estimators, max_depth = 10, min_samples_leaf = 5)\n"
+        "    • Benchmark Model:       LogisticRegression (StandardScaler pipeline, balanced class weights, L2 penalty)\n"
+        "    • Performance Spread:    ROC-AUC: 0.7781 vs 0.7521 (+0.0260)  |  KS Separation: 42.57% vs 39.28% (+3.29 points)"
     )
-    p_gbdt.runs[0].font.name = "Consolas"
-    p_gbdt.runs[0].font.size = Pt(9.5)
-    p_gbdt.runs[0].font.color.rgb = BLUE_SECONDARY
+    p_comp.runs[0].font.name = "Consolas"
+    p_comp.runs[0].font.size = Pt(9.5)
+    p_comp.runs[0].font.color.rgb = BLUE_SECONDARY
 
     doc.add_paragraph(
-        "Why Random Forest was Retained as the Champion Over Gradient Boosting:\n"
-        "While Gradient Boosting matched Random Forest in raw discrimination (0.7765 vs 0.7781 ROC-AUC), Random Forest was "
-        "selected as the institutional production champion for three operational governance reasons:\n"
-        "1. Resilience to Macroeconomic Regime Shifts: Boosting models aggressively fit edge-case residuals. In sudden macro "
-        "shocks (e.g. rapid interest rate hikes), GBDT over-reacts to historical outliers, whereas bagging averages them out.\n"
-        "2. Superior Probability Calibration: Random Forest achieved a tighter Brier score (0.1685 vs 0.1710), ensuring that "
-        "the predicted probabilities directly reflect true default frequencies for Basel reserve calculation.\n"
-        "3. Operational Governance & Audit Simplicity: Regulators and risk committees favor Random Forest's de-correlated bagging "
-        "structure over boosting's recursive dependency chain."
+        "Key Governance & Behavioral Findings from the Model Comparison:\n"
+        "1. Capture of Non-Linear Step-Function Risks: Logistic regression assumes linear log-odds relationships. "
+        "However, consumer credit distress exhibits sharp non-linear thresholds: a 1-month payment delay increases default "
+        "rates to 50.3% (3.6x baseline), and a 2-month delay escalates default rates to 69.6% (4.2x baseline). "
+        "Random Forest's hierarchical decision trees segment these critical thresholds naturally without requiring manual polynomial terms.\n"
+        "2. Improved Probability Prediction Error: Random Forest achieved a tighter Brier score (0.1685 vs 0.1914, a 12.0% error "
+        "reduction), indicating that its predicted probabilities are substantially closer to actual default outcomes.\n"
+        "3. Explainability vs. Discrimination Trade-Off: Logistic regression offers simple linear odds-ratio interpretability "
+        "per feature, whereas Random Forest provides superior KS separation (42.57% vs 39.28%) and minority-class precision (50.96% vs 44.43%)."
     )
 
     # =========================================================================
-    # SECTION 6: MODEL 4 - FICO SCORECARD & RISK TIER SEGMENTATION
+    # SECTION 6: CUSTOM RISK SCORE & RISK TIER SEGMENTATION
     # =========================================================================
-    h6 = doc.add_heading("6. Model 4: CreditLens Scorecard & FICO Risk Tier Mapping Engine", level=1)
+    h6 = doc.add_heading("6. Custom Credit Risk Score (300–850) & Strategic Risk Tier Mapping Engine", level=1)
     h6.runs[0].font.color.rgb = NAVY_PRIMARY
     h6.runs[0].font.size = Pt(16)
 
     doc.add_paragraph(
-        "Raw machine learning probabilities (e.g. PD = 0.0834) are unintuitive for branch managers, loan officers, and "
-        "credit committees. CreditLens incorporates an institutional mapping engine that translates raw continuous default "
-        "probabilities into the standardized FICO 300–850 credit risk scale:"
+        "Raw machine learning probabilities (e.g. PD = 0.0834) are unintuitive for operational lending workflows. "
+        "CreditLens incorporates an illustrative mapping engine that translates raw continuous default probabilities "
+        "into a Custom Credit Risk Score on a familiar 300–850 scale, where higher scores represent lower predicted default risk:"
     )
 
     p_fico = doc.add_paragraph(
-        "    Credit Risk Score = round( 850.0 - ( Predicted_PD * 550.0 ) ),  clipped to [300, 850]"
+        "    Custom Credit Risk Score = round( 850.0 - ( Predicted_PD * 550.0 ) ),  clipped to [300, 850]"
     )
     p_fico.runs[0].font.name = "Consolas"
     p_fico.runs[0].font.size = Pt(10)
     p_fico.runs[0].font.bold = True
     p_fico.runs[0].font.color.rgb = NAVY_PRIMARY
 
+    doc.add_paragraph(
+        "NOTE: This custom transformation is an internal illustrative risk score calibrated for demonstration and scenario "
+        "simulation. It is NOT an official Fair Isaac Corporation (FICO) score or credit bureau rating."
+    )
+
     tier_tbl = doc.add_table(rows=5, cols=5)
-    t_headers = ["Risk Tier", "FICO Score Range", "Default Prob (PD)", "Basel Asset Class", "Prescribed Underwriting & Account Action"]
+    t_headers = ["Risk Tier", "Score Range (300–850)", "Default Prob (PD)", "Asset Quality Proxy", "Prescribed Underwriting & Account Action"]
     for i, h in enumerate(t_headers):
         tier_tbl.rows[0].cells[i].text = h
 
@@ -564,26 +567,24 @@ def generate_word_document():
     )
 
     # =========================================================================
-    # SECTION 8: MODEL 6 - BASEL III CAPITAL ADEQUACY & EXPECTED LOSS ENGINE
+    # SECTION 8: SIMPLIFIED EXPECTED CREDIT LOSS (ECL) ESTIMATION
     # =========================================================================
-    h8 = doc.add_heading("8. Model 6: Basel III Capital Adequacy & Expected Loss Engine", level=1)
+    h8 = doc.add_heading("8. Simplified Expected Credit Loss (ECL) & Capital Reserve Estimation", level=1)
     h8.runs[0].font.color.rgb = NAVY_PRIMARY
     h8.runs[0].font.size = Pt(16)
 
     doc.add_paragraph(
-        "Under international Basel III regulatory frameworks, financial institutions must maintain adequate capital reserves "
-        "to absorb both Expected Credit Losses (ECL) and unexpected systemic shocks. CreditLens implements the standard "
-        "Foundation Internal Ratings-Based (F-IRB) formula across all scored assets:"
+        "To translate default probabilities into financial exposure, CreditLens implements a simplified Expected Credit Loss (ECL) "
+        "framework inspired by Basel III Foundation Internal Ratings-Based (F-IRB) and IFRS 9 concepts:"
     )
 
     p_ecl = doc.add_paragraph(
         "    Expected Credit Loss (ECL) = EAD * PD * LGD\n"
-        "    Regulatory Capital Requirement = RWA * CAR_Target (12.5%)\n"
         "    Where:\n"
-        "      • EAD (Exposure at Default): Current statement balance + undrawn committed credit conversion factor (CCF 20%)\n"
+        "      • EAD (Exposure at Default): Billed drawn balance + undrawn limit * CCF (20% Credit Conversion Factor)\n"
         "      • PD (Probability of Default): Derived from Champion Random Forest model\n"
-        "      • LGD (Loss Given Default): 45% standardized regulatory benchmark for unsecured consumer credit\n"
-        "      • CAR (Capital Adequacy Ratio): 12.5% target maintaining a 4.5% conservative buffer above 8.0% Basel minimum"
+        "      • LGD (Loss Given Default): 45% standardized benchmark for unsecured consumer credit\n"
+        "    DISCLAIMER: This is an illustrative simplified risk calculation for portfolio analysis, not an official regulatory certification."
     )
     p_ecl.runs[0].font.name = "Consolas"
     p_ecl.runs[0].font.size = Pt(9.5)
@@ -593,7 +594,7 @@ def generate_word_document():
     f_ecl = ecl_data.get("full_population_30k", {})
 
     doc.add_paragraph(
-        "Empirical Basel III Portfolio ECL Reserves:\n"
+        "Modeled Portfolio ECL Reserves:\n"
         f"• Out-of-Sample Holdout (6,000 Unseen Accounts): Total Exposure at Default (EAD) is NT$ {h_ecl.get('total_ead', 450895229.0)/1e6:.1f}M, "
         f"generating an Expected Credit Loss reserve of NT$ {h_ecl.get('total_ecl', 71434703.5)/1e6:.1f}M ({h_ecl.get('portfolio_ecl_coverage_pct', 15.8):.1f}% coverage).\n"
         f"• Full Population Tape (30,000 Accounts): Total EAD is NT$ {f_ecl.get('total_ead', 2239409244.8)/1e6:.1f}M, "
@@ -608,8 +609,9 @@ def generate_word_document():
     h9.runs[0].font.size = Pt(16)
 
     doc.add_paragraph(
-        "To ensure non-technical stakeholders understand exactly what drives credit risk, the table below breaks down the "
-        "top 8 most critical predictive features, their ensemble weights, and their commercial interpretations:"
+        "To ensure non-technical stakeholders understand what drives credit risk, the table below breaks down the "
+        "top 8 most critical predictive features, their ensemble weights, and their commercial interpretations. "
+        "NOTE: Feature importance reflects predictive association within the decision trees, not causal proof of default."
     )
 
     feat_tbl = doc.add_table(rows=9, cols=4)
@@ -638,12 +640,11 @@ def generate_word_document():
 
     add_callout_box(
         doc,
-        "Regulatory Fairness & Non-Discrimination Audit:\n"
-        "Demographic features exhibited near-zero predictive weight in the Champion model:\n"
-        "• Education: 0.59% weight  • Gender (Sex): 0.32% weight  • Marital Status: 0.31% weight\n"
-        "This proves that CreditLens evaluates borrowers strictly on objective repayment discipline and debt burden, "
-        "satisfying Equal Credit Opportunity Act (ECOA) and Consumer Financial Protection Bureau (CFPB) fair lending standards.",
-        title="Fair Lending & Disparate Impact Compliance",
+        "Exploratory Demographic & Sensitivity Analysis:\n"
+        "Demographic features (Age, Education, Sex, Marriage) contribute a combined 3.05% of predictive weight in the Champion model:\n"
+        "• Age: 1.83%  • Education: 0.59%  • Gender (Sex): 0.32%  • Marital Status: 0.31%\n"
+        "While behavioral repayment metrics dominate predictive weight, low feature importance does not by itself prove the absence of disparate impact or constitute legal compliance with the Equal Credit Opportunity Act (ECOA) or CFPB regulations. In commercial production lending, protected characteristics (such as sex and marital status) must generally be excluded from scoring models under ECOA Regulation B, and models must undergo formal adverse impact ratio (AIR) testing and disparate impact auditing prior to operational deployment.",
+        title="Exploratory Demographic Review & Fair Lending Limitations",
         border_hex=HEX_BLUE,
         bg_hex="EFF6FF"
     )
@@ -759,25 +760,25 @@ def generate_word_document():
     qa_list = [
         (
             "Q1: Why did you pick Random Forest over Logistic Regression?",
-            "“In banking, traditional scorecards use Logistic Regression because regulators require interpretable coefficients. "
+            "“In banking, traditional scorecards use Logistic Regression because credit committees require simple odds-ratio coefficients. "
             "However, credit risk in the real world is non-linear and compounding: a high credit limit is safe when the borrower "
             "pays on time, but becomes deadlier when paired with a sudden repayment delay. Linear models struggle "
-            "with that interaction without complex manual engineering. Random Forest captured these interactions naturally, "
-            "achieving a KS statistic of 42.6%—an 8.4% relative lift over our logistic benchmark—which prevented NT$ 38.4M in direct write-offs on our holdout validation set (NT$ 42.5M at FICO 620 cutoff).”"
+            "with that interaction without complex manual feature engineering. Random Forest captured these interactions naturally, "
+            "achieving a KS statistic of 42.6%—an 8.4% relative lift over our logistic benchmark (39.3%)—which prevented NT$ 38.4M in direct write-offs on our holdout validation set (NT$ 42.5M at score cutoff 620).”"
         ),
         (
             "Q2: How do you measure model performance in banking? Isn't accuracy enough?",
             "“Accuracy is misleading in credit risk due to class imbalance. If default prevalence is 20%, a naive model that "
-            "approves everyone is 80% accurate but bankrupts the bank! In credit risk, we look at ROC-AUC and the KS Statistic. "
+            "approves everyone is 80% accurate but bankrupts the bank! In credit risk, we evaluate ROC-AUC and the KS Statistic. "
             "ROC-AUC tells us how well the model ranks good vs bad borrowers across all cutoffs, while KS measures the maximum "
-            "vertical distance between good and bad cumulative distributions. In retail banking, a KS > 40% represents an elite "
-            "scorecard. More importantly, we translate the confusion matrix into dollars: bad debt avoided vs lost APR opportunity.”"
+            "vertical separation between cumulative good and bad distributions. In retail banking, a KS > 40% represents an elite "
+            "scorecard. More importantly, we translate the confusion matrix into financial impact: bad debt avoided vs lost APR opportunity.”"
         ),
         (
             "Q3: How do you balance risk management with commercial growth?",
             "“Risk management isn't about eliminating all defaults—that would mean zero loan volume and zero profit! We built an "
             "Underwriting Policy Simulator that models the net financial benefit: (Bad Debt Prevented) minus (Lost Interest on "
-            "Good Borrowers). Setting our cutoff at FICO 620 on unseen test data achieves a 65.6% approval rate, cuts the default "
+            "Good Borrowers). Setting our cutoff at score 620 (on our 300–850 scale) on unseen test data achieves a 65.6% approval rate, cuts the default "
             "rate nearly in half from 22.1% to 11.4%, and avoids NT$ 42.5M in bad debt on the test set alone (extrapolated holdout x5: +NT$ 180.1M). "
             "When simulated across the bank's entire 30,000 population tape, the approved default rate drops to 7.7%, avoiding NT$ 232.9M in bad debt "
             "and delivering NT$ 206.6M in net commercial benefit.”"
@@ -790,11 +791,14 @@ def generate_word_document():
             "above 80% utilization default at 31.9% (1.8x higher than the 17.9% rate for borrowers maintaining ≤30% utilization), showing severe dependence on revolving credit for basic living expenses.”"
         ),
         (
-            "Q5: How does your model align with Basel III and regulatory standards?",
-            "“We integrated the Basel III Expected Credit Loss formula (ECL = EAD × PD × LGD) with a 12.5% Capital Adequacy Ratio "
-            "target. The model's low Brier score (0.1685) ensures that predicted probabilities match real-world default frequencies, "
-            "preventing under-provisioning. Furthermore, demographic variables (AGE, EDUCATION, SEX, MARRIAGE) contributed "
-            "only 3.05% combined (with non-age protected classes under 1.25%), demonstrating fair lending compliance under ECOA rules.”"
+            "Q5: How does your framework approach regulatory concepts like Expected Credit Loss and fair lending?",
+            "“We implemented a simplified Expected Credit Loss (ECL = EAD × PD × LGD) framework inspired by Basel III / IFRS 9 concepts, "
+            "using standardized parameters (45% LGD and 20% CCF on undrawn lines). The Random Forest model achieved a Brier score of 0.1685 "
+            "(a 12.0% improvement in probability error over the logistic benchmark), which provides more reliable inputs for expected loss estimation. "
+            "For fair lending governance, an exploratory sensitivity check showed demographic features (Age, Education, Sex, Marriage) "
+            "contributed only 3.05% of feature importance, with repayment discipline driving 97% of predictive power. In an actual production "
+            "environment, protected characteristics would be formally excluded under ECOA Regulation B, and the scorecard would undergo "
+            "adverse impact ratio (AIR) auditing before live deployment.”"
         )
     ]
 

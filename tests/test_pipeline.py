@@ -1,11 +1,15 @@
 """
-CreditLens - Automated Test Suite
-Tests data ingestion cleaning, feature calculations, risk scoring formulas, and database connectivity.
+CreditLens - Comprehensive Automated Test Suite
+Tests data ingestion cleaning, feature calculations, risk scoring formulas,
+train/test separation, model probability bounds, policy simulation tradeoffs,
+illustrative ECL calculations, database connectivity, and SQL query execution.
 """
 
 import os
 import sys
 import unittest
+import sqlite3
+import joblib
 import pandas as pd
 import numpy as np
 
@@ -19,8 +23,10 @@ from src.analytics_engine import (
     get_portfolio_kpis,
     get_executive_insights,
     get_underwriting_policy_tradeoff,
+    compute_ecl,
     load_model_metrics
 )
+from src.model_training import get_feature_list, calculate_ks_statistic
 
 
 class TestCreditLensPipeline(unittest.TestCase):
@@ -42,33 +48,199 @@ class TestCreditLensPipeline(unittest.TestCase):
             "DEFAULT_NEXT_MONTH": 0
         }])
 
-    def test_credit_score_bounds(self):
-        """Verifies credit score mapping matches FICO standard (300 to 850)."""
+    def test_credit_score_bounds_and_direction(self):
+        """Verifies custom credit score scale (300 to 850) and monotonic inverse direction with PD."""
         self.assertEqual(pd_to_credit_score([0.0])[0], 850)
         self.assertEqual(pd_to_credit_score([1.0])[0], 300)
         self.assertTrue(300 <= pd_to_credit_score([0.5])[0] <= 850)
 
+        # Monotonicity test: as PD increases, score must decrease monotonically
+        pds = np.linspace(0.0, 1.0, 50)
+        scores = pd_to_credit_score(pds)
+        for i in range(len(scores) - 1):
+            self.assertGreaterEqual(
+                scores[i], scores[i + 1],
+                f"Score non-monotonic at index {i}: PD {pds[i]} -> {scores[i]}, PD {pds[i+1]} -> {scores[i+1]}"
+            )
+
+    def test_credit_score_edge_cases(self):
+        """Verifies credit score behavior on empty, NaN, negative, and out-of-range inputs."""
+        # Empty input
+        empty_res = pd_to_credit_score([])
+        self.assertEqual(len(empty_res), 0)
+
+        # NaN input (must impute baseline default rate ~0.2212 without raising runtime warnings)
+        nan_res = pd_to_credit_score([np.nan])
+        self.assertEqual(len(nan_res), 1)
+        self.assertTrue(300 <= nan_res[0] <= 850)
+
+        # Out-of-range floats
+        self.assertEqual(pd_to_credit_score([-0.5])[0], 850)
+        self.assertEqual(pd_to_credit_score([1.5])[0], 300)
+
     def test_risk_tier_classification(self):
-        """Verifies tier thresholds."""
+        """Verifies risk tier cutoff thresholds and safe non-numeric fallback."""
         self.assertEqual(classify_risk_tier(750), "Prime")
         self.assertEqual(classify_risk_tier(680), "Near-Prime")
         self.assertEqual(classify_risk_tier(600), "Subprime")
         self.assertEqual(classify_risk_tier(500), "High Risk")
+        # Boundary edges
+        self.assertEqual(classify_risk_tier(720), "Prime")
+        self.assertEqual(classify_risk_tier(660), "Near-Prime")
+        self.assertEqual(classify_risk_tier(580), "Subprime")
+        self.assertEqual(classify_risk_tier(300), "High Risk")
+        # Fallback for None/NaN
+        self.assertEqual(classify_risk_tier(None), "High Risk")
+
+    def test_assign_recommended_action(self):
+        """Verifies policy action assignment by tier and early warning flag."""
+        action_prime = assign_recommended_action({"RISK_TIER": "Prime", "AVG_UTILIZATION_RATE": 0.20})
+        self.assertIn("Eligible for Pre-Approved Credit Increase", action_prime)
+
+        action_prime_high_util = assign_recommended_action({"RISK_TIER": "Prime", "AVG_UTILIZATION_RATE": 0.90})
+        self.assertIn("Monitor Utilization", action_prime_high_util)
+
+        action_high_risk = assign_recommended_action({"RISK_TIER": "High Risk"})
+        self.assertIn("Urgent Collections Outreach", action_high_risk)
 
     def test_feature_engineering_math(self):
-        """Verifies utilization rate and EWS flags."""
+        """Verifies utilization rate and early warning trigger logic."""
         feat_df = engineer_features(self.sample_df)
         self.assertAlmostEqual(feat_df["AVG_UTILIZATION_RATE"].iloc[0], 0.20, places=2)
         self.assertEqual(feat_df["EARLY_WARNING_FLAG"].iloc[0], 0)
         
-        # Test distressed scenario
+        # Test distressed scenario (delinquency >= 1 month triggers EWS)
         distressed_df = self.sample_df.copy()
         distressed_df["PAY_0"] = 2
         feat_distressed = engineer_features(distressed_df)
         self.assertEqual(feat_distressed["EARLY_WARNING_FLAG"].iloc[0], 1)
 
+        # Test high utilization trigger (avg utilization >= 80% triggers EWS)
+        high_util_df = self.sample_df.copy()
+        for i in range(1, 7):
+            high_util_df[f"BILL_AMT{i}"] = 85000.0
+        feat_high_util = engineer_features(high_util_df)
+        self.assertEqual(feat_high_util["EARLY_WARNING_FLAG"].iloc[0], 1)
+
+    def test_feature_target_separation(self):
+        """Verifies that no target, identifier, or leak variables are present in model feature list."""
+        features = get_feature_list()
+        leak_candidates = ["DEFAULT_NEXT_MONTH", "ID", "EARLY_WARNING_FLAG", "PREDICTED_PD", "CREDIT_RISK_SCORE", "IS_TEST_SAMPLE"]
+        for leak in leak_candidates:
+            self.assertNotIn(
+                leak, features,
+                f"Data leakage risk: '{leak}' found in model training feature list!"
+            )
+
+    def test_expected_feature_count(self):
+        """Verifies model utilizes exactly 30 engineered features."""
+        features = get_feature_list()
+        self.assertEqual(len(features), 30, f"Expected 30 features, but found {len(features)}")
+
+    def test_train_test_split_integrity(self):
+        """Verifies 80/20 train/test split on full dataset yields 24k/6k records with zero overlap."""
+        raw_csv = os.path.join(BASE_DIR, "data", "processed", "credit_lens_clean.csv")
+        if not os.path.exists(raw_csv):
+            self.skipTest(f"Clean CSV not found at {raw_csv}")
+
+        from sklearn.model_selection import train_test_split
+        df = pd.read_csv(raw_csv)
+        self.assertEqual(len(df), 30000, f"Expected 30,000 records, found {len(df)}")
+
+        target_col = "DEFAULT_NEXT_MONTH"
+        X = df.drop(columns=[target_col])
+        y = df[target_col]
+
+        X_train, X_test, y_train, y_test = train_test_split(
+            X, y, test_size=0.20, random_state=42, stratify=y
+        )
+
+        self.assertEqual(len(X_train), 24000)
+        self.assertEqual(len(X_test), 6000)
+
+        # Disjoint verification
+        overlap = set(X_train.index).intersection(set(X_test.index))
+        self.assertEqual(len(overlap), 0, "Train and Test sets contain overlapping index rows!")
+
+        # Stratification check (prevalence ~ 22.12%)
+        train_prev = y_train.mean()
+        test_prev = y_test.mean()
+        self.assertAlmostEqual(train_prev, 0.2212, places=3)
+        self.assertAlmostEqual(test_prev, 0.2212, places=3)
+
+    def test_champion_model_prediction_bounds(self):
+        """Verifies loaded champion model predicts probabilities bounded strictly within [0, 1]."""
+        model_path = os.path.join(BASE_DIR, "models", "credit_risk_model.joblib")
+        self.assertTrue(os.path.exists(model_path), f"Champion model missing at {model_path}")
+
+        rf_model = joblib.load(model_path)
+        feature_cols = get_feature_list()
+
+        # Build synthetic test dataframe containing all 30 engineered features
+        engineered = engineer_features(self.sample_df)
+        X_sample = engineered[feature_cols]
+
+        prob = rf_model.predict_proba(X_sample)[:, 1]
+        self.assertEqual(len(prob), 1)
+        self.assertGreaterEqual(prob[0], 0.0)
+        self.assertLessEqual(prob[0], 1.0)
+
+    def test_ks_statistic_calculation(self):
+        """Verifies Kolmogorov-Smirnov statistic returns valid float in [0.0, 1.0]."""
+        y_true = np.array([0, 0, 0, 1, 1, 1])
+        # Perfect discrimination
+        y_prob_perf = np.array([0.05, 0.10, 0.15, 0.85, 0.90, 0.95])
+        ks_perf = calculate_ks_statistic(y_true, y_prob_perf)
+        self.assertAlmostEqual(ks_perf, 1.0, places=2)
+
+        # Random guessing
+        y_prob_rand = np.array([0.5, 0.5, 0.5, 0.5, 0.5, 0.5])
+        ks_rand = calculate_ks_statistic(y_true, y_prob_rand)
+        self.assertAlmostEqual(ks_rand, 0.0, places=2)
+
+    def test_underwriting_policy_tradeoff_logic_and_empty(self):
+        """Verifies underwriting policy tradeoff logic and empty DataFrame safety."""
+        test_df = pd.DataFrame([
+            {"CREDIT_RISK_SCORE": 750, "DEFAULT_NEXT_MONTH": 0, "BILL_AMT1": 50000.0},
+            {"CREDIT_RISK_SCORE": 650, "DEFAULT_NEXT_MONTH": 0, "BILL_AMT1": 30000.0},
+            {"CREDIT_RISK_SCORE": 520, "DEFAULT_NEXT_MONTH": 1, "BILL_AMT1": 40000.0}
+        ])
+        tradeoff = get_underwriting_policy_tradeoff(test_df, score_cutoff=620)
+        self.assertEqual(tradeoff["approved_count"], 2)
+        self.assertEqual(tradeoff["rejected_count"], 1)
+        self.assertEqual(tradeoff["avoided_defaults"], 1)
+        self.assertEqual(tradeoff["approved_default_rate"], 0.0)
+        self.assertEqual(tradeoff["approved_count"] + tradeoff["rejected_count"], 3)
+
+        # Empty DataFrame safety test
+        empty_tradeoff = get_underwriting_policy_tradeoff(pd.DataFrame(), score_cutoff=620)
+        self.assertIsInstance(empty_tradeoff, dict)
+        self.assertEqual(empty_tradeoff["approved_count"], 0)
+        self.assertEqual(empty_tradeoff["net_financial_benefit"], 0.0)
+
+    def test_compute_ecl_math_and_empty(self):
+        """Verifies illustrative ECL calculation math and empty DataFrame safety."""
+        # Drawn = 20k, Limit = 100k -> Undrawn = 80k.
+        # CCF = 20% -> EAD = 20k + 0.20 * 80k = 36,000 NTD.
+        # PD = 0.10, LGD = 0.45 -> ECL = 36,000 * 0.10 * 0.45 = 1,620 NTD.
+        sample_ecl = pd.DataFrame([{
+            "LIMIT_BAL": 100000.0,
+            "BILL_AMT1": 20000.0,
+            "PREDICTED_PD": 0.10
+        }])
+        res = compute_ecl(sample_ecl, lgd=0.45, ccf=0.20)
+        self.assertEqual(res["total_ead"], 36000.0)
+        self.assertEqual(res["total_ecl"], 1620.0)
+        self.assertAlmostEqual(res["portfolio_ecl_coverage_pct"], 4.5, places=1)
+
+        # Empty DataFrame test
+        empty_ecl = compute_ecl(pd.DataFrame())
+        self.assertIsInstance(empty_ecl, dict)
+        self.assertEqual(empty_ecl["total_ead"], 0.0)
+        self.assertEqual(empty_ecl["total_ecl"], 0.0)
+
     def test_portfolio_kpis(self):
-        """Verifies KPI math aggregation."""
+        """Verifies KPI aggregation mathematics."""
         df = self.sample_df.copy()
         df["CREDIT_RISK_SCORE"] = 750
         df["PREDICTED_PD"] = 0.05
@@ -77,6 +249,7 @@ class TestCreditLensPipeline(unittest.TestCase):
         kpis = get_portfolio_kpis(df)
         self.assertEqual(kpis["total_borrowers"], 1)
         self.assertEqual(kpis["total_exposure"], 100000.0)
+        self.assertEqual(kpis["portfolio_avg_score"], 750.0)
 
     def test_executive_insights(self):
         """Verifies executive insights calculations."""
@@ -90,24 +263,46 @@ class TestCreditLensPipeline(unittest.TestCase):
         self.assertIn("util_multiplier", insights)
         self.assertEqual(insights["distressed_accounts"], 1)
 
-    def test_underwriting_policy_tradeoff(self):
-        """Verifies policy cutoff trade-off calculations."""
-        test_df = pd.DataFrame([
-            {"CREDIT_RISK_SCORE": 750, "DEFAULT_NEXT_MONTH": 0, "BILL_AMT1": 50000},
-            {"CREDIT_RISK_SCORE": 520, "DEFAULT_NEXT_MONTH": 1, "BILL_AMT1": 40000}
-        ])
-        tradeoff = get_underwriting_policy_tradeoff(test_df, score_cutoff=620)
-        self.assertEqual(tradeoff["approved_count"], 1)
-        self.assertEqual(tradeoff["rejected_count"], 1)
-        self.assertEqual(tradeoff["avoided_defaults"], 1)
-        self.assertEqual(tradeoff["approved_default_rate"], 0.0)
-
     def test_load_model_metrics(self):
-        """Verifies loading saved model metrics JSON."""
+        """Verifies structure and keys in model_metrics.json."""
         metrics = load_model_metrics()
         self.assertIn("champion_model", metrics)
         self.assertIn("champion_metrics", metrics)
+        self.assertIn("benchmark_metrics", metrics)
+        self.assertIn("holdout_confusion_dollars", metrics)
+        self.assertIn("dataset_summary", metrics)
+        self.assertIn("risk_drivers", metrics)
         self.assertIn("roc_auc", metrics["champion_metrics"])
+
+    def test_analytical_sql_queries_execution(self):
+        """Verifies all 6 SQL queries in analytical_queries.sql execute cleanly on credit_lens.db."""
+        db_path = os.path.join(BASE_DIR, "database", "credit_lens.db")
+        sql_path = os.path.join(BASE_DIR, "database", "analytical_queries.sql")
+        self.assertTrue(os.path.exists(db_path), f"SQLite DB missing at {db_path}")
+        self.assertTrue(os.path.exists(sql_path), f"SQL script missing at {sql_path}")
+
+        with open(sql_path, "r", encoding="utf-8") as f:
+            sql_text = f.read()
+
+        raw_queries = sql_text.split(";")
+        conn = sqlite3.connect(db_path)
+        executed_count = 0
+        try:
+            for q in raw_queries:
+                clean_lines = [l for l in q.splitlines() if not l.strip().startswith("--")]
+                stmt = "\n".join(clean_lines).strip()
+                if stmt:
+                    cursor = conn.execute(stmt)
+                    rows = cursor.fetchall()
+                    self.assertGreater(
+                        len(rows), 0,
+                        f"SQL query returned 0 rows: {stmt[:60]}..."
+                    )
+                    executed_count += 1
+        finally:
+            conn.close()
+
+        self.assertEqual(executed_count, 6, f"Expected 6 SQL analytical queries, executed {executed_count}")
 
     def test_readme_benchmark_metrics_match_json(self):
         """
